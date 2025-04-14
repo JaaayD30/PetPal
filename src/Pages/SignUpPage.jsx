@@ -1,44 +1,41 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
 
-function SignUpPage() {
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+const SignUpPage = () => {
+  const [formData, setFormData] = useState({
+    fullName: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
-  // Google login success handler
-  const handleGoogleSuccess = (response) => {
-    console.log('Google login successful:', response);  // Log the response for debugging
-    
-    // After Google login success, redirect to UserDetailsPage for additional information
-    navigate('/user-details', { state: { googleResponse: response } });
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Google login failure handler
-  const handleGoogleFailure = (error) => {
-    console.error('Google login failed:', error);
-    setError('Google login failed. Please try again.');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/signup', formData);
+      alert(res.data.message);
+      // Redirect to login or confirmation page if needed
+    } catch (err) {
+      alert(err.response?.data?.message || 'Signup failed');
+    }
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9', padding: '2rem' }}>
-      <div style={{ width: '100%', maxWidth: '450px', backgroundColor: '#fff', padding: '2rem', borderRadius: '8px', boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>PetPal</h1>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Sign Up</h2>
-
-        {error && <p style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>{error}</p>}
-
-        {/* Google Login Button */}
-        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={handleGoogleFailure}
-            clientId="523925700451-f5rmmu0jghctco3qr5l293orh6d8qgcu.apps.googleusercontent.com"
-          />
-        </div>
-      </div>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <input type="text" name="fullName" placeholder="Full Name" onChange={handleChange} required />
+      <input type="text" name="username" placeholder="Username" onChange={handleChange} required />
+      <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
+      <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
+      <input type="password" name="confirmPassword" placeholder="Confirm Password" onChange={handleChange} required />
+      <button type="submit">Sign Up</button>
+    </form>
   );
-}
+};
 
 export default SignUpPage;

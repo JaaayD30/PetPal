@@ -8,6 +8,8 @@ function UserDetailsPage() {
   const [googleResponse, setGoogleResponse] = useState(null);
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -46,6 +48,8 @@ function UserDetailsPage() {
         <form onSubmit={handleSubmit}>
           <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} style={inputStyle} />
           <input type="text" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} style={inputStyle} />
+          <input type="text" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
+          <input type="text" placeholder="Confirm" value={confirm} onChange={(e) => setConfirm(e.target.value)} style={inputStyle} />
 
           <button type="submit" style={{ width: '100%', padding: '0.75rem', backgroundColor: 'red', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold' }}>
             Complete Sign Up
