@@ -9,7 +9,7 @@ function HomePage() {
         <p>Your one-stop app for connecting with pet blood donors in emergencies</p>
 
         {/* Link to the Sign Up page */}
-        <Link to="/signup">
+        <Link to="/user-details">
           <button
             style={{
               padding: '0.75rem 2rem',
