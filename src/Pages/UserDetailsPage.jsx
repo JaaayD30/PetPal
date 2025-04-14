@@ -17,10 +17,16 @@ const UserDetailsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (formData.password !== formData.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
     try {
       const res = await axios.post('http://localhost:5000/api/signup', formData);
-      alert(res.data.message);
-      // Redirect to login or confirmation page if needed
+      alert(res.data.message); // Success message from backend
+      // Redirect to login page after successful signup
+      window.location.href = '/login';
     } catch (err) {
       alert(err.response?.data?.message || 'Signup failed');
     }
@@ -28,11 +34,46 @@ const UserDetailsPage = () => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <input type="text" name="fullName" placeholder="Full Name" onChange={handleChange} required />
-      <input type="text" name="username" placeholder="Username" onChange={handleChange} required />
-      <input type="email" name="email" placeholder="Email" onChange={handleChange} required />
-      <input type="password" name="password" placeholder="Password" onChange={handleChange} required />
-      <input type="password" name="confirmPassword" placeholder="Confirm Password" onChange={handleChange} required />
+      <input
+        type="text"
+        name="fullName"
+        placeholder="Full Name"
+        onChange={handleChange}
+        value={formData.fullName}
+        required
+      />
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        onChange={handleChange}
+        value={formData.username}
+        required
+      />
+      <input
+        type="email"
+        name="email"
+        placeholder="Email"
+        onChange={handleChange}
+        value={formData.email}
+        required
+      />
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        onChange={handleChange}
+        value={formData.password}
+        required
+      />
+      <input
+        type="password"
+        name="confirmPassword"
+        placeholder="Confirm Password"
+        onChange={handleChange}
+        value={formData.confirmPassword}
+        required
+      />
       <button type="submit">Sign Up</button>
     </form>
   );

@@ -1,35 +1,54 @@
-import { useNavigate } from 'react-router-dom';
-import { GoogleLogin } from '@react-oauth/google';
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate hook
 
-function LoginPage() {
-  const navigate = useNavigate();
+const LoginPage = () => {
+  const [loginData, setLoginData] = useState({
+    username: '',
+    password: '',
+  });
 
-  // Google login success and failure handlers
-  const handleGoogleLoginSuccess = (response) => {
-    console.log('Google login successful:', response);
-    // You can send the response token to your server for validation
-    navigate('/landing'); // Redirect to LandingPage after successful login
+  const navigate = useNavigate(); // Initialize navigate hook
+
+  const handleChange = (e) => {
+    setLoginData({ ...loginData, [e.target.name]: e.target.value });
   };
 
-  const handleGoogleLoginFailure = (error) => {
-    console.error('Google login failed:', error);
-    // Show an error message if needed
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await axios.post('http://localhost:5000/api/login', loginData);
+      // Assuming the backend sends a token on successful login
+      localStorage.setItem('authToken', res.data.token); // Store token in localStorage
+      alert(res.data.message);
+
+      // Redirect to the homepage after successful login
+      navigate('/'); // Redirect to the homepage
+    } catch (err) {
+      alert(err.response?.data?.message || 'Login failed');
+    }
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '400px', margin: 'auto' }}>
-      <h2>Login</h2>
-
-      {/* Google Login Button */}
-      <div style={{ marginTop: '1rem' }}>
-        <GoogleLogin 
-          onSuccess={handleGoogleLoginSuccess} 
-          onError={handleGoogleLoginFailure}
-          clientId="YOUR_GOOGLE_CLIENT_ID" // Replace with your actual Client ID
-        />
-      </div>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        name="username"
+        placeholder="Username"
+        onChange={handleChange}
+        required
+      />
+      <input
+        type="password"
+        name="password"
+        placeholder="Password"
+        onChange={handleChange}
+        required
+      />
+      <button type="submit">Login</button>
+    </form>
   );
-}
+};
 
 export default LoginPage;

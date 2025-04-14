@@ -6,10 +6,10 @@ import UserDetailsPage from './Pages/UserDetailsPage';
 import ConfirmationPage from './Pages/ConfirmationPage';
 import LandingPage from './Pages/LandingPage';
 
-
 function App() {
   return (
-    <GoogleOAuthProvider clientId="523925700451-f5rmmu0jghctco3qr5l293orh6d8qgcu.apps.googleusercontent.com"> {/* Wrap with GoogleOAuthProvider */}
+    <GoogleOAuthProvider clientId="523925700451-f5rmmu0jghctco3qr5l293orh6d8qgcu.apps.googleusercontent.com">
+      {/* Wrap with GoogleOAuthProvider */}
       <Router>
         <nav>
           <ul style={{ display: 'flex', listStyleType: 'none' }}>
