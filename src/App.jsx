@@ -6,6 +6,8 @@ import LoginPage from './Pages/LoginPage';
 import UserDetailsPage from './Pages/UserDetailsPage'; // Keep or replace with UserDetails if needed
 import ConfirmationPage from './Pages/ConfirmationPage';
 import LandingPage from './Pages/LandingPage';
+import ProfilePage from './Pages/Profile';
+
 // Import UserDetails if it's a separate component you want to use
 // import UserDetails from './UserDetails'; 
 
@@ -32,6 +34,7 @@ function App() {
           <Route path="/user-details" element={<UserDetailsPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/landing" element={<LandingPage />} />
+          <Route path='/profile' element={<ProfilePage/>} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>

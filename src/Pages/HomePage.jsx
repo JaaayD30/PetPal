@@ -1,31 +1,34 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { jwtDecode } from 'jwt-decode';
+
+
+
 
 const HomePage = () => {
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
 
-  const handleLoginSuccess = (response) => {
-    console.log(response); // Log response to see if it's correct
-    // After successful login, navigate to user details
+  const handleLoginSuccess = (credentialResponse) => {
+    const decoded = jwtDecode(credentialResponse.credential);
+    console.log('Decoded Google User:', decoded);
+
+    // Save email to localStorage
+    localStorage.setItem('googleEmail', decoded.email);
+
+    // Navigate to user details page
     navigate('/user-details');
   };
 
   const handleLoginFailure = (error) => {
-    console.log(error); // Log failure details for debugging
+    console.log('Login Failed:', error);
   };
 
   return (
     <div>
       <h1>Welcome to PetPal!</h1>
       <p>Your one-stop app for connecting with pet blood donors in emergencies</p>
-
-      {/* Google Login Button */}
-      <GoogleLogin
-        onSuccess={handleLoginSuccess}
-        onError={handleLoginFailure}
-        clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}  // Ensure this is correct
-      />
+      <GoogleLogin onSuccess={handleLoginSuccess} onError={handleLoginFailure} />
     </div>
   );
 };
