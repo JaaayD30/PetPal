@@ -1,87 +1,79 @@
 import express from 'express';
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
 import cors from 'cors';
-import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
+import pkg from 'pg';
 
-dotenv.config();
+const { Pool } = pkg;
 
 const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-// Connect to MongoDB using the URI from .env file
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log('Error connecting to MongoDB:', err));
-
-// Define user schema and model
-const userSchema = new mongoose.Schema({
-  fullName: String,
-  username: String,
-  email: String,
-  password: String, // Plain-text password (no hashing)
+// PostgreSQL connection setup
+const pool = new Pool({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'User',
+  password: '123',
+  port: 5432,
 });
 
-const User = mongoose.model('User', userSchema);
-
-// Signup Route
+// Signup endpoint
 app.post('/api/signup', async (req, res) => {
-  const { fullName, username, email, password, confirmPassword } = req.body;
-
-  if (password !== confirmPassword) {
-    return res.status(400).json({ message: 'Passwords do not match' });
-  }
+  const { fullName, username, email, password } = req.body;
 
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
-      fullName,
-      username,
-      email,
-      password, // Save plain-text password directly
-    });
+    await pool.query(
+      'INSERT INTO "users1" (full_name, username, email, password) VALUES ($1, $2, $3, $4)',
+      [fullName, username, email, hashedPassword]
+    );
 
-    await newUser.save();
-    res.status(201).json({ message: 'User successfully created' });
-  } catch (error) {
-    console.error('Signup Error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(200).json({ message: 'Signup successful' });
+  } catch (err) {
+    console.error('Error during signup:', err);
+    res.status(500).json({ message: 'Signup failed' });
   }
 });
 
-// Login Route
+// Login endpoint using username
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
-    if (!user) {
+    const result = await pool.query(
+      'SELECT * FROM "users1" WHERE username = $1',
+      [username]
+    );
+
+    if (result.rows.length === 0) {
       return res.status(400).json({ message: 'User not found' });
     }
 
-    // Compare entered password with stored plain-text password
-    if (user.password !== password) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    const user = result.rows[0];
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect password' });
     }
 
-    // Create JWT token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    res.json({
+    res.status(200).json({
       message: 'Login successful',
-      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        fullName: user.full_name,
+        email: user.email,
+      },
     });
-  } catch (error) {
-    console.error('Login Error:', error);
-    res.status(500).json({ message: 'Server error' });
+  } catch (err) {
+    console.error('Error during login:', err);
+    res.status(500).json({ message: 'Login failed' });
   }
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(5000, () => {
+  console.log('Server running on http://localhost:5000');
+});
