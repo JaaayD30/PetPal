@@ -1,10 +1,13 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google'; // Import GoogleOAuthProvider
 import HomePage from './Pages/HomePage';
 import LoginPage from './Pages/LoginPage';
-import UserDetailsPage from './Pages/UserDetailsPage';
+import UserDetailsPage from './Pages/UserDetailsPage'; // Keep or replace with UserDetails if needed
 import ConfirmationPage from './Pages/ConfirmationPage';
 import LandingPage from './Pages/LandingPage';
+// Import UserDetails if it's a separate component you want to use
+// import UserDetails from './UserDetails'; 
 
 function App() {
   return (
@@ -25,6 +28,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
+          {/* If using UserDetailsPage for user info, this route is correct */}
           <Route path="/user-details" element={<UserDetailsPage />} />
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/landing" element={<LandingPage />} />

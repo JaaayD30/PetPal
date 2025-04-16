@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
 const UserDetailsPage = () => {
+  const navigate = useNavigate(); // Initialize navigate
   const [formData, setFormData] = useState({
     fullName: '',
     username: '',
@@ -26,7 +28,7 @@ const UserDetailsPage = () => {
       const res = await axios.post('http://localhost:5000/api/signup', formData);
       alert(res.data.message); // Success message from backend
       // Redirect to login page after successful signup
-      window.location.href = '/login';
+      navigate('/login');
     } catch (err) {
       alert(err.response?.data?.message || 'Signup failed');
     }
