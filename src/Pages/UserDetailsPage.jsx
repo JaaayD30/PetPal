@@ -13,7 +13,6 @@ const UserDetailsPage = () => {
 
   const navigate = useNavigate();
 
-  // Automatically fill email from Google login
   useEffect(() => {
     const emailFromGoogle = localStorage.getItem('googleEmail');
     if (emailFromGoogle) {
@@ -34,18 +33,25 @@ const UserDetailsPage = () => {
     }
 
     try {
+      // Send signup data
       const res = await axios.post('http://localhost:5000/api/signup', formData);
-      alert(res.data.message);
 
-      // Store user details in localStorage including password
-      localStorage.setItem('user', JSON.stringify({
+      // Use the response user object (recommended)
+      const user = res.data.user;
+
+      // Fallback if backend doesn't return full user info
+      const storedUser = user || {
         fullName: formData.fullName,
         username: formData.username,
         email: formData.email,
-        password: formData.password, // Store password (for demo purposes only)
-      }));
+      };
 
-      // Redirect to the profile page
+      // Save user to localStorage (no password)
+      localStorage.setItem('user', JSON.stringify(storedUser));
+
+      alert(res.data.message || 'Signup successful!');
+
+      // Redirect to profile
       navigate('/profile');
     } catch (err) {
       alert(err.response?.data?.message || 'Signup failed');
@@ -77,7 +83,7 @@ const UserDetailsPage = () => {
         onChange={handleChange}
         value={formData.email}
         required
-        readOnly={!!formData.email} // Make it readonly if prefilled
+        readOnly={!!formData.email} // Read-only if filled by Google
       />
       <input
         type="password"
