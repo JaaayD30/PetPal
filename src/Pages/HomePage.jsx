@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 
-
 const HomePage = () => {
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [userData, setUserData] = useState(null);
@@ -30,20 +29,27 @@ const HomePage = () => {
     }
   };
 
-  // Handle Google signup success (store email only)
-  const handleGoogleLoginSuccess = (response) => {
+  // ✅ Enhanced Google login handler: checks if email exists in PostgreSQL
+  const handleGoogleLoginSuccess = async (response) => {
     try {
-      const decoded = jwtDecode(response.credential); // ✅ correct // decode JWT to get user info
+      const decoded = jwtDecode(response.credential);
       const googleEmail = decoded.email;
 
-      // Save email as placeholder to localStorage
-      localStorage.setItem('googleEmail', googleEmail);
+      // Check if the email already exists
+      const res = await axios.post('http://localhost:5000/api/check-email', {
+        email: googleEmail,
+      });
 
-      // Redirect to user details page
-      navigate('/user-details');
+      if (res.data.exists) {
+        alert('Email is already registered. Please log in instead.');
+      } else {
+        // Save email as placeholder to localStorage and redirect
+        localStorage.setItem('googleEmail', googleEmail);
+        navigate('/user-details');
+      }
     } catch (err) {
-      console.error('JWT Decode Error:', err);
-      alert('Google login failed');
+      console.error('JWT decode or email check failed:', err);
+      alert('Google login failed or server error');
     }
   };
 

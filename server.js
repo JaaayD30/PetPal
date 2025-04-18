@@ -16,7 +16,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// PostgreSQL connection setup
+// PostgreSQL connection
 const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
@@ -25,13 +25,14 @@ const pool = new Pool({
   port: 5432,
 });
 
-// Disable COOP and COEP headers for local testing
+// Disable COOP and COEP for local testing
 app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
   res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
   next();
 });
 
+// 🔒 Signup route
 app.post('/api/signup', async (req, res) => {
   const { fullName, username, email, password, address, phone } = req.body;
 
@@ -40,26 +41,19 @@ app.post('/api/signup', async (req, res) => {
   }
 
   try {
-    // Check if email is already in use
-    const result = await pool.query(
-      'SELECT * FROM "users1" WHERE email = $1',
-      [email]
-    );
+    const existing = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
 
-    if (result.rows.length > 0) {
-      // Email is already taken
+    if (existing.rows.length > 0) {
       return res.status(400).json({ message: 'User already has an account with this email' });
     }
 
-    // If email is not taken, proceed to hash password and create new user
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    const insertResult = await pool.query(
+    const newUser = await pool.query(
       'INSERT INTO "users1" (full_name, username, email, password, address, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [fullName, username, email, hashedPassword, address, phone]
     );
 
-    const user = insertResult.rows[0];
+    const user = newUser.rows[0];
 
     res.status(200).json({
       message: 'Signup successful',
@@ -72,15 +66,13 @@ app.post('/api/signup', async (req, res) => {
         phone: user.phone,
       },
     });
-
   } catch (err) {
-    console.error('Error during signup:', err);
+    console.error('Signup error:', err);
     res.status(500).json({ message: 'Signup failed' });
   }
 });
 
-
-// ✅ Login endpoint
+// 🔑 Login route
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -102,7 +94,6 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ message: 'Incorrect password' });
     }
 
-    // ✅ Return the plain-text password in the response (for testing purposes)
     res.status(200).json({
       message: 'Login successful',
       user: {
@@ -112,17 +103,33 @@ app.post('/api/login', async (req, res) => {
         email: user.email,
         address: user.address,
         phone: user.phone,
-        password: password,  // Return the plain-text password for the frontend
+        password: password, // Only for testing purposes
       },
     });
 
   } catch (err) {
-    console.error('Error during login:', err.message || err);
-    res.status(500).json({ message: 'Login failed, please try again later' });
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Login failed' });
   }
 });
 
-// Google OAuth Login endpoint
+// ✅ Check if email exists (used in Google sign up flow)
+app.post('/api/check-email', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) return res.status(400).json({ message: 'Email is required' });
+
+  try {
+    const result = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
+    const exists = result.rows.length > 0;
+    res.json({ exists });
+  } catch (err) {
+    console.error('Email check error:', err);
+    res.status(500).json({ message: 'Server error during email check' });
+  }
+});
+
+// ✅ Google OAuth Login route
 app.post('/api/google-login', async (req, res) => {
   const { token } = req.body;
 
@@ -136,17 +143,16 @@ app.post('/api/google-login', async (req, res) => {
     const { name, email } = payload;
 
     const result = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
-
     let user;
 
     if (result.rows.length > 0) {
       user = result.rows[0];
     } else {
-      const insertResult = await pool.query(
+      const newUser = await pool.query(
         'INSERT INTO "users1" (full_name, username, email) VALUES ($1, $2, $3) RETURNING *',
-        [name, email, email] // Use email as default username
+        [name, email, email]
       );
-      user = insertResult.rows[0];
+      user = newUser.rows[0];
     }
 
     res.status(200).json({
@@ -160,7 +166,7 @@ app.post('/api/google-login', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Error during Google login:', err);
+    console.error('Google login error:', err);
     res.status(500).json({ message: 'Google login failed' });
   }
 });
