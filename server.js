@@ -32,10 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Signup endpoint
 app.post('/api/signup', async (req, res) => {
-  console.log(req.body);  // Log the request body to see what data is sent
-
   const { fullName, username, email, password, address, phone } = req.body;
 
   if (!fullName || !username || !email || !password || !address || !phone) {
@@ -43,16 +40,27 @@ app.post('/api/signup', async (req, res) => {
   }
 
   try {
+    // Check if email is already in use
+    const result = await pool.query(
+      'SELECT * FROM "users1" WHERE email = $1',
+      [email]
+    );
+
+    if (result.rows.length > 0) {
+      // Email is already taken
+      return res.status(400).json({ message: 'User already has an account with this email' });
+    }
+
+    // If email is not taken, proceed to hash password and create new user
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const result = await pool.query(
+    const insertResult = await pool.query(
       'INSERT INTO "users1" (full_name, username, email, password, address, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [fullName, username, email, hashedPassword, address, phone]
     );
 
-    const user = result.rows[0];
+    const user = insertResult.rows[0];
 
-    // Send plain-text password in the response (for testing purposes)
     res.status(200).json({
       message: 'Signup successful',
       user: {
@@ -62,7 +70,6 @@ app.post('/api/signup', async (req, res) => {
         email: user.email,
         address: user.address,
         phone: user.phone,
-        password: password,  // Return the plain-text password for the frontend
       },
     });
 
@@ -71,6 +78,7 @@ app.post('/api/signup', async (req, res) => {
     res.status(500).json({ message: 'Signup failed' });
   }
 });
+
 
 // ✅ Login endpoint
 app.post('/api/login', async (req, res) => {

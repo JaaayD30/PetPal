@@ -1,27 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
-  const [showPassword, setShowPassword] = useState(false); // State for password visibility
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
+    const userFromState = location.state;
     const storedUser = JSON.parse(localStorage.getItem('user'));
 
-    if (storedUser) {
+    if (userFromState) {
+      setUser(userFromState);
+      localStorage.setItem('user', JSON.stringify(userFromState));
+    } else if (storedUser) {
       setUser(storedUser);
     } else {
       navigate('/login');
     }
-  }, [navigate]);
+  }, [location, navigate]);
 
-  // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('user');
     navigate('/');
@@ -39,14 +42,12 @@ const ProfilePage = () => {
 
       <p>
         <strong>Password:</strong> 
-        {/* Conditionally render the password */}
-        {showPassword ? user.password : '******'}
+        {showPassword ? user.password : '******'}{' '}
         <button onClick={togglePasswordVisibility}>
           {showPassword ? 'Hide Password' : 'See Password'}
         </button>
       </p>
 
-      {/* Log Out Button */}
       <button onClick={handleLogout}>Log Out</button>
     </div>
   );

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
+
 
 const HomePage = () => {
   const [loginData, setLoginData] = useState({ username: '', password: '' });
@@ -28,18 +30,20 @@ const HomePage = () => {
     }
   };
 
-  // Handle Google signup success
-  const handleGoogleLoginSuccess = async (response) => {
-    const token = response.credential;
-
+  // Handle Google signup success (store email only)
+  const handleGoogleLoginSuccess = (response) => {
     try {
-      const res = await axios.post('http://localhost:5000/api/google-login', { token });
-      alert(res.data.message);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      setUserData(res.data.user);
+      const decoded = jwtDecode(response.credential); // ✅ correct // decode JWT to get user info
+      const googleEmail = decoded.email;
+
+      // Save email as placeholder to localStorage
+      localStorage.setItem('googleEmail', googleEmail);
+
+      // Redirect to user details page
       navigate('/user-details');
     } catch (err) {
-      alert('Google signup failed');
+      console.error('JWT Decode Error:', err);
+      alert('Google login failed');
     }
   };
 

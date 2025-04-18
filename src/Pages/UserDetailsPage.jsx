@@ -35,28 +35,21 @@ const UserDetailsPage = () => {
     }
 
     try {
-      // Send signup data
       const res = await axios.post('http://localhost:5000/api/signup', formData);
 
-      // Use the response user object (recommended)
-      const user = res.data.user;
-
-      // Fallback if backend doesn't return full user info
-      const storedUser = user || {
+      const storedUser = {
         fullName: formData.fullName,
         username: formData.username,
         email: formData.email,
         address: formData.address,
-        phone: formData.phone
+        phone: formData.phone,
+        password: formData.password,
       };
 
-      // Save user to localStorage (no password)
       localStorage.setItem('user', JSON.stringify(storedUser));
-
       alert(res.data.message || 'Signup successful!');
 
-      // Redirect to profile
-      navigate('/profile');
+      navigate('/profile', { state: storedUser });
     } catch (err) {
       alert(err.response?.data?.message || 'Signup failed');
     }
@@ -87,7 +80,7 @@ const UserDetailsPage = () => {
         onChange={handleChange}
         value={formData.email}
         required
-        readOnly={!!formData.email} // Read-only if filled by Google
+        readOnly={!!formData.email}
       />
       <input
         type="password"
