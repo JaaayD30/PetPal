@@ -171,6 +171,50 @@ app.post('/api/google-login', async (req, res) => {
   }
 });
 
+// ✏️ Update user details (except email)
+app.put('/api/update-user/:id', async (req, res) => {
+  const userId = req.params.id;
+  const { fullName, username, password, address, phone } = req.body;
+
+  if (!fullName || !username || !password || !address || !phone) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      `UPDATE "users1" 
+       SET full_name = $1, username = $2, password = $3, address = $4, phone = $5 
+       WHERE id = $6 RETURNING *`,
+      [fullName, username, hashedPassword, address, phone, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const updatedUser = result.rows[0];
+
+    res.status(200).json({
+      message: 'User updated successfully',
+      user: {
+        id: updatedUser.id,
+        fullName: updatedUser.full_name,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        address: updatedUser.address,
+        phone: updatedUser.phone,
+      },
+    });
+
+  } catch (err) {
+    console.error('Update error:', err);
+    res.status(500).json({ message: 'Failed to update user' });
+  }
+});
+
+
 // Start server
 app.listen(5000, () => {
   console.log('Server running on http://localhost:5000');
