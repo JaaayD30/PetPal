@@ -32,23 +32,59 @@ const ProfilePage = () => {
 
   if (!user) return <p>Loading...</p>;
 
+  const boxStyle = {
+    border: '1px solid #ccc',
+    padding: '10px 15px',
+    borderRadius: '6px',
+    backgroundColor: '#f9f9f9',
+    width: '300px',
+    fontSize: '16px',
+    marginBottom: '20px'
+  };
+
+  const labelStyle = {
+    fontWeight: 'bold',
+    marginBottom: '5px',
+    display: 'block',
+  };
+
   return (
-    <div>
+    <div style={{ padding: '20px' }}>
       <h1>Welcome, {user.fullName}</h1>
-      <p><strong>Username:</strong> {user.username}</p>
-      <p><strong>Email:</strong> {user.email}</p>
-      <p><strong>Address:</strong> {user.address}</p>
-      <p><strong>Phone:</strong> {user.phone}</p>
 
-      <p>
-        <strong>Password:</strong> 
-        {showPassword ? user.password : '******'}{' '}
-        <button onClick={togglePasswordVisibility}>
-          {showPassword ? 'Hide Password' : 'See Password'}
-        </button>
-      </p>
+      <div>
+        <label style={labelStyle}>USERNAME:</label>
+        <div style={boxStyle}>{user.username}</div>
+      </div>
 
-      <button onClick={handleLogout}>Log Out</button>
+      <div>
+        <label style={labelStyle}>EMAIL:</label>
+        <div style={boxStyle}>{user.email}</div>
+      </div>
+
+      <div>
+        <label style={labelStyle}>ADDRESS:</label>
+        <div style={boxStyle}>{user.address}</div>
+      </div>
+
+      <div>
+        <label style={labelStyle}>PHONE:</label>
+        <div style={boxStyle}>{user.phone}</div>
+      </div>
+
+      <div>
+        <label style={labelStyle}>PASSWORD:</label>
+        <div style={boxStyle}>
+          {showPassword ? user.password : '******'}
+          <button onClick={togglePasswordVisibility} style={{ marginLeft: '10px' }}>
+            {showPassword ? 'Hide' : 'See'}
+          </button>
+        </div>
+      </div>
+
+      <button onClick={handleLogout} style={{ marginTop: '20px' }}>
+        Log Out
+      </button>
     </div>
   );
 };
