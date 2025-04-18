@@ -32,7 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Signup endpoint
+// ✅ Updated Signup endpoint
 app.post('/api/signup', async (req, res) => {
   const { fullName, username, email, password } = req.body;
 
@@ -43,19 +43,32 @@ app.post('/api/signup', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await pool.query(
-      'INSERT INTO "users1" (full_name, username, email, password) VALUES ($1, $2, $3, $4)',
+    const result = await pool.query(
+      'INSERT INTO "users1" (full_name, username, email, password) VALUES ($1, $2, $3, $4) RETURNING *',
       [fullName, username, email, hashedPassword]
     );
 
-    res.status(200).json({ message: 'Signup successful' });
+    const user = result.rows[0];
+
+    // ✅ Include original password for this project
+    res.status(200).json({
+      message: 'Signup successful',
+      user: {
+        id: user.id,
+        fullName: user.full_name,
+        username: user.username,
+        email: user.email,
+        password: password, // return plaintext password for frontend use
+      },
+    });
+
   } catch (err) {
     console.error('Error during signup:', err);
     res.status(500).json({ message: 'Signup failed' });
   }
 });
 
-// Login endpoint using username
+// ✅ Login endpoint
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -83,8 +96,10 @@ app.post('/api/login', async (req, res) => {
         username: user.username,
         fullName: user.full_name,
         email: user.email,
+        password: password, // return original input password for UI
       },
     });
+
   } catch (err) {
     console.error('Error during login:', err);
     res.status(500).json({ message: 'Login failed' });
@@ -113,7 +128,7 @@ app.post('/api/google-login', async (req, res) => {
     } else {
       const insertResult = await pool.query(
         'INSERT INTO "users1" (full_name, username, email) VALUES ($1, $2, $3) RETURNING *',
-        [name, email, email] // Using email as default username
+        [name, email, email] // Use email as default username
       );
       user = insertResult.rows[0];
     }
@@ -127,6 +142,7 @@ app.post('/api/google-login', async (req, res) => {
         email: user.email,
       },
     });
+
   } catch (err) {
     console.error('Error during Google login:', err);
     res.status(500).json({ message: 'Google login failed' });
