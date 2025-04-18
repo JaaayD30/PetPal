@@ -8,14 +8,14 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
-  
+
     if (storedUser) {
       setUser(storedUser);
     } else {
       navigate('/login');
     }
   }, [navigate]);
-  
+
   // Toggle password visibility
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -24,7 +24,7 @@ const ProfilePage = () => {
   // Handle logout
   const handleLogout = () => {
     localStorage.removeItem('user');
-    navigate('/login');
+    navigate('/');
   };
 
   if (!user) return <p>Loading...</p>;
@@ -34,13 +34,15 @@ const ProfilePage = () => {
       <h1>Welcome, {user.fullName}</h1>
       <p><strong>Username:</strong> {user.username}</p>
       <p><strong>Email:</strong> {user.email}</p>
-      
+      <p><strong>Address:</strong> {user.address}</p>
+      <p><strong>Phone:</strong> {user.phone}</p>
+
       <p>
         <strong>Password:</strong> 
         {/* Conditionally render the password */}
         {showPassword ? user.password : '******'}
         <button onClick={togglePasswordVisibility}>
-          {showPassword ? 'Hide Password' : 'Show Password'}
+          {showPassword ? 'Hide Password' : 'See Password'}
         </button>
       </p>
 

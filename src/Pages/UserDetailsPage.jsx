@@ -9,6 +9,8 @@ const UserDetailsPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    address: '',
+    phone: ''
   });
 
   const navigate = useNavigate();
@@ -44,6 +46,8 @@ const UserDetailsPage = () => {
         fullName: formData.fullName,
         username: formData.username,
         email: formData.email,
+        address: formData.address,
+        phone: formData.phone
       };
 
       // Save user to localStorage (no password)
@@ -99,6 +103,22 @@ const UserDetailsPage = () => {
         placeholder="Confirm Password"
         onChange={handleChange}
         value={formData.confirmPassword}
+        required
+      />
+      <input
+        type="text"
+        name="address"
+        placeholder="Address"
+        onChange={handleChange}
+        value={formData.address}
+        required
+      />
+      <input
+        type="text"
+        name="phone"
+        placeholder="Phone"
+        onChange={handleChange}
+        value={formData.phone}
         required
       />
       <button type="submit">Sign Up</button>

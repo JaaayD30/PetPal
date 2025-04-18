@@ -19,10 +19,7 @@ function App() {
         <nav>
           <ul style={{ display: 'flex', listStyleType: 'none' }}>
             <li style={{ marginRight: '1rem' }}>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to="/login">Login</Link>
+              {/* this is for navigation*/}
             </li>
           </ul>
         </nav>

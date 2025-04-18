@@ -32,11 +32,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Updated Signup endpoint
+// ✅ Signup endpoint
 app.post('/api/signup', async (req, res) => {
-  const { fullName, username, email, password } = req.body;
+  console.log(req.body);  // Log the request body to see what data is sent
 
-  if (!fullName || !username || !email || !password) {
+  const { fullName, username, email, password, address, phone } = req.body;
+
+  if (!fullName || !username || !email || !password || !address || !phone) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
@@ -44,13 +46,13 @@ app.post('/api/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await pool.query(
-      'INSERT INTO "users1" (full_name, username, email, password) VALUES ($1, $2, $3, $4) RETURNING *',
-      [fullName, username, email, hashedPassword]
+      'INSERT INTO "users1" (full_name, username, email, password, address, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [fullName, username, email, hashedPassword, address, phone]
     );
 
     const user = result.rows[0];
 
-    // ✅ Include original password for this project
+    // Send plain-text password in the response (for testing purposes)
     res.status(200).json({
       message: 'Signup successful',
       user: {
@@ -58,7 +60,9 @@ app.post('/api/signup', async (req, res) => {
         fullName: user.full_name,
         username: user.username,
         email: user.email,
-        password: password, // return plaintext password for frontend use
+        address: user.address,
+        phone: user.phone,
+        password: password,  // Return the plain-text password for the frontend
       },
     });
 
@@ -72,11 +76,12 @@ app.post('/api/signup', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Missing username or password' });
+  }
+
   try {
-    const result = await pool.query(
-      'SELECT * FROM "users1" WHERE username = $1',
-      [username]
-    );
+    const result = await pool.query('SELECT * FROM "users1" WHERE username = $1', [username]);
 
     if (result.rows.length === 0) {
       return res.status(400).json({ message: 'User not found' });
@@ -89,6 +94,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ message: 'Incorrect password' });
     }
 
+    // ✅ Return the plain-text password in the response (for testing purposes)
     res.status(200).json({
       message: 'Login successful',
       user: {
@@ -96,13 +102,15 @@ app.post('/api/login', async (req, res) => {
         username: user.username,
         fullName: user.full_name,
         email: user.email,
-        password: password, // return original input password for UI
+        address: user.address,
+        phone: user.phone,
+        password: password,  // Return the plain-text password for the frontend
       },
     });
 
   } catch (err) {
-    console.error('Error during login:', err);
-    res.status(500).json({ message: 'Login failed' });
+    console.error('Error during login:', err.message || err);
+    res.status(500).json({ message: 'Login failed, please try again later' });
   }
 });
 
