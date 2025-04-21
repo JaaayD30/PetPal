@@ -94,6 +94,7 @@ const HomePage = () => {
           <p><strong>Email:</strong> {userData.email}</p>
           <p><strong>Password:</strong> {userData.password}</p>
         </div>
+        //Jimar brayt
       )}
     </div>
   );
