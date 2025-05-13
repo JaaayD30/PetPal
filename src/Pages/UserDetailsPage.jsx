@@ -10,10 +10,10 @@ const UserDetailsPage = () => {
     password: '',
     confirmPassword: '',
     address: '',
-    phone: ''
+    phone: '',
+    acknowledge: false
   });
 
-  const [isAcknowledged, setIsAcknowledged] = useState(false); // New state for checkbox
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,8 +27,14 @@ const UserDetailsPage = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handlePhoneChange = (e) => {
+    // Allow only numbers and limit the length to 11 digits
+    const phoneValue = e.target.value.replace(/[^0-9]/g, '').slice(0, 11);
+    setFormData({ ...formData, phone: phoneValue });
+  };
+
   const handleCheckboxChange = (e) => {
-    setIsAcknowledged(e.target.checked); // Update checkbox state
+    setFormData({ ...formData, acknowledge: e.target.checked });
   };
 
   const handleSubmit = async (e) => {
@@ -39,8 +45,8 @@ const UserDetailsPage = () => {
       return;
     }
 
-    if (!isAcknowledged) { // Check if the checkbox is ticked
-      alert('You must acknowledge that we are collecting your personal details');
+    if (!formData.acknowledge) {
+      alert('You must acknowledge the data collection');
       return;
     }
 
@@ -192,7 +198,7 @@ const UserDetailsPage = () => {
               type="text"
               name="phone"
               placeholder="Phone"
-              onChange={handleChange}
+              onChange={handlePhoneChange}
               value={formData.phone}
               required
               style={{
@@ -201,21 +207,19 @@ const UserDetailsPage = () => {
                 border: '1px solid #ccc'
               }}
             />
-
-            {/* Acknowledgment checkbox */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <input
                 type="checkbox"
-                id="acknowledge"
-                checked={isAcknowledged}
+                name="acknowledge"
+                checked={formData.acknowledge}
                 onChange={handleCheckboxChange}
                 required
+                style={{ width: '20px', height: '20px' }}
               />
-              <label htmlFor="acknowledge" style={{ fontSize: '14px', color: '#555' }}>
-                I acknowledge that PetPal will be collecting my personal and my companions information.
+              <label htmlFor="acknowledge" style={{ fontSize: '14px', color: '#777' }}>
+                I acknowledge that PetPal will gather my personal and my companions information.
               </label>
             </div>
-
             <button
               type="submit"
               style={{
