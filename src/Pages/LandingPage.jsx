@@ -6,14 +6,18 @@ const LandingPage = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showForm, setShowForm] = useState(false);
-  const [petCards, setPetCards] = useState([]);
+  const [cards, setCards] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     breed: '',
     bloodType: '',
     age: '',
     address: '',
+    images: [],
   });
+
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleLogout = () => {
     localStorage.removeItem('googleEmail');
@@ -30,11 +34,11 @@ const LandingPage = () => {
   };
 
   const handleNext = () => {
-    setCurrentCardIndex((prev) => (prev + 1) % petCards.length);
+    setCurrentCardIndex((prev) => (prev + 1) % cards.length);
   };
 
   const handlePrev = () => {
-    setCurrentCardIndex((prev) => (prev - 1 + petCards.length) % petCards.length);
+    setCurrentCardIndex((prev) => (prev - 1 + cards.length) % cards.length);
   };
 
   const handleChange = (e) => {
@@ -42,15 +46,52 @@ const LandingPage = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFormSubmit = (e) => {
-    e.preventDefault();
-    setPetCards((prev) => [...prev, formData]);
-    setShowForm(false);
-    setFormData({ name: '', breed: '', bloodType: '', age: '', address: '' });
-    setCurrentCardIndex(petCards.length); // set to the newly added card
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files).slice(0, 5);
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData((prev) => ({
+          ...prev,
+          images: [...prev.images, reader.result].slice(0, 5),
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
-  const currentCard = petCards[currentCardIndex];
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    const newCard = {
+      ...formData,
+      id: Date.now(),
+    };
+    setCards((prev) => [...prev, newCard]);
+    setShowForm(false);
+    setFormData({
+      name: '',
+      breed: '',
+      bloodType: '',
+      age: '',
+      address: '',
+      images: [],
+    });
+  };
+
+  const handleImageClick = (index) => {
+    setCurrentImageIndex(index);
+    setIsImageModalOpen(true);
+  };
+
+  const handleImageNext = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % currentCard.images.length);
+  };
+
+  const handleImagePrev = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + currentCard.images.length) % currentCard.images.length);
+  };
+
+  const currentCard = cards[currentCardIndex] || null;
 
   return (
     <div style={styles.container}>
@@ -79,11 +120,7 @@ const LandingPage = () => {
 
       {/* CARD SECTION */}
       <section style={styles.cardSection}>
-        {petCards.length === 0 ? (
-          <div style={{ textAlign: 'center', fontSize: '18px', color: '#666' }}>
-            No pet donors added yet. Click the ＋ button to add one.
-          </div>
-        ) : (
+        {cards.length > 0 ? (
           <>
             <button onClick={handlePrev} style={styles.arrowButton}>⬅️</button>
             <div style={styles.card}>
@@ -92,11 +129,46 @@ const LandingPage = () => {
               <p>Blood Type: {currentCard.bloodType}</p>
               <p>Age: {currentCard.age}</p>
               <p>Address: {currentCard.address}</p>
+              {currentCard.images?.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
+                  {currentCard.images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={`pet-${idx}`}
+                      onClick={() => handleImageClick(idx)}
+                      style={{
+                        width: '60px',
+                        height: '60px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             <button onClick={handleNext} style={styles.arrowButton}>➡️</button>
           </>
+        ) : (
+          <p style={{ fontSize: '18px', color: '#888' }}>No pets added yet.</p>
         )}
       </section>
+
+      {/* FULLSCREEN IMAGE MODAL */}
+      {isImageModalOpen && currentCard?.images?.length > 0 && (
+        <div style={styles.imageModal}>
+          <button onClick={() => setIsImageModalOpen(false)} style={styles.imageModalClose}>✕</button>
+          <button onClick={handleImagePrev} style={styles.imageModalNavLeft}>⬅️</button>
+          <img
+            src={currentCard.images[currentImageIndex]}
+            alt="fullscreen"
+            style={styles.imageModalImg}
+          />
+          <button onClick={handleImageNext} style={styles.imageModalNavRight}>➡️</button>
+        </div>
+      )}
 
       {/* POPUP FORM */}
       {showForm && (
@@ -104,14 +176,28 @@ const LandingPage = () => {
           <div style={styles.popup}>
             <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Add Pet Details</h2>
             <form onSubmit={handleFormSubmit}>
+              <label style={styles.formLabel}>Upload Images (Max 5)</label>
+              <input type="file" accept="image/*" multiple onChange={handleImageChange} style={styles.formInput} />
+
               <label style={styles.formLabel}>Pet Name</label>
               <input type="text" name="name" value={formData.name} onChange={handleChange} required style={styles.formInput} />
-              <label style={styles.formLabel}>Breed</label>
-              <input type="text" name="breed" value={formData.breed} onChange={handleChange} required style={styles.formInput} />
+              <select name="breed" value={formData.breed} onChange={handleChange} required style={styles.formInput} >
+              <option value="">Select Breed</option>
+              <option value="Aspin">Aspin</option>
+              <option value="Shih Tzu">Shih Tzu</option>
+              <option value="Chihuahua">Chihuahua</option>
+              <option value="Pomeranian">Pomeranian</option>
+              <option value="Labrador Retriever">Labrador Retriever</option>
+              <option value="Siberian Husky">Siberian Husky</option>
+              <option value="Pug">Pug</option>
+              <option value="Beagle">Beagle</option>
+              </select>
               <label style={styles.formLabel}>Blood Type</label>
               <input type="text" name="bloodType" value={formData.bloodType} onChange={handleChange} required style={styles.formInput} />
+
               <label style={styles.formLabel}>Age</label>
               <input type="number" name="age" value={formData.age} onChange={handleChange} required style={styles.formInput} />
+
               <label style={styles.formLabel}>Address</label>
               <input type="text" name="address" value={formData.address} onChange={handleChange} required style={styles.formInput} />
 
@@ -218,6 +304,7 @@ const styles = {
     backgroundColor: '#fff',
     flex: 1,
     padding: '40px',
+    minHeight: '300px',
   },
   card: {
     backgroundColor: '#e9f7f1',
@@ -235,35 +322,51 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
   },
-  footer: {
-    backgroundColor: '#333',
-    color: '#fff',
-    padding: '10px',
-    textAlign: 'center',
-  },
-  footerText: {
-    margin: 0,
-  },
-  fab: {
+  imageModal: {
     position: 'fixed',
-    bottom: '30px',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    zIndex: 9999,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imageModalImg: {
+    maxWidth: '90%',
+    maxHeight: '90%',
+    borderRadius: '10px',
+  },
+  imageModalClose: {
+    position: 'absolute',
+    top: '20px',
     right: '30px',
-    width: '60px',
-    height: '60px',
-    borderRadius: '50%',
-    backgroundColor: '#5b9f85',
-    color: '#fff',
     fontSize: '32px',
+    color: '#fff',
+    background: 'transparent',
     border: 'none',
     cursor: 'pointer',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+  },
+  imageModalNavLeft: {
+    position: 'absolute',
+    left: '30px',
+    fontSize: '40px',
+    color: '#fff',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+  },
+  imageModalNavRight: {
+    position: 'absolute',
+    right: '30px',
+    fontSize: '40px',
+    color: '#fff',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
   },
   popupOverlay: {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.5)',
     display: 'flex',
     justifyContent: 'center',
@@ -318,6 +421,29 @@ const styles = {
     borderRadius: '8px',
     cursor: 'pointer',
     fontWeight: 'bold',
+  },
+  fab: {
+    position: 'fixed',
+    bottom: '30px',
+    right: '30px',
+    width: '60px',
+    height: '60px',
+    borderRadius: '50%',
+    backgroundColor: '#5b9f85',
+    color: '#fff',
+    fontSize: '32px',
+    border: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+  },
+  footer: {
+    backgroundColor: '#333',
+    color: '#fff',
+    padding: '10px',
+    textAlign: 'center',
+  },
+  footerText: {
+    margin: 0,
   },
 };
 
