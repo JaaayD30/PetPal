@@ -124,12 +124,7 @@ const LandingPage = () => {
           <>
             <button onClick={handlePrev} style={styles.arrowButton}>⬅️</button>
             <div style={styles.card}>
-              <h3>{currentCard.name}</h3>
-              <p>Breed: {currentCard.breed}</p>
-              <p>Blood Type: {currentCard.bloodType}</p>
-              <p>Age: {currentCard.age}</p>
-              <p>Address: {currentCard.address}</p>
-              {currentCard.images?.length > 0 && (
+            {currentCard.images?.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
                   {currentCard.images.map((img, idx) => (
                     <img
@@ -148,6 +143,11 @@ const LandingPage = () => {
                   ))}
                 </div>
               )}
+              <h3>{currentCard.name}</h3>
+              <p>Breed: {currentCard.breed}</p>
+              <p>Blood Type: {currentCard.bloodType}</p>
+              <p>Age: {currentCard.age}</p>
+              <p>Address: {currentCard.address}</p>
             </div>
             <button onClick={handleNext} style={styles.arrowButton}>➡️</button>
           </>
