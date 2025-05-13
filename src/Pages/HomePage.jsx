@@ -9,12 +9,10 @@ const HomePage = () => {
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
-  // Handle Login form change
   const handleLoginChange = (e) => {
     setLoginData({ ...loginData, [e.target.name]: e.target.value });
   };
 
-  // Handle Login form submit
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -22,20 +20,17 @@ const HomePage = () => {
       alert(res.data.message);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       setUserData(res.data.user);
-      console.log('Logged in user:', res.data.user);
       navigate('/landing');
     } catch (err) {
       alert(err.response?.data?.message || 'Login failed');
     }
   };
 
-  // ✅ Enhanced Google login handler: checks if email exists in PostgreSQL
   const handleGoogleLoginSuccess = async (response) => {
     try {
       const decoded = jwtDecode(response.credential);
       const googleEmail = decoded.email;
 
-      // Check if the email already exists
       const res = await axios.post('http://localhost:5000/api/check-email', {
         email: googleEmail,
       });
@@ -43,7 +38,6 @@ const HomePage = () => {
       if (res.data.exists) {
         alert('Email is already registered. Please log in instead.');
       } else {
-        // Save email as placeholder to localStorage and redirect
         localStorage.setItem('googleEmail', googleEmail);
         navigate('/user-details');
       }
@@ -54,49 +48,121 @@ const HomePage = () => {
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleLoginSubmit}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          onChange={handleLoginChange}
-          value={loginData.username}
-          required
+      <div style={{
+        position: 'fixed', // Prevent scroll
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#eaf6ff',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontFamily: 'Arial, sans-serif'
+        }}>
+
+      <div style={{
+        backgroundColor: 'white',
+        padding: '30px 40px',
+        borderRadius: '10px',
+        boxShadow: '0 0 10px rgba(0,0,0,0.1)',
+        width: '350px',
+        textAlign: 'center'
+      }}>
+        {/* Logo */}
+        <img
+          src="/Images/Logo.png" // <-- Make sure this image exists in your public/images folder
+          alt="Pet Logo"
+          style={{ width: '150px', height: '110px', marginBottom: '10px' }}
         />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleLoginChange}
-          value={loginData.password}
-          required
-        />
-        <button type="submit">Log In</button>
-      </form>
+        <h1 style={{
+          fontSize: '26px',
+          fontWeight: 'bold',
+          marginBottom: '25px'
+        }}>PetPAL</h1>
 
-      <br /><br />
-      <hr />
-      <br />
+        {/* Login form */}
+        <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={loginData.username}
+            onChange={handleLoginChange}
+            required
+            style={{
+              padding: '10px',
+              borderRadius: '10px',
+              border: '1px solid #ccc'
+            }}
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={loginData.password}
+            onChange={handleLoginChange}
+            required
+            style={{
+              padding: '10px',
+              borderRadius: '10px',
+              border: '1px solid #ccc'
+            }}
+          />
+          <button
+            type="submit"
+            style={{
+              padding: '10px',
+              backgroundColor: '#f28b39',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Login
+          </button>
+        </form>
 
-      <h2>Sign Up with Google</h2>
-      <GoogleLogin
-        onSuccess={handleGoogleLoginSuccess}
-        onError={() => alert('Google signup error')}
-      />
-
-      {userData && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>User Info</h3>
-          <p><strong>Full Name:</strong> {userData.fullName}</p>
-          <p><strong>Username:</strong> {userData.username}</p>
-          <p><strong>Email:</strong> {userData.email}</p>
-          <p><strong>Password:</strong> {userData.password}</p>
+        {/* Signup */}
+        <div style={{
+          marginTop: '10px',
+          fontSize: '12px',
+          display: 'flex',
+          justifyContent: 'space-between'
+        }}>
+          <span>Haven't made an account?</span>
         </div>
-        //Jimar brayt
-        //jmar brayt2
-      )}
+
+        {/* Social login */}
+        <div style={{ marginTop: '20px' }}>
+          <p style={{ fontWeight: 'bold' }}>Sign Up</p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={() => alert('Google signup error')}
+            />
+          </div>
+        </div>
+
+        {/* Optional user info box below */}
+        {userData && (
+          <div style={{
+            marginTop: '30px',
+            border: '1px solid black',
+            borderRadius: '8px',
+            padding: '15px',
+            textAlign: 'left'
+          }}>
+            <h3 style={{ textAlign: 'center' }}>User Info</h3>
+            <p><strong>Full Name:</strong> {userData.fullName}</p>
+            <p><strong>Username:</strong> {userData.username}</p>
+            <p><strong>Email:</strong> {userData.email}</p>
+            <p><strong>Password:</strong> {userData.password}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
