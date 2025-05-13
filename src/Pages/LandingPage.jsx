@@ -238,11 +238,6 @@ const LandingPage = () => {
 
       {/* FLOATING ACTION BUTTON */}
       <button onClick={() => setShowForm(true)} style={styles.fab}>＋</button>
-
-      {/* FOOTER */}
-      <footer style={styles.footer}>
-        <p style={styles.footerText}>© 2025 PetPal. All rights reserved.</p>
-      </footer>
     </div>
   );
 };
@@ -463,15 +458,6 @@ const styles = {
     border: 'none',
     cursor: 'pointer',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
-  },
-  footer: {
-    backgroundColor: '#333',
-    color: '#fff',
-    padding: '10px',
-    textAlign: 'center',
-  },
-  footerText: {
-    margin: 0,
   },
 };
 
