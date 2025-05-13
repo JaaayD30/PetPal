@@ -409,7 +409,9 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     gap: '15px',
-  },
+    maxHeight: '80vh', // Adjust this value based on your preferred max height
+    overflowY: 'auto', // This will enable vertical scrolling if the content overflows
+  },  
   formLabel: {
     fontWeight: 'bold',
     marginBottom: '5px',
