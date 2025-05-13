@@ -8,12 +8,14 @@ const LandingPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [cards, setCards] = useState([]);
   const [formData, setFormData] = useState({
+    images: [],
     name: '',
     breed: '',
     bloodType: '',
     age: '',
+    sex: '',
     address: '',
-    images: [],
+    details: '',
   });
 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -69,12 +71,15 @@ const LandingPage = () => {
     setCards((prev) => [...prev, newCard]);
     setShowForm(false);
     setFormData({
+      images: [],
       name: '',
       breed: '',
       bloodType: '',
       age: '',
+      sex: '',
       address: '',
-      images: [],
+      kilos: '',
+      details: '',
     });
   };
 
@@ -147,7 +152,10 @@ const LandingPage = () => {
               <p>Breed: {currentCard.breed}</p>
               <p>Blood Type: {currentCard.bloodType}</p>
               <p>Age: {currentCard.age}</p>
+              <p>Sex: {currentCard.sex} </p>
+              <p>Kilos: {currentCard.kilos}</p>
               <p>Address: {currentCard.address}</p>
+              <p>details: {currentCard.details}</p>
             </div>
             <button onClick={handleNext} style={styles.arrowButton}>➡️</button>
           </>
@@ -181,6 +189,13 @@ const LandingPage = () => {
 
               <label style={styles.formLabel}>Pet Name</label>
               <input type="text" name="name" value={formData.name} onChange={handleChange} required style={styles.formInput} />
+              <label style={styles.formLabel}>Sex</label>
+              <select name="sex" value={formData.sex} onChange={handleChange} required style={styles.formInput} >
+              <option value="sex">Select Sex</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              </select>
+              <label style={styles.formLabel}>Breed</label>
               <select name="breed" value={formData.breed} onChange={handleChange} required style={styles.formInput} >
               <option value="">Select Breed</option>
               <option value="Aspin">Aspin</option>
@@ -193,13 +208,24 @@ const LandingPage = () => {
               <option value="Beagle">Beagle</option>
               </select>
               <label style={styles.formLabel}>Blood Type</label>
-              <input type="text" name="bloodType" value={formData.bloodType} onChange={handleChange} required style={styles.formInput} />
+              <select name="blood" value={formData.breed} onChange={handleChange} required style={styles.formInput} >
+              <option value="">Select Blood Type</option>
+              <option value="Aspin">DEA 1 Positive</option>
+              <option value="Shih Tzu">DEA 1 Negative</option>
+              <option value="Chihuahua">DEA 3</option>
+              <option value="Pomeranian">DEA 4</option>
+              <option value="Labrador Retriever">DEA 5</option>
+              <option value="Siberian Husky">DEA 7</option>
+              </select>
 
-              <label style={styles.formLabel}>Age</label>
+              <label style={styles.formLabel}>Age(in months)</label>
               <input type="number" name="age" value={formData.age} onChange={handleChange} required style={styles.formInput} />
-
+              <label style={styles.formLabel}>Kilograms(Kg)</label>
+              <input type="number" name="kilos" value={formData.Kilos} onChange={handleChange} required style={styles.formInput} />
               <label style={styles.formLabel}>Address</label>
               <input type="text" name="address" value={formData.address} onChange={handleChange} required style={styles.formInput} />
+              <label style={styles.formLabel}>Medical Details(Vaccinations, Vet visits, Health Condition)</label>
+              <input type="text" name="details" value={formData.details} onChange={handleChange} required style={styles.formInput} />
 
               <div style={styles.formButtonGroup}>
                 <button type="submit" style={styles.submitButton}>Save</button>
