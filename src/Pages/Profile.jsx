@@ -6,6 +6,7 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [editableUser, setEditableUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -36,6 +37,11 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === 'phone') {
+      if (!/^\d*$/.test(value) || value.length > 11) return;
+    }
+
     setEditableUser((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -54,10 +60,17 @@ const ProfilePage = () => {
       setEditableUser(updatedUser);
       localStorage.setItem('user', JSON.stringify(updatedUser));
       alert('Profile updated successfully!');
+      setIsEditing(false);
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Failed to update profile.');
     }
+  };
+
+  const handleCancel = () => {
+    setEditableUser(user); // Revert to original user data
+    setIsEditing(false);
+    setShowPassword(false);
   };
 
   if (!editableUser) return <p>Loading...</p>;
@@ -89,6 +102,7 @@ const ProfilePage = () => {
           value={editableUser.username}
           onChange={handleChange}
           style={inputStyle}
+          disabled={!isEditing}
         />
       </div>
 
@@ -110,6 +124,7 @@ const ProfilePage = () => {
           value={editableUser.address}
           onChange={handleChange}
           style={inputStyle}
+          disabled={!isEditing}
         />
       </div>
 
@@ -121,6 +136,7 @@ const ProfilePage = () => {
           value={editableUser.phone}
           onChange={handleChange}
           style={inputStyle}
+          disabled={!isEditing}
         />
       </div>
 
@@ -132,15 +148,33 @@ const ProfilePage = () => {
           value={editableUser.password}
           onChange={handleChange}
           style={inputStyle}
+          disabled={!isEditing}
         />
-        <button onClick={togglePasswordVisibility} style={{ marginBottom: '20px' }}>
-          {showPassword ? 'Hide' : 'See'}
-        </button>
+        {isEditing && (
+          <button onClick={togglePasswordVisibility} style={{ marginBottom: '20px' }}>
+            {showPassword ? 'Hide' : 'See'}
+          </button>
+        )}
       </div>
 
-      <button onClick={handleSave} style={{ marginRight: '10px' }}>
-        Save Changes
-      </button>
+      {!isEditing ? (
+        <button onClick={() => setIsEditing(true)} style={{ marginRight: '10px' }}>
+          Edit Profile
+        </button>
+      ) : (
+        <>
+          <button onClick={handleSave} style={{ marginRight: '10px' }}>
+            Save Changes
+          </button>
+          <button onClick={handleCancel} style={{ marginRight: '10px' }}>
+            Cancel
+          </button>
+        </>
+      )}
+      <button onClick={() => navigate('/landing')} style={{ marginTop: '10px' }}>
+  Back to HomePage
+</button>
+
       <button onClick={handleLogout}>Log Out</button>
     </div>
   );
