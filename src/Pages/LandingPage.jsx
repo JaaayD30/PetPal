@@ -1,44 +1,77 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+const cardData = [
+  { id: 1, name: 'Buddy', type: 'Golden Retriever', location: 'Davao City' },
+  { id: 2, name: 'Milo', type: 'Siberian Husky', location: 'Tagum City' },
+  { id: 3, name: 'Luna', type: 'Persian Cat', location: 'Panabo' },
+];
 
 const LandingPage = () => {
   const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
 
   const handleLogout = () => {
-    // Clear the stored data (for example, the user's email)
     localStorage.removeItem('googleEmail');
-    // Optionally navigate to the login page or home
-    navigate('/'); 
+    navigate('/');
     console.log('User logged out');
   };
 
   const handleProfile = () => {
-    // Navigate to the Profile page
     navigate('/profile');
   };
 
+  const toggleDropdown = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleNext = () => {
+    setCurrentCardIndex((prev) => (prev + 1) % cardData.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentCardIndex((prev) => (prev - 1 + cardData.length) % cardData.length);
+  };
+
+  const currentCard = cardData[currentCardIndex];
+
   return (
     <div style={styles.container}>
+      {/* NAVIGATION HEADER */}
+      <nav style={styles.navbar}>
+        <div style={styles.logo}>🐾 PetPal</div>
+        <div style={styles.searchContainer}>
+          <input type="text" placeholder="Search..." style={styles.searchInput} />
+        </div>
+        <div style={styles.profileSection}>
+          <button onClick={toggleDropdown} style={styles.profileIcon}>👤</button>
+          {dropdownOpen && (
+            <div style={styles.dropdown}>
+              <button onClick={handleProfile} style={styles.dropdownItem}>View Profile</button>
+              <button onClick={handleLogout} style={styles.dropdownItem}>Log Out</button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* MAIN HEADER */}
       <header style={styles.header}>
         <h1 style={styles.title}>Welcome to PetPal</h1>
         <p style={styles.subtitle}>Connecting Pet Owners with Potential Blood Donors</p>
       </header>
 
-      <section style={styles.content}>
-        <p style={styles.text}>
-          PetPal is designed to help pet owners find blood donors for their pets in emergency situations.
-          With just a few clicks, you can connect with willing donors nearby and ensure your pet receives
-          the care it needs in times of crisis.
-        </p>
-        <button style={styles.button}>Get Started</button>
-        {/* Profile Button */}
-        <button onClick={handleProfile} style={styles.profileButton}>
-          View Profile
-        </button>
-        {/* Log Out Button */}
-        <button onClick={handleLogout} style={styles.logoutButton}>
-          Log Out
-        </button>
+      {/* SWIPEABLE CARDS */}
+      <section style={styles.cardSection}>
+        <button onClick={handlePrev} style={styles.arrowButton}>⬅️</button>
+
+        <div style={styles.card}>
+          <h3>{currentCard.name}</h3>
+          <p>Type: {currentCard.type}</p>
+          <p>Location: {currentCard.location}</p>
+        </div>
+
+        <button onClick={handleNext} style={styles.arrowButton}>➡️</button>
       </section>
 
       <footer style={styles.footer}>
@@ -51,17 +84,71 @@ const LandingPage = () => {
 const styles = {
   container: {
     fontFamily: 'Arial, sans-serif',
-    textAlign: 'center',
     color: '#333',
     backgroundColor: '#f4f4f4',
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
+  },
+  navbar: {
+    display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#5b9f85',
+    padding: '10px 20px',
+    color: '#fff',
+  },
+  logo: {
+    fontSize: '24px',
+    fontWeight: 'bold',
+  },
+  searchContainer: {
+    flexGrow: 1,
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  searchInput: {
+    padding: '8px 12px',
+    borderRadius: '5px',
+    border: 'none',
+    width: '60%',
+    maxWidth: '400px',
+    fontSize: '16px',
+  },
+  profileSection: {
+    position: 'relative',
+  },
+  profileIcon: {
+    backgroundColor: 'transparent',
+    color: '#fff',
+    border: 'none',
+    fontSize: '24px',
+    cursor: 'pointer',
+  },
+  dropdown: {
+    position: 'absolute',
+    right: 0,
+    top: '40px',
+    backgroundColor: '#fff',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+    borderRadius: '5px',
+    overflow: 'hidden',
+    zIndex: 1000,
+  },
+  dropdownItem: {
+    padding: '10px 15px',
+    backgroundColor: '#fff',
+    color: '#333',
+    border: 'none',
+    width: '100%',
+    textAlign: 'left',
+    cursor: 'pointer',
+    fontSize: '14px',
   },
   header: {
+    textAlign: 'center',
     backgroundColor: '#5b9f85',
-    padding: '20px',
+    padding: '30px',
     color: '#fff',
   },
   title: {
@@ -70,50 +157,36 @@ const styles = {
   },
   subtitle: {
     fontSize: '18px',
-    marginBottom: '20px',
   },
-  content: {
-    padding: '30px',
+  cardSection: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#fff',
     flex: 1,
+    padding: '40px',
   },
-  text: {
-    fontSize: '18px',
-    marginBottom: '20px',
+  card: {
+    backgroundColor: '#e9f7f1',
+    padding: '30px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    minWidth: '300px',
+    maxWidth: '400px',
+    textAlign: 'center',
+    margin: '0 20px',
   },
-  button: {
-    backgroundColor: '#5b9f85',
-    color: '#fff',
-    padding: '10px 20px',
-    fontSize: '16px',
+  arrowButton: {
+    fontSize: '30px',
+    backgroundColor: 'transparent',
     border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginRight: '10px',
-  },
-  profileButton: {
-    backgroundColor: '#3498db', // Blue color for Profile
-    color: '#fff',
-    padding: '10px 20px',
-    fontSize: '16px',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    marginRight: '10px',
-  },
-  logoutButton: {
-    backgroundColor: '#e74c3c', // Red color for logout
-    color: '#fff',
-    padding: '10px 20px',
-    fontSize: '16px',
-    border: 'none',
-    borderRadius: '5px',
     cursor: 'pointer',
   },
   footer: {
     backgroundColor: '#333',
     color: '#fff',
     padding: '10px',
+    textAlign: 'center',
   },
   footerText: {
     margin: 0,
