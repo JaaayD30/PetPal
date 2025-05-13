@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const cardData = [
-  { id: 1, name: 'Buddy', type: 'Golden Retriever', location: 'Davao City' },
-  { id: 2, name: 'Milo', type: 'Siberian Husky', location: 'Tagum City' },
-  { id: 3, name: 'Luna', type: 'Persian Cat', location: 'Panabo' },
-];
-
 const LandingPage = () => {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [showForm, setShowForm] = useState(false);
+  const [petCards, setPetCards] = useState([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    breed: '',
+    bloodType: '',
+    age: '',
+    address: '',
+  });
 
   const handleLogout = () => {
     localStorage.removeItem('googleEmail');
@@ -27,18 +30,31 @@ const LandingPage = () => {
   };
 
   const handleNext = () => {
-    setCurrentCardIndex((prev) => (prev + 1) % cardData.length);
+    setCurrentCardIndex((prev) => (prev + 1) % petCards.length);
   };
 
   const handlePrev = () => {
-    setCurrentCardIndex((prev) => (prev - 1 + cardData.length) % cardData.length);
+    setCurrentCardIndex((prev) => (prev - 1 + petCards.length) % petCards.length);
   };
 
-  const currentCard = cardData[currentCardIndex];
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    setPetCards((prev) => [...prev, formData]);
+    setShowForm(false);
+    setFormData({ name: '', breed: '', bloodType: '', age: '', address: '' });
+    setCurrentCardIndex(petCards.length); // set to the newly added card
+  };
+
+  const currentCard = petCards[currentCardIndex];
 
   return (
     <div style={styles.container}>
-      {/* NAVIGATION HEADER */}
+      {/* NAVBAR */}
       <nav style={styles.navbar}>
         <div style={styles.logo}>🐾 PetPal</div>
         <div style={styles.searchContainer}>
@@ -55,25 +71,63 @@ const LandingPage = () => {
         </div>
       </nav>
 
-      {/* MAIN HEADER */}
+      {/* HEADER */}
       <header style={styles.header}>
         <h1 style={styles.title}>Welcome to PetPal</h1>
         <p style={styles.subtitle}>Connecting Pet Owners with Potential Blood Donors</p>
       </header>
 
-      {/* SWIPEABLE CARDS */}
+      {/* CARD SECTION */}
       <section style={styles.cardSection}>
-        <button onClick={handlePrev} style={styles.arrowButton}>⬅️</button>
-
-        <div style={styles.card}>
-          <h3>{currentCard.name}</h3>
-          <p>Type: {currentCard.type}</p>
-          <p>Location: {currentCard.location}</p>
-        </div>
-
-        <button onClick={handleNext} style={styles.arrowButton}>➡️</button>
+        {petCards.length === 0 ? (
+          <div style={{ textAlign: 'center', fontSize: '18px', color: '#666' }}>
+            No pet donors added yet. Click the ＋ button to add one.
+          </div>
+        ) : (
+          <>
+            <button onClick={handlePrev} style={styles.arrowButton}>⬅️</button>
+            <div style={styles.card}>
+              <h3>{currentCard.name}</h3>
+              <p>Breed: {currentCard.breed}</p>
+              <p>Blood Type: {currentCard.bloodType}</p>
+              <p>Age: {currentCard.age}</p>
+              <p>Address: {currentCard.address}</p>
+            </div>
+            <button onClick={handleNext} style={styles.arrowButton}>➡️</button>
+          </>
+        )}
       </section>
 
+      {/* POPUP FORM */}
+      {showForm && (
+        <div style={styles.popupOverlay}>
+          <div style={styles.popup}>
+            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Add Pet Details</h2>
+            <form onSubmit={handleFormSubmit}>
+              <label style={styles.formLabel}>Pet Name</label>
+              <input type="text" name="name" value={formData.name} onChange={handleChange} required style={styles.formInput} />
+              <label style={styles.formLabel}>Breed</label>
+              <input type="text" name="breed" value={formData.breed} onChange={handleChange} required style={styles.formInput} />
+              <label style={styles.formLabel}>Blood Type</label>
+              <input type="text" name="bloodType" value={formData.bloodType} onChange={handleChange} required style={styles.formInput} />
+              <label style={styles.formLabel}>Age</label>
+              <input type="number" name="age" value={formData.age} onChange={handleChange} required style={styles.formInput} />
+              <label style={styles.formLabel}>Address</label>
+              <input type="text" name="address" value={formData.address} onChange={handleChange} required style={styles.formInput} />
+
+              <div style={styles.formButtonGroup}>
+                <button type="submit" style={styles.submitButton}>Save</button>
+                <button type="button" onClick={() => setShowForm(false)} style={styles.cancelButton}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING ACTION BUTTON */}
+      <button onClick={() => setShowForm(true)} style={styles.fab}>＋</button>
+
+      {/* FOOTER */}
       <footer style={styles.footer}>
         <p style={styles.footerText}>© 2025 PetPal. All rights reserved.</p>
       </footer>
@@ -132,7 +186,6 @@ const styles = {
     backgroundColor: '#fff',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
     borderRadius: '5px',
-    overflow: 'hidden',
     zIndex: 1000,
   },
   dropdownItem: {
@@ -190,6 +243,81 @@ const styles = {
   },
   footerText: {
     margin: 0,
+  },
+  fab: {
+    position: 'fixed',
+    bottom: '30px',
+    right: '30px',
+    width: '60px',
+    height: '60px',
+    borderRadius: '50%',
+    backgroundColor: '#5b9f85',
+    color: '#fff',
+    fontSize: '32px',
+    border: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.2)',
+  },
+  popupOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+  popup: {
+    backgroundColor: '#fff',
+    padding: '30px',
+    borderRadius: '15px',
+    width: '95%',
+    maxWidth: '450px',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.25)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '15px',
+  },
+  formLabel: {
+    fontWeight: 'bold',
+    marginBottom: '5px',
+    fontSize: '14px',
+    color: '#333',
+  },
+  formInput: {
+    padding: '10px',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    fontSize: '14px',
+    marginBottom: '10px',
+    width: '100%',
+    boxSizing: 'border-box',
+  },
+  formButtonGroup: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '15px',
+  },
+  submitButton: {
+    backgroundColor: '#5b9f85',
+    color: '#fff',
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
+  cancelButton: {
+    backgroundColor: '#ccc',
+    color: '#333',
+    padding: '10px 20px',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
   },
 };
 
