@@ -14,7 +14,8 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));  // Increase limit to 10 megabytes or more
+
 
 // PostgreSQL connection
 const pool = new Pool({
@@ -213,6 +214,57 @@ app.put('/api/update-user/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to update user' });
   }
 });
+
+app.post('/api/pets', async (req, res) => {
+  const {
+    images, // array of base64 strings like "data:image/jpeg;base64,..."
+    name,
+    breed,
+    bloodType,
+    age,
+    sex,
+    address,
+    kilos,
+    details,
+  } = req.body;
+
+  if (!name || !breed || !bloodType || !age || !sex || !address || !kilos || !details) {
+    return res.status(400).json({ message: 'Missing required pet fields' });
+  }
+
+  try {
+    // Insert pet info first
+    const petResult = await pool.query(
+      `INSERT INTO pets (name, breed, blood_type, age, sex, address, kilos, details)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+      [name, breed, bloodType, age, sex, address, kilos, details]
+    );
+
+    const pet = petResult.rows[0];
+
+    // Now insert each image into pet_images table
+    if (images && images.length > 0) {
+      for (const base64Image of images) {
+        // Remove the "data:image/jpeg;base64," part to get raw base64 data
+        const base64Data = base64Image.split(',')[1];
+        const imgBuffer = Buffer.from(base64Data, 'base64');
+
+        await pool.query(
+          `INSERT INTO pet_images (pet_id, image) VALUES ($1, $2)`,
+          [pet.id, imgBuffer]
+        );
+      }
+    }
+
+    res.status(201).json({ message: 'Pet added successfully', pet });
+
+  } catch (err) {
+    console.error('Error adding pet:', err);
+    res.status(500).json({ message: 'Failed to add pet' });
+  }
+});
+
+
 
 
 // Start server

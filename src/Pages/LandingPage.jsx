@@ -4,9 +4,7 @@ import { useNavigate } from 'react-router-dom';
 const LandingPage = () => {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [showForm, setShowForm] = useState(false);
-  const [cards, setCards] = useState([]);
   const [formData, setFormData] = useState({
     images: [],
     name: '',
@@ -15,11 +13,9 @@ const LandingPage = () => {
     age: '',
     sex: '',
     address: '',
+    kilos: '',
     details: '',
   });
-
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleLogout = () => {
     localStorage.removeItem('googleEmail');
@@ -33,14 +29,6 @@ const LandingPage = () => {
 
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
-  };
-
-  const handleNext = () => {
-    setCurrentCardIndex((prev) => (prev + 1) % cards.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentCardIndex((prev) => (prev - 1 + cards.length) % cards.length);
   };
 
   const handleChange = (e) => {
@@ -62,41 +50,45 @@ const LandingPage = () => {
     });
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
-    const newCard = {
-      ...formData,
-      id: Date.now(),
-    };
-    setCards((prev) => [...prev, newCard]);
-    setShowForm(false);
-    setFormData({
-      images: [],
-      name: '',
-      breed: '',
-      bloodType: '',
-      age: '',
-      sex: '',
-      address: '',
-      kilos: '',
-      details: '',
-    });
+  
+    try {
+      const response = await fetch('http://localhost:5000/api/pets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert('Failed to save pet: ' + errorData.message);
+        return;
+      }
+  
+      const data = await response.json();
+      alert('Pet added successfully!');
+      console.log('Saved pet:', data.pet);
+  
+      setShowForm(false);
+      setFormData({
+        images: [],
+        name: '',
+        breed: '',
+        bloodType: '',
+        age: '',
+        sex: '',
+        address: '',
+        kilos: '',
+        details: '',
+      });
+    } catch (error) {
+      console.error('Error saving pet:', error);
+      alert('An error occurred while saving the pet.');
+    }
   };
-
-  const handleImageClick = (index) => {
-    setCurrentImageIndex(index);
-    setIsImageModalOpen(true);
-  };
-
-  const handleImageNext = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % currentCard.images.length);
-  };
-
-  const handleImagePrev = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + currentCard.images.length) % currentCard.images.length);
-  };
-
-  const currentCard = cards[currentCardIndex] || null;
 
   return (
     <div style={styles.container}>
@@ -123,60 +115,7 @@ const LandingPage = () => {
         <p style={styles.subtitle}>Connecting Pet Owners with Potential Blood Donors</p>
       </header>
 
-      {/* CARD SECTION */}
-      <section style={styles.cardSection}>
-        {cards.length > 0 ? (
-          <>
-            <button onClick={handlePrev} style={styles.arrowButton}>⬅️</button>
-            <div style={styles.card}>
-            {currentCard.images?.length > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginTop: '10px' }}>
-                  {currentCard.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`pet-${idx}`}
-                      onClick={() => handleImageClick(idx)}
-                      style={{
-                        width: '60px',
-                        height: '60px',
-                        objectFit: 'cover',
-                        borderRadius: '8px',
-                        cursor: 'pointer'
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-              <h3>{currentCard.name}</h3>
-              <p>Breed: {currentCard.breed}</p>
-              <p>Blood Type: {currentCard.bloodType}</p>
-              <p>Age: {currentCard.age}</p>
-              <p>Sex: {currentCard.sex} </p>
-              <p>Kilos: {currentCard.kilos}</p>
-              <p>Address: {currentCard.address}</p>
-              <p>details: {currentCard.details}</p>
-            </div>
-            <button onClick={handleNext} style={styles.arrowButton}>➡️</button>
-          </>
-        ) : (
-          <p style={{ fontSize: '18px', color: '#888' }}>No pets added yet.</p>
-        )}
-      </section>
-
-      {/* FULLSCREEN IMAGE MODAL */}
-      {isImageModalOpen && currentCard?.images?.length > 0 && (
-        <div style={styles.imageModal}>
-          <button onClick={() => setIsImageModalOpen(false)} style={styles.imageModalClose}>✕</button>
-          <button onClick={handleImagePrev} style={styles.imageModalNavLeft}>⬅️</button>
-          <img
-            src={currentCard.images[currentImageIndex]}
-            alt="fullscreen"
-            style={styles.imageModalImg}
-          />
-          <button onClick={handleImageNext} style={styles.imageModalNavRight}>➡️</button>
-        </div>
-      )}
+      {/* Remove CARD SECTION */}
 
       {/* POPUP FORM */}
       {showForm && (
@@ -189,42 +128,48 @@ const LandingPage = () => {
 
               <label style={styles.formLabel}>Pet Name</label>
               <input type="text" name="name" value={formData.name} onChange={handleChange} required style={styles.formInput} />
+              
               <label style={styles.formLabel}>Sex</label>
               <select name="sex" value={formData.sex} onChange={handleChange} required style={styles.formInput} >
-              <option value="sex">Select Sex</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
+                <option value="">Select Sex</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
               </select>
+              
               <label style={styles.formLabel}>Breed</label>
               <select name="breed" value={formData.breed} onChange={handleChange} required style={styles.formInput} >
-              <option value="">Select Breed</option>
-              <option value="Aspin">Aspin</option>
-              <option value="Shih Tzu">Shih Tzu</option>
-              <option value="Chihuahua">Chihuahua</option>
-              <option value="Pomeranian">Pomeranian</option>
-              <option value="Labrador Retriever">Labrador Retriever</option>
-              <option value="Siberian Husky">Siberian Husky</option>
-              <option value="Pug">Pug</option>
-              <option value="Beagle">Beagle</option>
+                <option value="">Select Breed</option>
+                <option value="Aspin">Aspin</option>
+                <option value="Shih Tzu">Shih Tzu</option>
+                <option value="Chihuahua">Chihuahua</option>
+                <option value="Pomeranian">Pomeranian</option>
+                <option value="Labrador Retriever">Labrador Retriever</option>
+                <option value="Siberian Husky">Siberian Husky</option>
+                <option value="Pug">Pug</option>
+                <option value="Beagle">Beagle</option>
               </select>
+              
               <label style={styles.formLabel}>Blood Type</label>
-              <select name="blood" value={formData.breed} onChange={handleChange} required style={styles.formInput} >
-              <option value="">Select Blood Type</option>
-              <option value="Aspin">DEA 1 Positive</option>
-              <option value="Shih Tzu">DEA 1 Negative</option>
-              <option value="Chihuahua">DEA 3</option>
-              <option value="Pomeranian">DEA 4</option>
-              <option value="Labrador Retriever">DEA 5</option>
-              <option value="Siberian Husky">DEA 7</option>
+              <select name="bloodType" value={formData.bloodType} onChange={handleChange} required style={styles.formInput} >
+                <option value="">Select Blood Type</option>
+                <option value="DEA 1 Positive">DEA 1 Positive</option>
+                <option value="DEA 1 Negative">DEA 1 Negative</option>
+                <option value="DEA 3">DEA 3</option>
+                <option value="DEA 4">DEA 4</option>
+                <option value="DEA 5">DEA 5</option>
+                <option value="DEA 7">DEA 7</option>
               </select>
 
-              <label style={styles.formLabel}>Age(in months)</label>
+              <label style={styles.formLabel}>Age (in months)</label>
               <input type="number" name="age" value={formData.age} onChange={handleChange} required style={styles.formInput} />
-              <label style={styles.formLabel}>Kilograms(Kg)</label>
-              <input type="number" name="kilos" value={formData.Kilos} onChange={handleChange} required style={styles.formInput} />
+              
+              <label style={styles.formLabel}>Kilograms (Kg)</label>
+              <input type="number" name="kilos" value={formData.kilos} onChange={handleChange} required style={styles.formInput} />
+              
               <label style={styles.formLabel}>Address</label>
               <input type="text" name="address" value={formData.address} onChange={handleChange} required style={styles.formInput} />
-              <label style={styles.formLabel}>Medical Details(Vaccinations, Vet visits, Health Condition)</label>
+              
+              <label style={styles.formLabel}>Medical Details (Vaccinations, Vet visits, Health Condition)</label>
               <input type="text" name="details" value={formData.details} onChange={handleChange} required style={styles.formInput} />
 
               <div style={styles.formButtonGroup}>
@@ -241,6 +186,7 @@ const LandingPage = () => {
     </div>
   );
 };
+
 
 const styles = {
   container: {
