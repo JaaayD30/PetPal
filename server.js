@@ -14,8 +14,14 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));  // Increase limit to 10 megabytes or more
+app.use(express.json({ limit: '10mb' }));
 
+// Disable COOP and COEP for local testing
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
+  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
+  next();
+});
 
 // PostgreSQL connection
 const pool = new Pool({
@@ -26,14 +32,9 @@ const pool = new Pool({
   port: 5432,
 });
 
-// Disable COOP and COEP for local testing
-app.use((req, res, next) => {
-  res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
-  res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
-  next();
-});
+// ==================== AUTH ROUTES ====================
 
-// 🔒 Signup route
+// Signup
 app.post('/api/signup', async (req, res) => {
   const { fullName, username, email, password, address, phone } = req.body;
 
@@ -43,9 +44,8 @@ app.post('/api/signup', async (req, res) => {
 
   try {
     const existing = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
-
     if (existing.rows.length > 0) {
-      return res.status(400).json({ message: 'User already has an account with this email' });
+      return res.status(400).json({ message: 'User already exists with this email' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -73,7 +73,7 @@ app.post('/api/signup', async (req, res) => {
   }
 });
 
-// 🔑 Login route
+// Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -104,17 +104,15 @@ app.post('/api/login', async (req, res) => {
         email: user.email,
         address: user.address,
         phone: user.phone,
-        password: password, // Only for testing purposes
       },
     });
-
   } catch (err) {
     console.error('Login error:', err);
     res.status(500).json({ message: 'Login failed' });
   }
 });
 
-// ✅ Check if email exists (used in Google sign up flow)
+// Check if email exists (for Google signup)
 app.post('/api/check-email', async (req, res) => {
   const { email } = req.body;
 
@@ -122,15 +120,14 @@ app.post('/api/check-email', async (req, res) => {
 
   try {
     const result = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
-    const exists = result.rows.length > 0;
-    res.json({ exists });
+    res.json({ exists: result.rows.length > 0 });
   } catch (err) {
     console.error('Email check error:', err);
     res.status(500).json({ message: 'Server error during email check' });
   }
 });
 
-// ✅ Google OAuth Login route
+// Google OAuth login
 app.post('/api/google-login', async (req, res) => {
   const { token } = req.body;
 
@@ -143,18 +140,16 @@ app.post('/api/google-login', async (req, res) => {
     const payload = ticket.getPayload();
     const { name, email } = payload;
 
-    const result = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
-    let user;
+    let userResult = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
 
-    if (result.rows.length > 0) {
-      user = result.rows[0];
-    } else {
-      const newUser = await pool.query(
+    if (userResult.rows.length === 0) {
+      userResult = await pool.query(
         'INSERT INTO "users1" (full_name, username, email) VALUES ($1, $2, $3) RETURNING *',
         [name, email, email]
       );
-      user = newUser.rows[0];
     }
+
+    const user = userResult.rows[0];
 
     res.status(200).json({
       message: 'Google login successful',
@@ -165,14 +160,13 @@ app.post('/api/google-login', async (req, res) => {
         email: user.email,
       },
     });
-
   } catch (err) {
     console.error('Google login error:', err);
     res.status(500).json({ message: 'Google login failed' });
   }
 });
 
-// ✏️ Update user details (except email)
+// Update user details (except email)
 app.put('/api/update-user/:id', async (req, res) => {
   const userId = req.params.id;
   const { fullName, username, password, address, phone } = req.body;
@@ -183,10 +177,9 @@ app.put('/api/update-user/:id', async (req, res) => {
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const result = await pool.query(
-      `UPDATE "users1" 
-       SET full_name = $1, username = $2, password = $3, address = $4, phone = $5 
+      `UPDATE "users1"
+       SET full_name = $1, username = $2, password = $3, address = $4, phone = $5
        WHERE id = $6 RETURNING *`,
       [fullName, username, hashedPassword, address, phone, userId]
     );
@@ -208,16 +201,18 @@ app.put('/api/update-user/:id', async (req, res) => {
         phone: updatedUser.phone,
       },
     });
-
   } catch (err) {
     console.error('Update error:', err);
     res.status(500).json({ message: 'Failed to update user' });
   }
 });
 
+// ==================== PET ROUTES ====================
+
+// Add a pet
 app.post('/api/pets', async (req, res) => {
   const {
-    images, // array of base64 strings like "data:image/jpeg;base64,..."
+    images,
     name,
     breed,
     bloodType,
@@ -233,7 +228,6 @@ app.post('/api/pets', async (req, res) => {
   }
 
   try {
-    // Insert pet info first
     const petResult = await pool.query(
       `INSERT INTO pets (name, breed, blood_type, age, sex, address, kilos, details)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
@@ -242,49 +236,37 @@ app.post('/api/pets', async (req, res) => {
 
     const pet = petResult.rows[0];
 
-    // Now insert each image into pet_images table
     if (images && images.length > 0) {
       for (const base64Image of images) {
-        // Remove the "data:image/jpeg;base64," part to get raw base64 data
         const base64Data = base64Image.split(',')[1];
         const imgBuffer = Buffer.from(base64Data, 'base64');
 
         await pool.query(
-          `INSERT INTO pet_images (pet_id, image) VALUES ($1, $2)`,
+          'INSERT INTO pet_images (pet_id, image) VALUES ($1, $2)',
           [pet.id, imgBuffer]
         );
       }
     }
 
     res.status(201).json({ message: 'Pet added successfully', pet });
-
   } catch (err) {
     console.error('Error adding pet:', err);
     res.status(500).json({ message: 'Failed to add pet' });
   }
 });
 
-app.get('/api/pets', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM pets');
-    res.status(200).json({ pets: result.rows });
-  } catch (err) {
-    console.error('Error fetching pets:', err);
-    res.status(500).json({ message: 'Failed to fetch pets' });
-  }
-});
-
+// Get all pets with images
 app.get('/api/pets', async (req, res) => {
   try {
     const petsResult = await pool.query('SELECT * FROM pets');
     const pets = petsResult.rows;
 
-    for (let pet of pets) {
+    for (const pet of pets) {
       const imagesResult = await pool.query(
-        'SELECT encode(image, \'base64\') as base64image FROM pet_images WHERE pet_id = $1',
+        'SELECT encode(image, \'base64\') AS base64image FROM pet_images WHERE pet_id = $1',
         [pet.id]
       );
-      pet.images = imagesResult.rows.map(row => 'data:image/jpeg;base64,' + row.base64image);
+      pet.images = imagesResult.rows.map(row => `data:image/jpeg;base64,${row.base64image}`);
     }
 
     res.status(200).json({ pets });
@@ -294,8 +276,7 @@ app.get('/api/pets', async (req, res) => {
   }
 });
 
-
-// Start server
+// ==================== START SERVER ====================
 app.listen(5000, () => {
   console.log('Server running on http://localhost:5000');
 });
