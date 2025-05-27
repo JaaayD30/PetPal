@@ -274,6 +274,25 @@ app.get('/api/pets', async (req, res) => {
   }
 });
 
+app.get('/api/pets', async (req, res) => {
+  try {
+    const petsResult = await pool.query('SELECT * FROM pets');
+    const pets = petsResult.rows;
+
+    for (let pet of pets) {
+      const imagesResult = await pool.query(
+        'SELECT encode(image, \'base64\') as base64image FROM pet_images WHERE pet_id = $1',
+        [pet.id]
+      );
+      pet.images = imagesResult.rows.map(row => 'data:image/jpeg;base64,' + row.base64image);
+    }
+
+    res.status(200).json({ pets });
+  } catch (err) {
+    console.error('Error fetching pets:', err);
+    res.status(500).json({ message: 'Failed to fetch pets' });
+  }
+});
 
 
 // Start server

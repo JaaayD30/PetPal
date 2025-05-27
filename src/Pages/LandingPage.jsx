@@ -45,6 +45,10 @@ const LandingPage = () => {
     navigate('/profile');
   };
 
+  const handlePets = () => {
+    navigate('/pets');
+  };
+
   const toggleDropdown = () => {
     setDropdownOpen(!dropdownOpen);
   };
@@ -123,6 +127,7 @@ const LandingPage = () => {
             <div style={styles.dropdown}>
               <button onClick={handleProfile} style={styles.dropdownItem}>View Profile</button>
               <button onClick={handleLogout} style={styles.dropdownItem}>Log Out</button>
+              <button onClick={handlePets} style={styles.dropdownItem}>Pets</button>
             </div>
           )}
         </div>
@@ -134,37 +139,6 @@ const LandingPage = () => {
         <p style={styles.subtitle}>Connecting Pet Owners with Potential Blood Donors</p>
       </header>
 
-      <div style={styles.petList}>
-  {pets.map((pet, index) => (
-    <div key={index} style={styles.petCard}>
-      <h3 style={{ marginBottom: '10px' }}>PET {index + 1}</h3>
-      <div style={styles.petImagesContainer}>
-        {pet.images && pet.images.length > 0 ? (
-          pet.images.map((src, idx) => (
-            <img
-              key={idx}
-              src={src}
-              alt={`Pet ${index + 1} Image ${idx + 1}`}
-              style={styles.petImage}
-            />
-          ))
-        ) : (
-          <p>No Images</p>
-        )}
-      </div>
-      <div style={styles.petDetails}>
-        <p><strong>Name:</strong> {pet.name}</p>
-        <p><strong>Breed:</strong> {pet.breed}</p>
-        <p><strong>Blood Type:</strong> {pet.bloodType}</p>
-        <p><strong>Age:</strong> {pet.age} months</p>
-        <p><strong>Sex:</strong> {pet.sex}</p>
-        <p><strong>Weight:</strong> {pet.kilos} Kg</p>
-        <p><strong>Address:</strong> {pet.address}</p>
-        <p><strong>Medical Details:</strong> {pet.details}</p>
-      </div>
-    </div>
-  ))}
-</div>
 
 
       {/* POPUP FORM */}

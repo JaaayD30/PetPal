@@ -6,6 +6,7 @@ import UserDetailsPage from './Pages/UserDetailsPage'; // Keep or replace with U
 import ConfirmationPage from './Pages/ConfirmationPage';
 import LandingPage from './Pages/LandingPage';
 import ProfilePage from './Pages/Profile';
+import PetDetails from './Pages/PetDetails';
 
 // Import UserDetails if it's a separate component you want to use
 // import UserDetails from './UserDetails'; 
@@ -30,6 +31,7 @@ function App() {
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path='/profile' element={<ProfilePage/>} />
+          <Route path='/pets' element={<PetDetails/>} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>
