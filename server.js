@@ -264,6 +264,15 @@ app.post('/api/pets', async (req, res) => {
   }
 });
 
+app.get('/api/pets', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM pets');
+    res.status(200).json({ pets: result.rows });
+  } catch (err) {
+    console.error('Error fetching pets:', err);
+    res.status(500).json({ message: 'Failed to fetch pets' });
+  }
+});
 
 
 

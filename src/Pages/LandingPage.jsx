@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [pets, setPets] = useState([]);
   const [formData, setFormData] = useState({
     images: [],
     name: '',
@@ -16,6 +17,23 @@ const LandingPage = () => {
     kilos: '',
     details: '',
   });
+
+  useEffect(() => {
+    const fetchPets = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/pets');
+        if (!res.ok) throw new Error('Failed to fetch pets');
+        const data = await res.json();
+        console.log('Fetched pets:', data.pets);  // <-- check here
+        setPets(data.pets || []);
+      } catch (error) {
+        console.error('Error fetching pets:', error);
+      }
+    };
+  
+    fetchPets();
+  }, []);
+  
 
   const handleLogout = () => {
     localStorage.removeItem('googleEmail');
@@ -70,6 +88,7 @@ const LandingPage = () => {
   
       const data = await response.json();
       alert('Pet added successfully!');
+      setPets((prev) => [...prev, data.pet]);
       console.log('Saved pet:', data.pet);
   
       setShowForm(false);
@@ -115,7 +134,38 @@ const LandingPage = () => {
         <p style={styles.subtitle}>Connecting Pet Owners with Potential Blood Donors</p>
       </header>
 
-      {/* Remove CARD SECTION */}
+      <div style={styles.petList}>
+  {pets.map((pet, index) => (
+    <div key={index} style={styles.petCard}>
+      <h3 style={{ marginBottom: '10px' }}>PET {index + 1}</h3>
+      <div style={styles.petImagesContainer}>
+        {pet.images && pet.images.length > 0 ? (
+          pet.images.map((src, idx) => (
+            <img
+              key={idx}
+              src={src}
+              alt={`Pet ${index + 1} Image ${idx + 1}`}
+              style={styles.petImage}
+            />
+          ))
+        ) : (
+          <p>No Images</p>
+        )}
+      </div>
+      <div style={styles.petDetails}>
+        <p><strong>Name:</strong> {pet.name}</p>
+        <p><strong>Breed:</strong> {pet.breed}</p>
+        <p><strong>Blood Type:</strong> {pet.bloodType}</p>
+        <p><strong>Age:</strong> {pet.age} months</p>
+        <p><strong>Sex:</strong> {pet.sex}</p>
+        <p><strong>Weight:</strong> {pet.kilos} Kg</p>
+        <p><strong>Address:</strong> {pet.address}</p>
+        <p><strong>Medical Details:</strong> {pet.details}</p>
+      </div>
+    </div>
+  ))}
+</div>
+
 
       {/* POPUP FORM */}
       {showForm && (
@@ -189,6 +239,47 @@ const LandingPage = () => {
 
 
 const styles = {
+
+  petList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '30px',
+    padding: '20px',
+    backgroundColor: '#fff',
+    margin: '20px auto',
+    width: '90%',
+    maxWidth: '900px',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+  },
+  
+  petCard: {
+    border: '2px solid #5b9f85',
+    borderRadius: '12px',
+    padding: '20px',
+    backgroundColor: '#e9f7f1',
+  },
+  
+  petImagesContainer: {
+    display: 'flex',
+    gap: '10px',
+    marginBottom: '15px',
+    overflowX: 'auto',
+  },
+  
+  petImage: {
+    width: '100px',
+    height: '100px',
+    objectFit: 'cover',
+    borderRadius: '10px',
+    border: '1px solid #ccc',
+  },
+  
+  petDetails: {
+    lineHeight: '1.5',
+    fontSize: '14px',
+  },
+  
   container: {
     fontFamily: 'Arial, sans-serif',
     color: '#333',
