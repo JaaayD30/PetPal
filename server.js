@@ -298,6 +298,80 @@ app.get('/api/pets', authenticateToken, async (req, res) => {
   }
 });
 
+app.put('/api/pets/:id', authenticateToken, async (req, res) => {
+  const petId = req.params.id;
+  const userId = req.user.id;
+  const {
+    name,
+    breed,
+    bloodType,
+    age,
+    sex,
+    address,
+    kilos,
+    details,
+  } = req.body;
+
+  // Basic validation (optional, can be more strict)
+  if (!name || !breed || !bloodType || !age || !sex || !address || !kilos || !details) {
+    return res.status(400).json({ message: 'Missing required pet fields' });
+  }
+
+  try {
+    // Check if pet belongs to this user first
+    const petCheck = await pool.query('SELECT * FROM pets WHERE id = $1 AND user_id = $2', [petId, userId]);
+    if (petCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Pet not found or unauthorized' });
+    }
+
+    // Update pet info
+    const updateResult = await pool.query(
+      `UPDATE pets SET
+        name = $1,
+        breed = $2,
+        blood_type = $3,
+        age = $4,
+        sex = $5,
+        address = $6,
+        kilos = $7,
+        details = $8
+       WHERE id = $9
+       RETURNING *`,
+      [name, breed, bloodType, age, sex, address, kilos, details, petId]
+    );
+
+    res.status(200).json({ message: 'Pet updated successfully', pet: updateResult.rows[0] });
+  } catch (err) {
+    console.error('Error updating pet:', err);
+    res.status(500).json({ message: 'Failed to update pet' });
+  }
+});
+
+app.delete('/api/pets/:id', authenticateToken, async (req, res) => {
+  const petId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    // Check if pet belongs to this user first
+    const petCheck = await pool.query('SELECT * FROM pets WHERE id = $1 AND user_id = $2', [petId, userId]);
+    if (petCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Pet not found or unauthorized' });
+    }
+
+    // Delete pet images first (if you want to clean up)
+    await pool.query('DELETE FROM pet_images WHERE pet_id = $1', [petId]);
+
+    // Delete pet record
+    await pool.query('DELETE FROM pets WHERE id = $1', [petId]);
+
+    res.status(200).json({ message: 'Pet deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting pet:', err);
+    res.status(500).json({ message: 'Failed to delete pet' });
+  }
+});
+
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
