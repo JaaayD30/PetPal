@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
+  const token = localStorage.getItem('token'); // or the key you store your JWT or Google OAuth token under
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);

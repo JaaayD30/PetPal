@@ -10,11 +10,11 @@ import PetDetails from './Pages/PetDetails';
 
 // Import UserDetails if it's a separate component you want to use
 // import UserDetails from './UserDetails'; 
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId="523925700451-f5rmmu0jghctco3qr5l293orh6d8qgcu.apps.googleusercontent.com">
-      {/* Wrap with GoogleOAuthProvider */}
+    <GoogleOAuthProvider clientId={clientId}>
       <Router>
         <nav>
           <ul style={{ display: 'flex', listStyleType: 'none' }}>
