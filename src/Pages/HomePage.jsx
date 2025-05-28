@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { jwtDecode } from 'jwt-decode';
 
+
+
+
 const HomePage = () => {
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
+
+  
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUserData(JSON.parse(storedUser));
+    }
+  }, []);
 
   const handleLoginChange = (e) => {
     setLoginData({ ...loginData, [e.target.name]: e.target.value });
@@ -18,13 +29,18 @@ const HomePage = () => {
     try {
       const res = await axios.post('http://localhost:5000/api/login', loginData);
       alert(res.data.message);
+  
+      // Store both user info and token
+      localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
+  
       setUserData(res.data.user);
       navigate('/landing');
     } catch (err) {
       alert(err.response?.data?.message || 'Login failed');
     }
   };
+  
 
   const handleGoogleLoginSuccess = async (response) => {
     try {
@@ -145,23 +161,6 @@ const HomePage = () => {
             />
           </div>
         </div>
-
-        {/* Optional user info box below */}
-        {userData && (
-          <div style={{
-            marginTop: '30px',
-            border: '1px solid black',
-            borderRadius: '8px',
-            padding: '15px',
-            textAlign: 'left'
-          }}>
-            <h3 style={{ textAlign: 'center' }}>User Info</h3>
-            <p><strong>Full Name:</strong> {userData.fullName}</p>
-            <p><strong>Username:</strong> {userData.username}</p>
-            <p><strong>Email:</strong> {userData.email}</p>
-            <p><strong>Password:</strong> {userData.password}</p>
-          </div>
-        )}
       </div>
     </div>
   );

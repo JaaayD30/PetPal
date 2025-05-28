@@ -17,22 +17,7 @@ const LandingPage = () => {
     kilos: '',
     details: '',
   });
-
-  useEffect(() => {
-    const fetchPets = async () => {
-      try {
-        const res = await fetch('http://localhost:5000/api/pets');
-        if (!res.ok) throw new Error('Failed to fetch pets');
-        const data = await res.json();
-        console.log('Fetched pets:', data.pets);  // <-- check here
-        setPets(data.pets || []);
-      } catch (error) {
-        console.error('Error fetching pets:', error);
-      }
-    };
   
-    fetchPets();
-  }, []);
   
 
   const handleLogout = () => {
@@ -80,6 +65,7 @@ const LandingPage = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,  // <-- Add this line with your token
         },
         body: JSON.stringify(formData),
       });
@@ -112,6 +98,7 @@ const LandingPage = () => {
       alert('An error occurred while saving the pet.');
     }
   };
+  
 
   return (
     <div style={styles.container}>

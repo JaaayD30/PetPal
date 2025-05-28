@@ -3,12 +3,21 @@ import cors from 'cors';
 import bcrypt from 'bcrypt';
 import pkg from 'pg';
 import { OAuth2Client } from 'google-auth-library';
+import { authenticateToken, generateToken } from './jwtUtils.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+
+
+
+
 
 const { Pool } = pkg;
 const app = express();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Middleware
+
 app.use(cors({
   origin: 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -34,7 +43,6 @@ const pool = new Pool({
 
 // ==================== AUTH ROUTES ====================
 
-// Signup
 app.post('/api/signup', async (req, res) => {
   const { fullName, username, email, password, address, phone } = req.body;
 
@@ -55,9 +63,11 @@ app.post('/api/signup', async (req, res) => {
     );
 
     const user = newUser.rows[0];
+    const token = generateToken(user);
 
     res.status(200).json({
       message: 'Signup successful',
+      token,  // send token to client
       user: {
         id: user.id,
         fullName: user.full_name,
@@ -90,13 +100,16 @@ app.post('/api/login', async (req, res) => {
 
     const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
-
+  
     if (!isMatch) {
       return res.status(400).json({ message: 'Incorrect password' });
     }
-
+  
+    const token = generateToken(user); // <-- Add this line here
+  
     res.status(200).json({
       message: 'Login successful',
+      token,  // <-- Send the generated token
       user: {
         id: user.id,
         username: user.username,
@@ -129,7 +142,7 @@ app.post('/api/check-email', async (req, res) => {
 
 // Google OAuth login
 app.post('/api/google-login', async (req, res) => {
-  const { token } = req.body;
+  const { token } = req.body; // Google ID token from client
 
   try {
     const ticket = await client.verifyIdToken({
@@ -150,9 +163,11 @@ app.post('/api/google-login', async (req, res) => {
     }
 
     const user = userResult.rows[0];
+    const jwtToken = generateToken(user); // ✅ Renamed to avoid collision
 
     res.status(200).json({
       message: 'Google login successful',
+      token: jwtToken, // ✅ Make sure you actually return the JWT token here
       user: {
         id: user.id,
         username: user.username,
@@ -165,6 +180,7 @@ app.post('/api/google-login', async (req, res) => {
     res.status(500).json({ message: 'Google login failed' });
   }
 });
+
 
 // Update user details (except email)
 app.put('/api/update-user/:id', async (req, res) => {
@@ -209,8 +225,9 @@ app.put('/api/update-user/:id', async (req, res) => {
 
 // ==================== PET ROUTES ====================
 
-// Add a pet
-app.post('/api/pets', async (req, res) => {
+
+// Add pet route with auth
+app.post('/api/pets', authenticateToken, async (req, res) => {
   const {
     images,
     name,
@@ -223,15 +240,17 @@ app.post('/api/pets', async (req, res) => {
     details,
   } = req.body;
 
+  const userId = req.user.id; // get userId from JWT token
+
   if (!name || !breed || !bloodType || !age || !sex || !address || !kilos || !details) {
     return res.status(400).json({ message: 'Missing required pet fields' });
   }
 
   try {
     const petResult = await pool.query(
-      `INSERT INTO pets (name, breed, blood_type, age, sex, address, kilos, details)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [name, breed, bloodType, age, sex, address, kilos, details]
+      `INSERT INTO pets (user_id, name, breed, blood_type, age, sex, address, kilos, details)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [userId, name, breed, bloodType, age, sex, address, kilos, details]
     );
 
     const pet = petResult.rows[0];
@@ -255,10 +274,13 @@ app.post('/api/pets', async (req, res) => {
   }
 });
 
-// Get all pets with images
-app.get('/api/pets', async (req, res) => {
+
+
+app.get('/api/pets', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
   try {
-    const petsResult = await pool.query('SELECT * FROM pets');
+    const petsResult = await pool.query('SELECT * FROM pets WHERE user_id = $1', [userId]);
     const pets = petsResult.rows;
 
     for (const pet of pets) {
@@ -269,14 +291,16 @@ app.get('/api/pets', async (req, res) => {
       pet.images = imagesResult.rows.map(row => `data:image/jpeg;base64,${row.base64image}`);
     }
 
-    res.status(200).json({ pets });
+    res.status(200).json(pets);
   } catch (err) {
-    console.error('Error fetching pets:', err);
-    res.status(500).json({ message: 'Failed to fetch pets' });
+    console.error('Error fetching user pets:', err);
+    res.status(500).json({ message: 'Failed to fetch user pets' });
   }
 });
 
-// ==================== START SERVER ====================
-app.listen(5000, () => {
-  console.log('Server running on http://localhost:5000');
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
 });
+

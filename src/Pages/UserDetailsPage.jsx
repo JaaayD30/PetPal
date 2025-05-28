@@ -62,10 +62,11 @@ const UserDetailsPage = () => {
         password: formData.password,
       };
 
-      localStorage.setItem('user', JSON.stringify(storedUser));
+      localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
       alert(res.data.message || 'Signup successful!');
 
-      navigate('/', { state: storedUser });
+      navigate('/', { state: res.data.user });
     } catch (err) {
       alert(err.response?.data?.message || 'Signup failed');
     }
