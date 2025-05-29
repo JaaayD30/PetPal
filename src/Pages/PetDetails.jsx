@@ -17,7 +17,7 @@ const PetDetailsPage = () => {
       });
       if (!res.ok) throw new Error('Failed to fetch pets');
       const data = await res.json();
-      setPets(data.pets);
+      setPets(data);
     } catch (err) {
       setError(err.message || 'Failed to load pets');
     } finally {
@@ -119,7 +119,9 @@ const PetDetailsPage = () => {
   return (
     <div style={containerStyle}>
       <h2 style={headerStyle}>Your Pets</h2>
-      {pets.length === 0 && <p style={{ textAlign: 'center', color: '#777' }}>No pets found.</p>}
+      {Array.isArray(pets) && pets.length === 0 && (
+  <p style={{ textAlign: 'center', color: '#777' }}>No pets found.</p>
+)}
       {pets.map((pet) => (
         <div key={pet.id} style={cardStyle}>
           {editPetId === pet.id ? (
