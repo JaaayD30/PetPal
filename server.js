@@ -353,7 +353,7 @@ app.post('/api/forgot-password', async (req, res) => {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    const expiry = new Date(Date.now() + 3600000); // 1 hour
+    const expiry = new Date(Date.now() + 180000); // 3minutes
 
     await pool.query(
       'UPDATE users1 SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3',

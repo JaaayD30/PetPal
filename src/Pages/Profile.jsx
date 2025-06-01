@@ -5,7 +5,6 @@ import axios from 'axios';
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [editableUser, setEditableUser] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -25,10 +24,6 @@ const ProfilePage = () => {
       navigate('/login');
     }
   }, [location, navigate]);
-
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -68,9 +63,8 @@ const ProfilePage = () => {
   };
 
   const handleCancel = () => {
-    setEditableUser(user); // Revert to original user data
+    setEditableUser(user);
     setIsEditing(false);
-    setShowPassword(false);
   };
 
   if (!editableUser) return <p>Loading...</p>;
@@ -141,41 +135,73 @@ const ProfilePage = () => {
       </div>
 
       <div>
-        <label style={labelStyle}>PASSWORD:</label>
-        <input
-          type={showPassword ? 'text' : 'password'}
-          name="password"
-          value={editableUser.password}
-          onChange={handleChange}
-          style={inputStyle}
-          disabled={!isEditing}
-        />
-        {isEditing && (
-          <button onClick={togglePasswordVisibility} style={{ marginBottom: '20px' }}>
-            {showPassword ? 'Hide' : 'See'}
-          </button>
-        )}
+  <label style={labelStyle}>PASSWORD:</label>
+  {!isEditing ? (
+    <input
+      type="password"
+      value={'********'}
+      readOnly
+      style={{ ...inputStyle, letterSpacing: '0.3em' }}
+    />
+  ) : (
+    <input
+      type="text"
+      name="password"
+      value={editableUser.password}
+      onChange={handleChange}
+      style={inputStyle}
+      autoComplete="new-password"
+    />
+  )}
+</div>
+
+
+      <div>
+        <button
+          onClick={async () => {
+            try {
+              const res = await axios.post('http://localhost:5000/api/forgot-password', {
+                email: user.email,
+              });
+              alert(res.data.message || 'Reset link sent to your email.');
+            } catch {
+              alert('Failed to send reset link.');
+            }
+          }}
+          style={{
+            padding: '10px',
+            backgroundColor: '#f28b39',
+            color: 'white',
+            border: 'none',
+            borderRadius: '10px',
+            fontWeight: 'bold',
+            cursor: 'pointer',
+            marginTop: '10px',
+          }}
+          type="button"
+        >
+          Reset Password
+        </button>
       </div>
 
       {!isEditing ? (
-        <button onClick={() => setIsEditing(true)} style={{ marginRight: '10px' }}>
+        <button onClick={() => setIsEditing(true)} style={{ marginTop: '10px', marginRight: '10px' }}>
           Edit Profile
         </button>
       ) : (
         <>
-          <button onClick={handleSave} style={{ marginRight: '10px' }}>
+          <button onClick={handleSave} style={{ marginTop: '10px', marginRight: '10px' }}>
             Save Changes
           </button>
-          <button onClick={handleCancel} style={{ marginRight: '10px' }}>
+          <button onClick={handleCancel} style={{ marginTop: '10px', marginRight: '10px' }}>
             Cancel
           </button>
         </>
       )}
-      <button onClick={() => navigate('/landing')} style={{ marginTop: '10px' }}>
-  Back to HomePage
-</button>
 
-      <button onClick={handleLogout}>Log Out</button>
+      <button onClick={handleLogout} style={{ marginTop: '10px' }}>
+        Log Out
+      </button>
     </div>
   );
 };
