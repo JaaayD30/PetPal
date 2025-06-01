@@ -6,6 +6,8 @@ const PetDetailsPage = () => {
   const [editFormData, setEditFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [modalImage, setModalImage] = useState(null); // For modal image source
+
   const token = localStorage.getItem('token');
 
   const fetchPets = async () => {
@@ -34,7 +36,7 @@ const PetDetailsPage = () => {
     setEditFormData({
       name: pet.name || '',
       breed: pet.breed || '',
-      bloodType: pet.bloodType || '',
+      bloodType: pet.blood_type || '',
       age: pet.age || '',
       sex: pet.sex || '',
       kilos: pet.kilos || '',
@@ -54,7 +56,6 @@ const PetDetailsPage = () => {
   };
 
   const handleSaveClick = async (petId) => {
-    // Basic validation example:
     const requiredFields = ['name', 'breed', 'bloodType', 'age', 'sex', 'address', 'kilos', 'details'];
     for (const field of requiredFields) {
       if (!editFormData[field]) {
@@ -113,6 +114,9 @@ const PetDetailsPage = () => {
     }
   };
 
+  // Modal close handler
+  const closeModal = () => setModalImage(null);
+
   if (loading) return <p style={{ textAlign: 'center' }}>Loading pets...</p>;
   if (error) return <p style={{ textAlign: 'center', color: 'red' }}>{error}</p>;
 
@@ -120,13 +124,13 @@ const PetDetailsPage = () => {
     <div style={containerStyle}>
       <h2 style={headerStyle}>Your Pets</h2>
       {Array.isArray(pets) && pets.length === 0 && (
-  <p style={{ textAlign: 'center', color: '#777' }}>No pets found.</p>
-)}
+        <p style={{ textAlign: 'center', color: '#777' }}>No pets found.</p>
+      )}
       {pets.map((pet) => (
         <div key={pet.id} style={cardStyle}>
           {editPetId === pet.id ? (
             <>
-              {/* Input fields unchanged */}
+              {/* Edit inputs */}
               <input
                 style={inputStyle}
                 type="text"
@@ -212,6 +216,32 @@ const PetDetailsPage = () => {
               <p><strong>Weight:</strong> {pet.kilos} kg</p>
               <p><strong>Address:</strong> {pet.address}</p>
               <p><strong>Details:</strong> {pet.details}</p>
+
+              {/* Clickable thumbnails */}
+              {pet.images && pet.images.length > 0 && (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                  {pet.images.map((imgSrc, idx) => (
+                    <img
+                      key={idx}
+                      src={imgSrc}
+                      alt={`Pet Image ${idx + 1}`}
+                      style={{
+                        maxWidth: '150px',
+                        maxHeight: '150px',
+                        borderRadius: '8px',
+                        objectFit: 'cover',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+                        transition: 'transform 0.2s',
+                      }}
+                      onClick={() => setModalImage(imgSrc)}
+                      onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseOut={e => (e.currentTarget.style.transform = 'scale(1)')}
+                    />
+                  ))}
+                </div>
+              )}
+
               <button
                 style={editButtonStyle}
                 onClick={() => handleEditClick(pet)}
@@ -228,11 +258,58 @@ const PetDetailsPage = () => {
           )}
         </div>
       ))}
+
+      {/* Modal for image viewing */}
+      {modalImage && (
+        <div
+          onClick={closeModal}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+            cursor: 'pointer',
+          }}
+        >
+          <img
+            src={modalImage}
+            alt="Enlarged pet"
+            style={{
+              maxHeight: '90%',
+              maxWidth: '90%',
+              borderRadius: '12px',
+              boxShadow: '0 0 15px #fff',
+              cursor: 'auto',
+            }}
+            onClick={e => e.stopPropagation()} // Prevent modal close on image click
+          />
+          <button
+            onClick={closeModal}
+            style={{
+              position: 'fixed',
+              top: 20,
+              right: 30,
+              background: 'transparent',
+              border: 'none',
+              fontSize: '2rem',
+              color: '#fff',
+              cursor: 'pointer',
+              fontWeight: 'bold',
+            }}
+            aria-label="Close image"
+          >
+            &times;
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-// Keep your existing styles below or import them from where you defined them
+// Styles unchanged except adding hover transform on images handled inline above
 const cardStyle = {
   borderRadius: '12px',
   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
