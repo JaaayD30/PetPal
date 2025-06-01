@@ -5,13 +5,13 @@ import pkg from 'pg';
 import { OAuth2Client } from 'google-auth-library';
 import { authenticateToken, generateToken } from './jwtUtils.js';
 import dotenv from 'dotenv';
+import { sendResetPasswordEmail } from './emailService.js';
+import crypto from 'crypto';
+
+
 dotenv.config();
-
-
-
-
-
-
+console.log('EMAIL_USER:', process.env.EMAIL_USER);
+console.log('EMAIL_PASS:', process.env.EMAIL_PASS ? '***hidden***' : 'NOT SET');
 const { Pool } = pkg;
 const app = express();
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -67,7 +67,7 @@ app.post('/api/signup', async (req, res) => {
 
     res.status(200).json({
       message: 'Signup successful',
-      token,  // send token to client
+      token,
       user: {
         id: user.id,
         fullName: user.full_name,
@@ -100,16 +100,16 @@ app.post('/api/login', async (req, res) => {
 
     const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.password);
-  
+
     if (!isMatch) {
       return res.status(400).json({ message: 'Incorrect password' });
     }
-  
-    const token = generateToken(user); // <-- Add this line here
-  
+
+    const token = generateToken(user);
+
     res.status(200).json({
       message: 'Login successful',
-      token,  // <-- Send the generated token
+      token,
       user: {
         id: user.id,
         username: user.username,
@@ -156,6 +156,7 @@ app.post('/api/google-login', async (req, res) => {
     let userResult = await pool.query('SELECT * FROM "users1" WHERE email = $1', [email]);
 
     if (userResult.rows.length === 0) {
+      // Using email as username for simplicity; adjust as needed
       userResult = await pool.query(
         'INSERT INTO "users1" (full_name, username, email) VALUES ($1, $2, $3) RETURNING *',
         [name, email, email]
@@ -163,11 +164,11 @@ app.post('/api/google-login', async (req, res) => {
     }
 
     const user = userResult.rows[0];
-    const jwtToken = generateToken(user); // ✅ Renamed to avoid collision
+    const jwtToken = generateToken(user);
 
     res.status(200).json({
       message: 'Google login successful',
-      token: jwtToken, // ✅ Make sure you actually return the JWT token here
+      token: jwtToken,
       user: {
         id: user.id,
         username: user.username,
@@ -180,7 +181,6 @@ app.post('/api/google-login', async (req, res) => {
     res.status(500).json({ message: 'Google login failed' });
   }
 });
-
 
 // Update user details (except email)
 app.put('/api/update-user/:id', async (req, res) => {
@@ -224,7 +224,6 @@ app.put('/api/update-user/:id', async (req, res) => {
 });
 
 // ==================== PET ROUTES ====================
-
 
 // Add pet route with auth
 app.post('/api/pets', authenticateToken, async (req, res) => {
@@ -274,8 +273,6 @@ app.post('/api/pets', authenticateToken, async (req, res) => {
   }
 });
 
-
-
 app.get('/api/pets', authenticateToken, async (req, res) => {
   const userId = req.user.id;
 
@@ -312,19 +309,16 @@ app.put('/api/pets/:id', authenticateToken, async (req, res) => {
     details,
   } = req.body;
 
-  // Basic validation (optional, can be more strict)
   if (!name || !breed || !bloodType || !age || !sex || !address || !kilos || !details) {
     return res.status(400).json({ message: 'Missing required pet fields' });
   }
 
   try {
-    // Check if pet belongs to this user first
     const petCheck = await pool.query('SELECT * FROM pets WHERE id = $1 AND user_id = $2', [petId, userId]);
     if (petCheck.rows.length === 0) {
       return res.status(404).json({ message: 'Pet not found or unauthorized' });
     }
 
-    // Update pet info
     const updateResult = await pool.query(
       `UPDATE pets SET
         name = $1,
@@ -347,34 +341,72 @@ app.put('/api/pets/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/pets/:id', authenticateToken, async (req, res) => {
-  const petId = req.params.id;
-  const userId = req.user.id;
+app.post('/api/forgot-password', async (req, res) => {
+  const { email } = req.body;
 
   try {
-    // Check if pet belongs to this user first
-    const petCheck = await pool.query('SELECT * FROM pets WHERE id = $1 AND user_id = $2', [petId, userId]);
-    if (petCheck.rows.length === 0) {
-      return res.status(404).json({ message: 'Pet not found or unauthorized' });
+    const user = await pool.query('SELECT * FROM users1 WHERE email = $1', [email]);
+
+    // Even if not found, return 200 to prevent email enumeration
+    if (user.rows.length === 0) {
+      return res.status(200).json({ message: 'If your email is registered, a reset link will be sent.' });
     }
 
-    // Delete pet images first (if you want to clean up)
-    await pool.query('DELETE FROM pet_images WHERE pet_id = $1', [petId]);
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 3600000); // 1 hour
 
-    // Delete pet record
-    await pool.query('DELETE FROM pets WHERE id = $1', [petId]);
+    await pool.query(
+      'UPDATE users1 SET reset_token = $1, reset_token_expiry = $2 WHERE email = $3',
+      [token, expiry, email]
+    );
 
-    res.status(200).json({ message: 'Pet deleted successfully' });
+    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+
+    try {
+      await sendResetPasswordEmail(email, resetLink);
+    } catch (emailErr) {
+      console.error('Error sending email:', emailErr);
+      return res.status(500).json({ message: 'Failed to send email. Please try again.' });
+    }
+
+    res.json({ message: 'If your email is registered, a reset link will be sent.' });
   } catch (err) {
-    console.error('Error deleting pet:', err);
-    res.status(500).json({ message: 'Failed to delete pet' });
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 
+app.post('/api/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  try {
+    const user = await pool.query(
+      'SELECT * FROM users1 WHERE reset_token = $1 AND reset_token_expiry > NOW()',
+      [token]
+    );
+
+    if (user.rows.length === 0) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await pool.query(
+      'UPDATE users1 SET password = $1, reset_token = NULL, reset_token_expiry = NULL WHERE reset_token = $2',
+      [hashedPassword, token]
+    );
+
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ==================== Start server ====================
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
-

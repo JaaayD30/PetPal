@@ -7,6 +7,8 @@ import ConfirmationPage from './Pages/ConfirmationPage';
 import LandingPage from './Pages/LandingPage';
 import ProfilePage from './Pages/Profile';
 import PetDetails from './Pages/PetDetails';
+import ResetPassword from './Pages/ResetPassword';
+import ForgotPassword from './Pages/ForgotPassword';
 
 // Import UserDetails if it's a separate component you want to use
 // import UserDetails from './UserDetails'; 
@@ -32,6 +34,8 @@ function App() {
           <Route path="/landing" element={<LandingPage />} />
           <Route path='/profile' element={<ProfilePage/>} />
           <Route path='/pets' element={<PetDetails/>} />
+          <Route path='/reset-password' element={<ResetPassword/>} />
+          <Route path='/forgot-password' element={<ForgotPassword/>} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>

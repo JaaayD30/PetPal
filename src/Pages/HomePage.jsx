@@ -159,6 +159,25 @@ const HomePage = () => {
             />
           </div>
         </div>
+
+        {/* Forgot Password Link */}
+<div style={{ marginTop: '10px', textAlign: 'right' }}>
+  <button
+    onClick={() => navigate('/forgot-password')}
+    style={{
+      background: 'none',
+      border: 'none',
+      color: '#f28b39',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: 'bold',
+      padding: 0,
+    }}
+  >
+    Forgot Password?
+  </button>
+</div>
+
       </div>
     </div>
   );
