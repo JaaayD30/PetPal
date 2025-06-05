@@ -8,8 +8,12 @@ import ConfirmationPage from './Pages/ConfirmationPage';
 import LandingPage from './Pages/LandingPage';
 import ProfilePage from './Pages/Profile';
 
+<<<<<<< HEAD
 // Import UserDetails if it's a separate component you want to use
 // import UserDetails from './UserDetails'; 
+=======
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+>>>>>>> 1bd26ddfc613bd6bc7be3676bbd2a63b30df674e
 
 function App() {
   return (
