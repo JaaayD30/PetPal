@@ -10,8 +10,6 @@ import PetDetails from './Pages/PetDetails';
 import ResetPassword from './Pages/ResetPassword';
 import ForgotPassword from './Pages/ForgotPassword';
 
-// Import UserDetails if it's a separate component you want to use
-// import UserDetails from './UserDetails'; 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function App() {

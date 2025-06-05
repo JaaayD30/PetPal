@@ -144,8 +144,8 @@ const LandingPage = () => {
           {dropdownOpen && (
             <div style={styles.dropdown}>
               <button onClick={handleProfile} style={styles.dropdownItem}>View Profile</button>
-              <button onClick={handleLogout} style={styles.dropdownItem}>Log Out</button>
               <button onClick={handlePets} style={styles.dropdownItem}>Pets</button>
+              <button onClick={handleLogout} style={styles.dropdownItem}>Log Out</button>
             </div>
           )}
         </div>
@@ -303,15 +303,6 @@ const LandingPage = () => {
                 style={styles.formInput}
               />
 
-              <label style={styles.formLabel}>Address</label>
-              <textarea
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-                style={{ ...styles.formInput, height: '60px' }}
-              />
-
               <label style={styles.formLabel}>Weight (Kilos)</label>
               <input
                 type="number"
@@ -321,6 +312,15 @@ const LandingPage = () => {
                 required
                 min="0"
                 style={styles.formInput}
+              />
+
+              <label style={styles.formLabel}>Address</label>
+              <textarea
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                required
+                style={{ ...styles.formInput, height: '60px' }}
               />
 
               <label style={styles.formLabel}>Details</label>
@@ -355,17 +355,10 @@ const LandingPage = () => {
 };
 
 const styles = {
-  pageContainer: {
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    backgroundColor: '#eef4f7',
-    minHeight: '100vh',
-    paddingBottom: '4rem',
-  },
-
   navbar: {
-    backgroundColor: '#6B9AC4',
+    backgroundColor: '#f28b39',
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'center',  // Center all children horizontally
     padding: '0.75rem 1rem',
     color: 'white',
     alignItems: 'center',
@@ -377,15 +370,16 @@ const styles = {
   logo: {
     fontWeight: 'bold',
     fontSize: '1.5rem',
+    marginRight: 'auto', // Push logo to the left
   },
 
   searchContainer: {
-    flex: 1,
-    marginLeft: '1rem',
+    width: '300px',       // Fixed width to make it shorter
+    margin: '0 auto',    // Center the container itself
   },
 
   searchInput: {
-    width: '100%',
+    width: '100%',      // Fill the container width
     padding: '0.4rem 0.75rem',
     borderRadius: '4px',
     border: 'none',
@@ -394,6 +388,7 @@ const styles = {
 
   profileSection: {
     position: 'relative',
+    marginLeft: 'auto', // Push profile section to the right
   },
 
   profileIcon: {
@@ -403,6 +398,7 @@ const styles = {
     fontSize: '1.4rem',
     cursor: 'pointer',
   },
+
 
   dropdown: {
     position: 'absolute',
@@ -485,7 +481,7 @@ detailsSection: {
     fontSize: '1rem',
     borderRadius: '5px',
     border: 'none',
-    backgroundColor: '#5882c6',
+    backgroundColor: '#f28b39',
     color: 'white',
     cursor: 'pointer',
     userSelect: 'none',
@@ -607,7 +603,7 @@ detailsSection: {
     height: '50px',
     borderRadius: '50%',
     fontSize: '2rem',
-    backgroundColor: '#357edd',
+    backgroundColor: '#f28b39',
     color: 'white',
     border: 'none',
     cursor: 'pointer',

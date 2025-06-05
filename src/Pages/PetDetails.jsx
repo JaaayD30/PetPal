@@ -309,23 +309,27 @@ const PetDetailsPage = () => {
   );
 };
 
-// Styles unchanged except adding hover transform on images handled inline above
 const cardStyle = {
   borderRadius: '12px',
   boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
   padding: '20px',
-  marginBottom: '20px',
   backgroundColor: '#fff',
   maxWidth: '400px',
   width: '100%',
+  flex: '0 0 400px',  // fix card width inside flex container
 };
+
 
 const containerStyle = {
   maxWidth: '900px',
-  margin: '40px auto',
-  padding: '0 20px',
+  margin: '40px auto',  // centers container horizontally with vertical spacing
+  padding: '20px',      // add some padding inside the container
   fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',  // centers children horizontally
 };
+
 
 const headerStyle = {
   textAlign: 'center',
