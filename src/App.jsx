@@ -6,14 +6,15 @@ import UserDetailsPage from './Pages/UserDetailsPage'; // Keep or replace with U
 import ConfirmationPage from './Pages/ConfirmationPage';
 import LandingPage from './Pages/LandingPage';
 import ProfilePage from './Pages/Profile';
+import PetDetails from './Pages/PetDetails';
+import ResetPassword from './Pages/ResetPassword';
+import ForgotPassword from './Pages/ForgotPassword';
 
-// Import UserDetails if it's a separate component you want to use
-// import UserDetails from './UserDetails'; 
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId="523925700451-f5rmmu0jghctco3qr5l293orh6d8qgcu.apps.googleusercontent.com">
-      {/* Wrap with GoogleOAuthProvider */}
+    <GoogleOAuthProvider clientId={clientId}>
       <Router>
         <nav>
           <ul style={{ display: 'flex', listStyleType: 'none' }}>
@@ -30,6 +31,9 @@ function App() {
           <Route path="/confirmation" element={<ConfirmationPage />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path='/profile' element={<ProfilePage/>} />
+          <Route path='/pets' element={<PetDetails/>} />
+          <Route path='/reset-password' element={<ResetPassword/>} />
+          <Route path='/forgot-password' element={<ForgotPassword/>} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>
