@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
-  const token = localStorage.getItem('token'); // JWT or OAuth token key
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -21,12 +21,12 @@ const LandingPage = () => {
     kilos: '',
     details: '',
   });
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const [expandedPetIndex, setExpandedPetIndex] = useState(null);
 
   const toggleExpandPet = (index) => {
     setExpandedPetIndex(prev => (prev === index ? null : index));
   };
-  
 
   useEffect(() => {
     fetch('http://localhost:5000/api/all-pets')
@@ -40,20 +40,15 @@ const LandingPage = () => {
         setLoading(false);
       });
   }, []);
-  
-
-  // Show loading state if pets not loaded yet
 
   const currentPet = pets[currentIndex];
 
   const handlePrev = () => {
     setCurrentIndex(prev => (prev === 0 ? pets.length - 1 : prev - 1));
-
   };
 
   const handleNext = () => {
     setCurrentIndex(prev => (prev === pets.length - 1 ? 0 : prev + 1));
-
   };
 
   const handleLogout = () => {
@@ -74,7 +69,6 @@ const LandingPage = () => {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files).slice(0, 5);
-    // Read all files asynchronously and update images array once all are loaded
     Promise.all(
       files.map(file =>
         new Promise((resolve) => {
@@ -166,19 +160,102 @@ const LandingPage = () => {
 <div style={styles.cardNavigation}>
   <button onClick={handlePrev} style={styles.navButton}>Prev</button>
 
-  {/* Only show clickable card (not expanded) if not expanded */}
   {expandedPetIndex !== currentIndex && (
+  <div
+    style={styles.card}
+    onClick={() => toggleExpandPet(currentIndex)}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        toggleExpandPet(currentIndex);
+      }
+    }}
+  >
+    {loading ? (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+    ) : pets.length === 0 ? (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
+    ) : (
+      <>
+        <h2>{pets[currentIndex].name}</h2>
+        <div style={styles.cardContent}>
+          <div style={styles.imageSection}>
+            {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
+              pets[currentIndex].images.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`${pets[currentIndex].name} image ${idx + 1}`}
+                  style={styles.largeImage}
+                  loading="lazy"
+                  // **REMOVE this onClick to disable clicking on images when collapsed**
+                  // onClick={(e) => {
+                  //   e.stopPropagation();
+                  //   setFullscreenImage(img);
+                  // }}
+                />
+              ))
+            ) : (
+              <p>No images available</p>
+            )}
+
+{fullscreenImage && (
+  <div
+    style={styles.fullscreenOverlay}
+    onClick={() => setFullscreenImage(null)}
+    role="dialog"
+    aria-modal="true"
+  >
+    <img
+      src={fullscreenImage}
+      alt="Fullscreen pet"
+      style={styles.fullscreenImage}
+      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image itself
+    />
+    <button
+      onClick={() => setFullscreenImage(null)}
+      style={styles.fullscreenCloseButton}
+      aria-label="Close fullscreen image"
+    >
+      ×
+    </button>
+  </div>
+)}
+            </div>
+            <div style={styles.detailsSection}>
+              <p><b>Breed:</b> {pets[currentIndex].breed}</p>
+              <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
+              <p><b>Age:</b> {pets[currentIndex].age}</p>
+              <p><b>Sex:</b> {pets[currentIndex].sex}</p>
+              <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
+              <p><b>Address:</b> {pets[currentIndex].address}</p>
+              <p><b>Details:</b> {pets[currentIndex].details}</p>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )}
+
+{/* Expanded modal */}
+{expandedPetIndex === currentIndex && (
+  <div
+    style={styles.modalOverlay}
+    onClick={() => {
+      if (!fullscreenImage) {
+        toggleExpandPet(null); // Close modal only if fullscreen image not open
+      } else {
+        setFullscreenImage(null); // If fullscreen image open, close that first
+      }
+    }}
+  >
     <div
-      style={styles.card}
-      onClick={() => toggleExpandPet(currentIndex)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          toggleExpandPet(currentIndex);
-        }
-      }}
+      style={{ ...styles.card, ...styles.cardExpanded }}
+      onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking inside
+      role="dialog"
+      tabIndex={-1}
     >
       {loading ? (
         <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
@@ -197,10 +274,41 @@ const LandingPage = () => {
                     alt={`${pets[currentIndex].name} image ${idx + 1}`}
                     style={styles.largeImage}
                     loading="lazy"
+                    onClick={() => setFullscreenImage(img)} // open fullscreen image
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setFullscreenImage(img);
+                      }
+                    }}
                   />
                 ))
               ) : (
                 <p>No images available</p>
+              )}
+
+              {fullscreenImage && (
+                <div
+                  style={styles.fullscreenOverlay}
+                  onClick={() => setFullscreenImage(null)}
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  <img
+                    src={fullscreenImage}
+                    alt="Fullscreen pet"
+                    style={styles.fullscreenImage}
+                    onClick={(e) => e.stopPropagation()} // prevent closing when clicking image
+                  />
+                  <button
+                    onClick={() => setFullscreenImage(null)}
+                    style={styles.fullscreenCloseButton}
+                    aria-label="Close fullscreen image"
+                  >
+                    ×
+                  </button>
+                </div>
               )}
             </div>
             <div style={styles.detailsSection}>
@@ -216,58 +324,9 @@ const LandingPage = () => {
         </>
       )}
     </div>
-  )}
+  </div>
+)}
 
-  {/* Expanded modal */}
-  {expandedPetIndex === currentIndex && (
-    <div
-      style={styles.modalOverlay}
-      onClick={() => toggleExpandPet(null)} // Close modal on overlay click
-    >
-      <div
-        style={{ ...styles.card, ...styles.cardExpanded }}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside card
-        role="dialog"
-        tabIndex={-1}
-      >
-        {loading ? (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-        ) : pets.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
-        ) : (
-          <>
-            <h2>{pets[currentIndex].name}</h2>
-            <div style={styles.cardContent}>
-              <div style={styles.imageSection}>
-                {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
-                  pets[currentIndex].images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img}
-                      alt={`${pets[currentIndex].name} image ${idx + 1}`}
-                      style={styles.largeImage}
-                      loading="lazy"
-                    />
-                  ))
-                ) : (
-                  <p>No images available</p>
-                )}
-              </div>
-              <div style={styles.detailsSection}>
-                <p><b>Breed:</b> {pets[currentIndex].breed}</p>
-                <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
-                <p><b>Age:</b> {pets[currentIndex].age}</p>
-                <p><b>Sex:</b> {pets[currentIndex].sex}</p>
-                <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
-                <p><b>Address:</b> {pets[currentIndex].address}</p>
-                <p><b>Details:</b> {pets[currentIndex].details}</p>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )}
 
   <button onClick={handleNext} style={styles.navButton}>Next</button>
 </div>
@@ -420,6 +479,38 @@ const LandingPage = () => {
 };
 
 const styles = {
+  fullscreenOverlay: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1500,
+    cursor: 'pointer',
+  },
+
+  fullscreenImage: {
+    maxWidth: '90%',
+    maxHeight: '90%',
+    borderRadius: '10px',
+    boxShadow: '0 0 20px rgba(255, 255, 255, 0.3)',
+    cursor: 'default',
+  },
+
+  fullscreenCloseButton: {
+    position: 'fixed',
+    top: '20px',
+    right: '30px',
+    fontSize: '2rem',
+    color: 'white',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    userSelect: 'none',
+    zIndex: 1600,
+  },
+
   // Nav & layout
   cardNavigation: {
     marginTop: '2rem',
