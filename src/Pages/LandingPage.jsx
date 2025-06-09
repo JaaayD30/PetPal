@@ -9,7 +9,6 @@ const LandingPage = () => {
   const [showForm, setShowForm] = useState(false);
   const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     images: [],
@@ -22,6 +21,12 @@ const LandingPage = () => {
     kilos: '',
     details: '',
   });
+  const [expandedPetIndex, setExpandedPetIndex] = useState(null);
+
+  const toggleExpandPet = (index) => {
+    setExpandedPetIndex(prev => (prev === index ? null : index));
+  };
+  
 
   useEffect(() => {
     fetch('http://localhost:5000/api/all-pets')
@@ -43,12 +48,12 @@ const LandingPage = () => {
 
   const handlePrev = () => {
     setCurrentIndex(prev => (prev === 0 ? pets.length - 1 : prev - 1));
-    setSelectedImage(null);
+
   };
 
   const handleNext = () => {
     setCurrentIndex(prev => (prev === pets.length - 1 ? 0 : prev + 1));
-    setSelectedImage(null);
+
   };
 
   const handleLogout = () => {
@@ -157,56 +162,116 @@ const LandingPage = () => {
         <p style={styles.subtitle}>Connecting Pet Owners with Potential Blood Donors</p>
       </header>
 
-      {/* PET CARD + NAVIGATION */}
-      <div style={styles.cardNavigation}>
+{/* PET CARD + NAVIGATION */}
+<div style={styles.cardNavigation}>
   <button onClick={handlePrev} style={styles.navButton}>Prev</button>
 
-  <div style={styles.card}>
-    {loading ? (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-    ) : pets.length === 0 ? (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
-    ) : (
-      <>
-        <h2>{pets[currentIndex].name}</h2>
-        <div style={styles.cardContent}>
-          <div style={styles.imageSection}>
-            {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
-              pets[currentIndex].images.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`${pets[currentIndex].name} image ${idx + 1}`}
-                  style={styles.largeImage}
-                  onClick={() => setSelectedImage(img)}
-                  loading="lazy"
-                />
-              ))
-            ) : (
-              <p>No images available</p>
-            )}
+  {/* Only show clickable card (not expanded) if not expanded */}
+  {expandedPetIndex !== currentIndex && (
+    <div
+      style={styles.card}
+      onClick={() => toggleExpandPet(currentIndex)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          toggleExpandPet(currentIndex);
+        }
+      }}
+    >
+      {loading ? (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+      ) : pets.length === 0 ? (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
+      ) : (
+        <>
+          <h2>{pets[currentIndex].name}</h2>
+          <div style={styles.cardContent}>
+            <div style={styles.imageSection}>
+              {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
+                pets[currentIndex].images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt={`${pets[currentIndex].name} image ${idx + 1}`}
+                    style={styles.largeImage}
+                    loading="lazy"
+                  />
+                ))
+              ) : (
+                <p>No images available</p>
+              )}
+            </div>
+            <div style={styles.detailsSection}>
+              <p><b>Breed:</b> {pets[currentIndex].breed}</p>
+              <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
+              <p><b>Age:</b> {pets[currentIndex].age}</p>
+              <p><b>Sex:</b> {pets[currentIndex].sex}</p>
+              <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
+              <p><b>Address:</b> {pets[currentIndex].address}</p>
+              <p><b>Details:</b> {pets[currentIndex].details}</p>
+            </div>
           </div>
-          <div style={styles.detailsSection}>
-            <p><b>Breed:</b> {pets[currentIndex].breed}</p>
-            <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
-            <p><b>Age:</b> {pets[currentIndex].age}</p>
-            <p><b>Sex:</b> {pets[currentIndex].sex}</p>
-            <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
-            <p><b>Address:</b> {pets[currentIndex].address}</p>
-            <p><b>Details:</b> {pets[currentIndex].details}</p>
-          </div>
-        </div>
-        {selectedImage && (
-          <div style={styles.modal} onClick={() => setSelectedImage(null)}>
-            <img src={selectedImage} alt="Selected pet" style={styles.modalImage} />
-          </div>
+        </>
+      )}
+    </div>
+  )}
+
+  {/* Expanded modal */}
+  {expandedPetIndex === currentIndex && (
+    <div
+      style={styles.modalOverlay}
+      onClick={() => toggleExpandPet(null)} // Close modal on overlay click
+    >
+      <div
+        style={{ ...styles.card, ...styles.cardExpanded }}
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside card
+        role="dialog"
+        tabIndex={-1}
+      >
+        {loading ? (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+        ) : pets.length === 0 ? (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
+        ) : (
+          <>
+            <h2>{pets[currentIndex].name}</h2>
+            <div style={styles.cardContent}>
+              <div style={styles.imageSection}>
+                {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
+                  pets[currentIndex].images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img}
+                      alt={`${pets[currentIndex].name} image ${idx + 1}`}
+                      style={styles.largeImage}
+                      loading="lazy"
+                    />
+                  ))
+                ) : (
+                  <p>No images available</p>
+                )}
+              </div>
+              <div style={styles.detailsSection}>
+                <p><b>Breed:</b> {pets[currentIndex].breed}</p>
+                <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
+                <p><b>Age:</b> {pets[currentIndex].age}</p>
+                <p><b>Sex:</b> {pets[currentIndex].sex}</p>
+                <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
+                <p><b>Address:</b> {pets[currentIndex].address}</p>
+                <p><b>Details:</b> {pets[currentIndex].details}</p>
+              </div>
+            </div>
+          </>
         )}
-      </>
-    )}
-  </div>
+      </div>
+    </div>
+  )}
 
   <button onClick={handleNext} style={styles.navButton}>Next</button>
 </div>
+
 
 
       {/* POPUP FORM */}
@@ -355,10 +420,90 @@ const LandingPage = () => {
 };
 
 const styles = {
+  // Nav & layout
+  cardNavigation: {
+    marginTop: '2rem',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+
+  navButton: {
+    padding: '0.5rem 1rem',
+    fontSize: '1rem',
+    borderRadius: '5px',
+    border: 'none',
+    backgroundColor: '#f28b39',
+    color: 'white',
+    cursor: 'pointer',
+    userSelect: 'none',
+  },
+
+  // Card styles
+  card: {
+    cursor: 'pointer',
+    backgroundColor: 'white',
+    padding: '1rem 1.5rem',
+    borderRadius: '8px',
+    boxShadow: '0 3px 8px rgba(0,0,0,0.1)',
+    maxWidth: '400px',
+    margin: '0 1rem',
+  },
+
+  cardExpanded: {
+    maxWidth: '600px',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+    cursor: 'default', // Not clickable when expanded
+  },
+
+  // Modal overlay for expanded pet card
+  modalOverlay: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+
+  // Card content inside the card/modal
+  cardContent: {
+    display: 'flex',
+    gap: '1.5rem',
+    alignItems: 'flex-start',
+  },
+
+  imageSection: {
+    flex: '1 1 40%',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    justifyContent: 'center',
+  },
+
+  largeImage: {
+    width: '150px',
+    height: '150px',
+    objectFit: 'cover',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+  },
+
+  detailsSection: {
+    flex: '1 1 60%',
+    fontSize: '1.1rem',
+    color: '#333',
+    lineHeight: '1.4',
+  },
+
+  // Other styles (navbar, search, dropdown, form, etc.) remain unchanged
   navbar: {
     backgroundColor: '#f28b39',
     display: 'flex',
-    justifyContent: 'center',  // Center all children horizontally
+    justifyContent: 'center',
     padding: '0.75rem 1rem',
     color: 'white',
     alignItems: 'center',
@@ -370,16 +515,16 @@ const styles = {
   logo: {
     fontWeight: 'bold',
     fontSize: '1.5rem',
-    marginRight: 'auto', // Push logo to the left
+    marginRight: 'auto',
   },
 
   searchContainer: {
-    width: '300px',       // Fixed width to make it shorter
-    margin: '0 auto',    // Center the container itself
+    width: '300px',
+    margin: '0 auto',
   },
 
   searchInput: {
-    width: '100%',      // Fill the container width
+    width: '100%',
     padding: '0.4rem 0.75rem',
     borderRadius: '4px',
     border: 'none',
@@ -388,7 +533,7 @@ const styles = {
 
   profileSection: {
     position: 'relative',
-    marginLeft: 'auto', // Push profile section to the right
+    marginLeft: 'auto',
   },
 
   profileIcon: {
@@ -398,7 +543,6 @@ const styles = {
     fontSize: '1.4rem',
     cursor: 'pointer',
   },
-
 
   dropdown: {
     position: 'absolute',
@@ -435,65 +579,6 @@ const styles = {
     fontSize: '1.1rem',
     color: '#557a95',
     marginTop: 0,
-  },
-
-  cardNavigation: {
-    marginTop: '2rem',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-
-  
-cardContent: {
-  display: 'flex',
-  gap: '1.5rem',
-  alignItems: 'flex-start',
-},
-
-imageSection: {
-  flex: '1 1 40%',
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: '10px',
-  justifyContent: 'center',
-},
-
-largeImage: {
-  width: '150px',
-  height: '150px',
-  objectFit: 'cover',
-  borderRadius: '8px',
-  cursor: 'pointer',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-},
-
-detailsSection: {
-  flex: '1 1 60%',
-  fontSize: '1.1rem',
-  color: '#333',
-  lineHeight: '1.4',
-},
-
-  navButton: {
-    padding: '0.5rem 1rem',
-    fontSize: '1rem',
-    borderRadius: '5px',
-    border: 'none',
-    backgroundColor: '#f28b39',
-    color: 'white',
-    cursor: 'pointer',
-    userSelect: 'none',
-  },
-
-  card: {
-    backgroundColor: 'white',
-    padding: '1rem 1.5rem',
-    borderRadius: '8px',
-    boxShadow: '0 3px 8px rgba(0,0,0,0.1)',
-    maxWidth: '900px',
-    margin: '0 1rem',
   },
 
   imagesContainer: {
@@ -611,5 +696,6 @@ detailsSection: {
     userSelect: 'none',
   },
 };
+
 
 export default LandingPage;
