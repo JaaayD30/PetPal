@@ -10,6 +10,20 @@ const LandingPage = () => {
   const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const fetchPets = () => {
+    setLoading(true);
+    fetch('http://localhost:5000/api/all-pets')
+      .then(res => res.json())
+      .then(data => {
+        setPets(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching pets:', err);
+        setLoading(false);
+      });
+  };
+  
   const [formData, setFormData] = useState({
     images: [],
     name: '',
@@ -29,17 +43,9 @@ const LandingPage = () => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/all-pets')
-      .then(res => res.json())
-      .then(data => {
-        setPets(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching pets:', err);
-        setLoading(false);
-      });
+    fetchPets();
   }, []);
+  
 
   const currentPet = pets[currentIndex];
 
@@ -111,6 +117,7 @@ const LandingPage = () => {
 
       const data = await response.json();
       alert('Pet added successfully!');
+      fetchPets();
       setPets(prev => [...prev, data.pet]);
       setShowForm(false);
       setFormData({
