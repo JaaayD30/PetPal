@@ -9,6 +9,7 @@ import ProfilePage from './Pages/Profile';
 import PetDetails from './Pages/PetDetails';
 import ResetPassword from './Pages/ResetPassword';
 import ForgotPassword from './Pages/ForgotPassword';
+import FavoritesPage from './Pages/FavoritesPage';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -34,6 +35,7 @@ function App() {
           <Route path='/pets' element={<PetDetails/>} />
           <Route path='/reset-password' element={<ResetPassword/>} />
           <Route path='/forgot-password' element={<ForgotPassword/>} />
+          <Route path='/favorites' element={<FavoritesPage/>} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>

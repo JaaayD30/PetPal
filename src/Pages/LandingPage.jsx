@@ -6,24 +6,20 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const toggleDropdown = () => setDropdownOpen(open => !open);
+  const handleProfile = () => navigate('/profile');
+  const handleFavorites = () => navigate ('/favorites');
+  const handlePets = () => navigate('/pets');
+  const handleLogout = () => {
+    localStorage.removeItem('googleEmail');
+    localStorage.removeItem('token');
+    navigate('/');
+    console.log('User logged out');
+  };
   const [showForm, setShowForm] = useState(false);
   const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const fetchPets = () => {
-    setLoading(true);
-    fetch('http://localhost:5000/api/all-pets')
-      .then(res => res.json())
-      .then(data => {
-        setPets(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching pets:', err);
-        setLoading(false);
-      });
-  };
-  
   const [formData, setFormData] = useState({
     images: [],
     name: '',
@@ -49,6 +45,21 @@ const LandingPage = () => {
 
   const currentPet = pets[currentIndex];
 
+  const fetchPets = () => {
+    setLoading(true);
+    fetch('http://localhost:5000/api/all-pets')
+      .then(res => res.json())
+      .then(data => {
+        setPets(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching pets:', err);
+        setLoading(false);
+      });
+  };
+  
+
   const handlePrev = () => {
     setCurrentIndex(prev => (prev === 0 ? pets.length - 1 : prev - 1));
   };
@@ -56,17 +67,6 @@ const LandingPage = () => {
   const handleNext = () => {
     setCurrentIndex(prev => (prev === pets.length - 1 ? 0 : prev + 1));
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem('googleEmail');
-    localStorage.removeItem('token');
-    navigate('/');
-    console.log('User logged out');
-  };
-
-  const handleProfile = () => navigate('/profile');
-  const handlePets = () => navigate('/pets');
-  const toggleDropdown = () => setDropdownOpen(open => !open);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -151,6 +151,7 @@ const LandingPage = () => {
             <div style={styles.dropdown}>
               <button onClick={handleProfile} style={styles.dropdownItem}>View Profile</button>
               <button onClick={handlePets} style={styles.dropdownItem}>Pets</button>
+              <button onClick={handleFavorites} style={styles.dropdownItem}>Favorites</button>
               <button onClick={handleLogout} style={styles.dropdownItem}>Log Out</button>
             </div>
           )}
