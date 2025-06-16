@@ -425,6 +425,39 @@ app.get('/api/all-pets', async (req, res) => {
   }
 });
 
+app.delete('/api/pets/:id', authenticateToken, async (req, res) => {
+  const petId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    // Check if the pet belongs to the user
+    const petCheck = await pool.query(
+      'SELECT * FROM pets WHERE id = $1 AND user_id = $2',
+      [petId, userId]
+    );
+
+    if (petCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Pet not found or unauthorized' });
+    }
+
+    // Delete related favorites
+    await pool.query('DELETE FROM favorites WHERE pet_id = $1', [petId]);
+
+    // Delete pet images
+    await pool.query('DELETE FROM pet_images WHERE pet_id = $1', [petId]);
+
+    // Delete the pet
+    await pool.query('DELETE FROM pets WHERE id = $1 AND user_id = $2', [petId, userId]);
+
+    res.status(200).json({ message: 'Pet deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting pet:', err);
+    res.status(500).json({ message: 'Failed to delete pet' });
+  }
+});
+
+
+
 
 // ==================== Start server ====================
 const PORT = process.env.PORT || 5000;

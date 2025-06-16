@@ -265,6 +265,22 @@ const LandingPage = () => {
       role="dialog"
       tabIndex={-1}
     >
+{pets.map((pet) => (
+  <div key={pet.id}>
+    {/* Show pet data */}
+    <button
+      style={styles.heartButton}
+      onClick={() => handleFavorite(pet.id)}
+      aria-label="Heart pet"
+    >
+      ❤️
+    </button>
+  </div>
+))}
+
+
+
+
       {loading ? (
         <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
       ) : pets.length === 0 ? (
@@ -551,22 +567,31 @@ const styles = {
   },
 
   cardExpanded: {
+    position: 'relative',
+    backgroundColor: '#fff',
+    padding: '2rem',
+    borderRadius: '10px',
     maxWidth: '600px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-    cursor: 'default', // Not clickable when expanded
+    width: '90%',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    overflowY: 'auto',
+    height: '65vh',
+    maxHeight: '90vh',
   },
 
   // Modal overlay for expanded pet card
   modalOverlay: {
     position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     display: 'flex',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 1000,
   },
-
   // Card content inside the card/modal
   cardContent: {
     display: 'flex',
@@ -717,6 +742,17 @@ const styles = {
     borderRadius: '10px',
     boxShadow: '0 0 15px rgba(255,255,255,0.5)',
   },
+
+  heartButton: {
+    position: 'absolute',
+    bottom: '1rem',
+    left: '1rem',
+    background: 'none',
+    border: 'none',
+    fontSize: '2rem',
+    cursor: 'pointer',
+  },
+  
 
   popupOverlay: {
     position: 'fixed',
