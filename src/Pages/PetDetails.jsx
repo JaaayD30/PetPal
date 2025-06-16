@@ -42,6 +42,7 @@ const PetDetailsPage = () => {
       kilos: pet.kilos || '',
       address: pet.address || '',
       details: pet.details || '',
+      images: pet.images || '',
     });
   };
 
@@ -92,6 +93,29 @@ const PetDetailsPage = () => {
     }
   };
 
+  const handleEditImageChange = (e) => {
+    const files = Array.from(e.target.files);
+  
+    // Prevent more than 5 total images
+    const total = editFormData.images.length + files.length;
+    const remaining = 5 - editFormData.images.length;
+    const filesToAdd = files.slice(0, remaining);
+  
+    setEditFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...filesToAdd],
+    }));
+  };
+  
+  const handleRemoveEditImage = (indexToRemove) => {
+    setEditFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove),
+    }));
+  };
+  
+  
+
   const handleDeleteClick = async (petId) => {
     if (!window.confirm('Are you sure you want to delete this pet?')) return;
 
@@ -129,83 +153,162 @@ const PetDetailsPage = () => {
       {pets.map((pet) => (
         <div key={pet.id} style={cardStyle}>
           {editPetId === pet.id ? (
-            <>
-              {/* Edit inputs */}
-              <input
-                style={inputStyle}
-                type="text"
-                name="name"
-                value={editFormData.name}
-                onChange={handleInputChange}
-                placeholder="Name"
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="breed"
-                value={editFormData.breed}
-                onChange={handleInputChange}
-                placeholder="Breed"
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="bloodType"
-                value={editFormData.bloodType}
-                onChange={handleInputChange}
-                placeholder="Blood Type"
-              />
-              <input
-                style={inputStyle}
-                type="number"
-                name="age"
-                value={editFormData.age}
-                onChange={handleInputChange}
-                placeholder="Age in months"
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="sex"
-                value={editFormData.sex}
-                onChange={handleInputChange}
-                placeholder="Sex"
-              />
-              <input
-                style={inputStyle}
-                type="number"
-                name="kilos"
-                value={editFormData.kilos}
-                onChange={handleInputChange}
-                placeholder="Weight in kg"
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="address"
-                value={editFormData.address}
-                onChange={handleInputChange}
-                placeholder="Address"
-              />
-              <textarea
-                style={{ ...inputStyle, height: '60px' }}
-                name="details"
-                value={editFormData.details}
-                onChange={handleInputChange}
-                placeholder="Details"
-              />
-              <div>
-                <button
-                  style={saveButtonStyle}
-                  onClick={() => handleSaveClick(pet.id)}
-                >
-                  Save
-                </button>
-                <button style={cancelButtonStyle} onClick={handleCancelClick}>
-                  Cancel
-                </button>
-              </div>
-            </>
+ <>
+{/* Edit Image Section */}
+<label style={styles.formLabel}>Upload Images (Max 5)</label>
+
+{/* Upload Button */}
+<input
+  type="file"
+  accept="image/*"
+  multiple
+  onChange={handleEditImageChange}
+  style={styles.formInput}
+  disabled={editFormData.images.length >= 5}
+/>
+
+{/* Preview of current + uploaded images */}
+<div style={styles.imagePreviewContainer}>
+  {editFormData.images.map((img, index) => (
+    <div key={index} style={styles.imageWrapper}>
+      <img
+        src={typeof img === 'string' ? img : URL.createObjectURL(img)}
+        alt={`pet-${index}`}
+        style={styles.previewImage}
+      />
+      <button
+        type="button"
+        onClick={() => handleRemoveEditImage(index)}
+        style={styles.removeImageButton}
+        title="Remove image"
+      >
+        ✕
+      </button>
+    </div>
+  ))}
+ </div>
+  <label style={styles.formLabel}>Pet Name</label>
+  <input
+    style={styles.formInput}
+    type="text"
+    name="name"
+    value={editFormData.name}
+    onChange={handleInputChange}
+    placeholder="Name"
+  />
+
+  <label style={styles.formLabel}>Sex</label>
+  <select
+    style={styles.formInput}
+    name="sex"
+    value={editFormData.sex}
+    onChange={handleInputChange}
+    required
+  >
+    <option value="">Select Sex</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+  </select>
+
+  <label style={styles.formLabel}>Breed</label>
+  <select
+    style={styles.formInput}
+    name="breed"
+    value={editFormData.breed}
+    onChange={handleInputChange}
+    required
+  >
+    <option value="">Select Breed</option>
+    <option value="Aspin">Aspin</option>
+    <option value="Shih Tzu">Shih Tzu</option>
+    <option value="Chihuahua">Chihuahua</option>
+    <option value="Pomeranian">Pomeranian</option>
+    <option value="Labrador Retriever">Labrador Retriever</option>
+    <option value="Siberian Husky">Siberian Husky</option>
+    <option value="Pug">Pug</option>
+    <option value="Beagle">Beagle</option>
+  </select>
+
+  <label style={styles.formLabel}>Blood Type</label>
+  <select
+    style={styles.formInput}
+    name="bloodType"
+    value={editFormData.bloodType}
+    onChange={handleInputChange}
+    required
+  >
+    <option value="">Select Blood Type</option>
+    <option value="DEA 1.1 positive">DEA 1.1 positive</option>
+    <option value="DEA 1.1 negative">DEA 1.1 negative</option>
+    <option value="DEA 1.2 positive">DEA 1.2 positive</option>
+    <option value="DEA 1.2 negative">DEA 1.2 negative</option>
+    <option value="DEA 3 positive">DEA 3 positive</option>
+    <option value="DEA 3 negative">DEA 3 negative</option>
+    <option value="DEA 4 positive">DEA 4 positive</option>
+    <option value="DEA 4 negative">DEA 4 negative</option>
+    <option value="DEA 5 positive">DEA 5 positive</option>
+    <option value="DEA 5 negative">DEA 5 negative</option>
+    <option value="DEA 7 positive">DEA 7 positive</option>
+    <option value="DEA 7 negative">DEA 7 negative</option>
+    <option value="Dal positive">Dal positive</option>
+    <option value="Dal negative">Dal negative</option>
+    <option value="No common blood group">No common blood group</option>
+  </select>
+
+  <label style={styles.formLabel}>Age (in months)</label>
+  <input
+    style={styles.formInput}
+    type="number"
+    name="age"
+    value={editFormData.age}
+    onChange={handleInputChange}
+    placeholder="Age in months"
+    min="0"
+  />
+
+  <label style={styles.formLabel}>Weight (Kilos)</label>
+  <input
+    style={styles.formInput}
+    type="number"
+    name="kilos"
+    value={editFormData.kilos}
+    onChange={handleInputChange}
+    placeholder="Weight in kg"
+    min="0"
+  />
+
+  <label style={styles.formLabel}>Address</label>
+  <textarea
+    style={{ ...styles.formInput, height: '60px' }}
+    name="address"
+    value={editFormData.address}
+    onChange={handleInputChange}
+    placeholder="Address"
+    required
+  />
+
+  <label style={styles.formLabel}>Details</label>
+  <textarea
+    style={{ ...styles.formInput, height: '60px' }}
+    name="details"
+    value={editFormData.details}
+    onChange={handleInputChange}
+    placeholder="Details"
+  />
+
+  <div style={styles.formButtons}>
+    <button
+      style={saveButtonStyle}
+      onClick={() => handleSaveClick(pet.id)}
+    >
+      Save
+    </button>
+    <button style={cancelButtonStyle} onClick={handleCancelClick}>
+      Cancel
+    </button>
+  </div>
+</>
+
           ) : (
             <>
               <h3 style={{ color: '#f28b39' }}>{pet.name}</h3>
@@ -307,6 +410,60 @@ const PetDetailsPage = () => {
       )}
     </div>
   );
+};
+
+const styles = {
+  formLabel: {
+    fontWeight: 'bold',
+    display: 'block',
+    marginBottom: '5px',
+    marginTop: '10px',
+  },
+  formInput: {
+    width: '100%',
+    padding: '8px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    marginBottom: '10px',
+  },
+  formButtons: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '10px',
+  },
+  imagePreviewContainer: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    marginBottom: '10px',
+  },
+  imageWrapper: {
+    position: 'relative',
+    width: '80px',
+    height: '80px',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: '-8px',
+    right: '-8px',
+    background: '#f44336',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '50%',
+    width: '20px',
+    height: '20px',
+    cursor: 'pointer',
+    fontSize: '12px',
+    lineHeight: '20px',
+    textAlign: 'center',
+  },
 };
 
 const cardStyle = {
