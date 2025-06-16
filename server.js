@@ -182,22 +182,22 @@ app.post('/api/google-login', async (req, res) => {
   }
 });
 
-// Update user details (except email)
+// Update user details (except email and password)
 app.put('/api/update-user/:id', async (req, res) => {
   const userId = req.params.id;
-  const { fullName, username, password, address, phone } = req.body;
+  const { fullName, username, address, phone } = req.body;
 
-  if (!fullName || !username || !password || !address || !phone) {
+  // Validate required fields (no password)
+  if (!fullName || !username || !address || !phone) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       `UPDATE "users1"
-       SET full_name = $1, username = $2, password = $3, address = $4, phone = $5
-       WHERE id = $6 RETURNING *`,
-      [fullName, username, hashedPassword, address, phone, userId]
+       SET full_name = $1, username = $2, address = $3, phone = $4
+       WHERE id = $5 RETURNING *`,
+      [fullName, username, address, phone, userId]
     );
 
     if (result.rows.length === 0) {
@@ -222,6 +222,7 @@ app.put('/api/update-user/:id', async (req, res) => {
     res.status(500).json({ message: 'Failed to update user' });
   }
 });
+
 
 // ==================== PET ROUTES ====================
 
