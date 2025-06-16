@@ -198,11 +198,6 @@ const LandingPage = () => {
                   alt={`${pets[currentIndex].name} image ${idx + 1}`}
                   style={styles.largeImage}
                   loading="lazy"
-                  // **REMOVE this onClick to disable clicking on images when collapsed**
-                  // onClick={(e) => {
-                  //   e.stopPropagation();
-                  //   setFullscreenImage(img);
-                  // }}
                 />
               ))
             ) : (
@@ -440,7 +435,7 @@ const LandingPage = () => {
                 <option value="No common blood group">No common blood group</option>
               </select>
 
-              <label style={styles.formLabel}>Age</label>
+              <label style={styles.formLabel}>Age(in months)</label>
               <input
                 type="number"
                 name="age"
