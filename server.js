@@ -223,6 +223,55 @@ app.put('/api/update-user/:id', async (req, res) => {
   }
 });
 
+// Get profile picture
+app.get('/api/users/profile-picture', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      'SELECT encode(profile_picture, \'base64\') AS base64image FROM users1 WHERE id = $1',
+      [userId]
+    );
+
+    if (!result.rows[0].base64image) {
+      return res.json({ image: null }); // No image set
+    }
+
+    const image = `data:image/jpeg;base64,${result.rows[0].base64image}`;
+    res.json({ image });
+  } catch (err) {
+    console.error('Error fetching profile picture:', err);
+    res.status(500).json({ message: 'Failed to fetch profile picture' });
+  }
+});
+
+
+// Upload or update profile picture
+app.put('/api/users/profile-picture', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const { image } = req.body;
+
+  if (!image) {
+    return res.status(400).json({ message: 'No image provided' });
+  }
+
+  try {
+    const base64Data = image.split(',')[1];
+    const imgBuffer = Buffer.from(base64Data, 'base64');
+
+    await pool.query(
+      'UPDATE users1 SET profile_picture = $1 WHERE id = $2',
+      [imgBuffer, userId]
+    );
+
+    res.json({ message: 'Profile picture updated successfully' });
+  } catch (err) {
+    console.error('Error updating profile picture:', err);
+    res.status(500).json({ message: 'Failed to update profile picture' });
+  }
+});
+
+
 
 // ==================== PET ROUTES ====================
 

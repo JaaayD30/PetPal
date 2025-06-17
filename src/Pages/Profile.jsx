@@ -8,6 +8,8 @@ const ProfilePage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [profileImage, setProfileImage] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const userFromState = location.state;
@@ -23,6 +25,21 @@ const ProfilePage = () => {
     } else {
       navigate('/login');
     }
+
+    const fetchProfilePicture = async () => {
+      const token = localStorage.getItem('token');
+      try {
+        const res = await axios.get('http://localhost:5000/api/users/profile-picture', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data.image) setProfileImage(res.data.image);
+
+      } catch (err) {
+        console.error('Error fetching profile image', err);
+      }
+    };
+
+    fetchProfilePicture();
   }, [location, navigate]);
 
   const handleLogout = () => {
@@ -32,11 +49,7 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    if (name === 'phone') {
-      if (!/^\d*$/.test(value) || value.length > 11) return;
-    }
-
+    if (name === 'phone' && (!/^\d*$/.test(value) || value.length > 11)) return;
     setEditableUser((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -48,7 +61,7 @@ const ProfilePage = () => {
         address: editableUser.address,
         phone: editableUser.phone,
       });
-  
+
       const updatedUser = response.data.user;
       setUser(updatedUser);
       setEditableUser(updatedUser);
@@ -60,12 +73,40 @@ const ProfilePage = () => {
       alert('Failed to update profile.');
     }
   };
-  
-  
 
   const handleCancel = () => {
     setEditableUser(user);
     setIsEditing(false);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedImage(URL.createObjectURL(file));
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64String = reader.result;
+
+        try {
+          const token = localStorage.getItem('token');
+          await axios.put(
+            'http://localhost:5000/api/users/profile-picture',
+            { image: base64String },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          setProfileImage(`data:image/jpeg;base64,${base64String}`);
+          alert('Profile picture updated!');
+        } catch (err) {
+          console.error('Error uploading image', err);
+          alert('Failed to upload profile picture.');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   if (!editableUser) return <p>Loading...</p>;
@@ -110,12 +151,11 @@ const ProfilePage = () => {
         style={{
           position: 'relative',
           width: '843px',
-          height: '881px',
+          height: 'auto',
           borderRadius: '6px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
           backgroundColor: 'white',
           padding: '60px',
-          overflowY: 'auto',
         }}
       >
         <img
@@ -123,6 +163,30 @@ const ProfilePage = () => {
           alt="PetPal Logo"
           style={{ width: '240px', height: 'auto', display: 'block', margin: '0 auto 20px' }}
         />
+
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          {profileImage && (
+            <img
+              src={selectedImage || profileImage}
+              alt="Profile"
+              style={{
+                width: '150px',
+                height: '150px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                marginBottom: '10px',
+              }}
+            />
+          )}
+          {isEditing && (
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ marginBottom: '20px' }}
+            />
+          )}
+        </div>
 
         <h1
           style={{
@@ -137,16 +201,16 @@ const ProfilePage = () => {
         </h1>
 
         <div>
-            <label style={labelStyle}>FullName:</label>
-            <input
-              type="text"
-              name="fullName"
-              value={editableUser.fullName}
-              onChange={handleChange}
-              disabled={!isEditing}
-              style={inputStyle}
-            />
-          </div>
+          <label style={labelStyle}>FullName:</label>
+          <input
+            type="text"
+            name="fullName"
+            value={editableUser.fullName}
+            onChange={handleChange}
+            disabled={!isEditing}
+            style={inputStyle}
+          />
+        </div>
 
         <div style={{ display: 'flex', gap: '30px', marginBottom: '20px' }}>
           <div>
@@ -162,12 +226,7 @@ const ProfilePage = () => {
           </div>
           <div>
             <label style={labelStyle}>EMAIL:</label>
-            <input
-              type="email"
-              value={editableUser.email}
-              readOnly
-              style={inputStyle}
-            />
+            <input type="email" value={editableUser.email} readOnly style={inputStyle} />
           </div>
         </div>
 
@@ -197,15 +256,14 @@ const ProfilePage = () => {
         </div>
 
         <div>
-  <label style={labelStyle}>PASSWORD:</label>
-  <input
-    type="password"
-    value="******"
-    readOnly
-    style={{ ...inputStyle, letterSpacing: '0.3em' }}
-  />
-</div>
-
+          <label style={labelStyle}>PASSWORD:</label>
+          <input
+            type="password"
+            value="******"
+            readOnly
+            style={{ ...inputStyle, letterSpacing: '0.3em' }}
+          />
+        </div>
 
         <div>
           <button
