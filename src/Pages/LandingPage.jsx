@@ -60,6 +60,18 @@ const LandingPage = () => {
     }
   };
   
+  const handleFavorite = (pet) => {
+    const existingFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    const alreadyFavorited = existingFavorites.some((fav) => fav.id === pet.id);
+    if (alreadyFavorited) {
+      alert(`${pet.name} is already in favorites.`);
+      return;
+    }
+    const updatedFavorites = [...existingFavorites, pet];
+    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+    alert(`${pet.name} added to favorites!`);
+  };
+  
   
 
   const currentPet = pets[currentIndex];
@@ -292,21 +304,14 @@ const LandingPage = () => {
       role="dialog"
       tabIndex={-1}
     >
-{pets.map((pet) => (
-  <div key={pet.id}>
-    {/* Show pet data */}
-    <button
-      style={styles.heartButton}
-      onClick={() => handleFavorite(pet.id)}
-      aria-label="Heart pet"
-    >
-      ❤️
-    </button>
-  </div>
-))}
-
-
-
+      {/* Show only the current pet's favorite button */}
+      <button
+        style={styles.heartButton}
+        onClick={() => handleFavorite(pets[currentIndex])}
+        aria-label="Heart pet"
+      >
+        ❤️
+      </button>
 
       {loading ? (
         <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
