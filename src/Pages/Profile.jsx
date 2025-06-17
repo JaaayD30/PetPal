@@ -136,6 +136,18 @@ const ProfilePage = () => {
           Welcome To PetPal, {user.fullName}
         </h1>
 
+        <div>
+            <label style={labelStyle}>FullName:</label>
+            <input
+              type="text"
+              name="fullName"
+              value={editableUser.fullName}
+              onChange={handleChange}
+              disabled={!isEditing}
+              style={inputStyle}
+            />
+          </div>
+
         <div style={{ display: 'flex', gap: '30px', marginBottom: '20px' }}>
           <div>
             <label style={labelStyle}>USERNAME:</label>
