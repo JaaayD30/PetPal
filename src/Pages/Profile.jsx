@@ -163,8 +163,20 @@ const ProfilePage = () => {
           alt="PetPal Logo"
           style={{ width: '240px', height: 'auto', display: 'block', margin: '0 auto 20px' }}
         />
-
-        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+  
+        <h1
+          style={{
+            textAlign: 'center',
+            fontFamily: "'Crimson Text', serif",
+            fontSize: '45px',
+            marginTop: '20px',
+            marginBottom: '30px',
+          }}
+        >
+          Welcome To PetPal, {user.fullName}
+        </h1>
+  
+        <div style={{ textAlign: 'center', marginBottom: '50px' }}>
           {profileImage && (
             <img
               src={selectedImage || profileImage}
@@ -183,23 +195,11 @@ const ProfilePage = () => {
               type="file"
               accept="image/*"
               onChange={handleImageChange}
-              style={{ marginBottom: '20px' }}
+              style={{ marginTop: '10px' }}
             />
           )}
         </div>
-
-        <h1
-          style={{
-            textAlign: 'center',
-            fontFamily: "'Crimson Text', serif",
-            fontSize: '45px',
-            marginTop: '20px',
-            marginBottom: '50px',
-          }}
-        >
-          Welcome To PetPal, {user.fullName}
-        </h1>
-
+  
         <div>
           <label style={labelStyle}>FullName:</label>
           <input
@@ -211,7 +211,7 @@ const ProfilePage = () => {
             style={inputStyle}
           />
         </div>
-
+  
         <div style={{ display: 'flex', gap: '30px', marginBottom: '20px' }}>
           <div>
             <label style={labelStyle}>USERNAME:</label>
@@ -229,7 +229,7 @@ const ProfilePage = () => {
             <input type="email" value={editableUser.email} readOnly style={inputStyle} />
           </div>
         </div>
-
+  
         <div style={{ display: 'flex', gap: '30px', marginBottom: '20px' }}>
           <div>
             <label style={labelStyle}>ADDRESS:</label>
@@ -254,7 +254,7 @@ const ProfilePage = () => {
             />
           </div>
         </div>
-
+  
         <div>
           <label style={labelStyle}>PASSWORD:</label>
           <input
@@ -264,7 +264,7 @@ const ProfilePage = () => {
             style={{ ...inputStyle, letterSpacing: '0.3em' }}
           />
         </div>
-
+  
         <div>
           <button
             onClick={async () => {
@@ -283,7 +283,7 @@ const ProfilePage = () => {
             Reset Password
           </button>
         </div>
-
+  
         <div
           style={{
             position: 'absolute',
@@ -314,6 +314,6 @@ const ProfilePage = () => {
       </div>
     </div>
   );
-};
+}  
 
 export default ProfilePage;

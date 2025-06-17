@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const LandingPage = () => {
   const token = localStorage.getItem('token');
@@ -7,6 +8,7 @@ const LandingPage = () => {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const toggleDropdown = () => setDropdownOpen(open => !open);
+  const [profileImage, setProfileImage] = useState(null);
   const handleProfile = () => navigate('/profile');
   const handleFavorites = () => navigate ('/favorites');
   const handlePets = () => navigate('/pets');
@@ -40,7 +42,24 @@ const LandingPage = () => {
 
   useEffect(() => {
     fetchPets();
+    fetchProfilePicture(); // 👈 Add this call
   }, []);
+  
+  const fetchProfilePicture = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/users/profile-picture', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.data.image) {
+        setProfileImage(res.data.image); // already a data URL
+      }
+    } catch (error) {
+      console.error('Error fetching profile picture:', error);
+    }
+  };
+  
   
 
   const currentPet = pets[currentIndex];
@@ -146,7 +165,20 @@ const LandingPage = () => {
           <input type="text" placeholder="Search..." style={styles.searchInput} />
         </div>
         <div style={styles.profileSection}>
-          <button onClick={toggleDropdown} style={styles.profileIcon}>👤</button>
+  <img
+    src={profileImage || '/Images/default-user.png'}
+    alt="Profile"
+    onClick={toggleDropdown}
+    style={{
+      width: '40px',
+      height: '40px',
+      borderRadius: '50%',
+      cursor: 'pointer',
+      objectFit: 'cover',
+      border: '2px solid #FA9A51',
+    }}
+  />
+
           {dropdownOpen && (
             <div style={styles.dropdown}>
               <button onClick={handleProfile} style={styles.dropdownItem}>View Profile</button>
