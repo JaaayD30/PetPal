@@ -146,10 +146,11 @@ const PetDetailsPage = () => {
 
   return (
     <div style={containerStyle}>
-      <h2 style={headerStyle}>Your Pets</h2>
+      <h2 style={headerStyle}>Your Companions</h2>
       {Array.isArray(pets) && pets.length === 0 && (
         <p style={{ textAlign: 'center', color: '#777' }}>No pets found.</p>
       )}
+       <div style={gridStyle}>
       {pets.map((pet) => (
         <div key={pet.id} style={cardStyle}>
           {editPetId === pet.id ? (
@@ -309,6 +310,7 @@ const PetDetailsPage = () => {
   </div>
 </>
 
+
           ) : (
             <>
               <h3 style={{ color: '#f28b39' }}>{pet.name}</h3>
@@ -409,8 +411,30 @@ const PetDetailsPage = () => {
         </div>
       )}
     </div>
+    </div>
   );
 };
+
+const gridStyle = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4, 280px)', // 4 cards per row
+  gap: '50px 70px', // 40px row gap, 32px column gap
+  justifyContent: 'center',
+  marginTop: '40px',
+};
+
+
+
+
+const cardStyle = {
+  borderRadius: '12px',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  padding: '20px',
+  backgroundColor: '#fff',
+  width: '280px',
+  flex: '0 0 auto',
+};
+
 
 const styles = {
   formLabel: {
@@ -466,17 +490,6 @@ const styles = {
   },
 };
 
-const cardStyle = {
-  borderRadius: '12px',
-  boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-  padding: '20px',
-  backgroundColor: '#fff',
-  maxWidth: '400px',
-  width: '100%',
-  flex: '0 0 400px',  // fix card width inside flex container
-};
-
-
 const containerStyle = {
   maxWidth: '900px',
   margin: '40px auto',  // centers container horizontally with vertical spacing
@@ -492,6 +505,7 @@ const headerStyle = {
   textAlign: 'center',
   marginBottom: '30px',
   color: '#333',
+  fontSize: '35px',
 };
 
 const inputStyle = {
