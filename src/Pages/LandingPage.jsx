@@ -172,24 +172,33 @@ const LandingPage = () => {
     <div style={styles.pageContainer}>
       {/* NAVBAR */}
       <nav style={styles.navbar}>
-        <div style={styles.logo}>🐾 PetPal</div>
-        <div style={styles.searchContainer}>
-          <input type="text" placeholder="Search..." style={styles.searchInput} />
-        </div>
-        <div style={styles.profileSection}>
-  <img
-    src={profileImage || '/Images/default-user.png'}
-    alt="Profile"
-    onClick={toggleDropdown}
-    style={{
-      width: '40px',
-      height: '40px',
-      borderRadius: '50%',
-      cursor: 'pointer',
-      objectFit: 'cover',
-      border: '2px solid #FA9A51',
-    }}
-  />
+  <div style={styles.logo}>🐾 PetPal</div>
+
+  <div style={styles.searchContainer}>
+    <input type="text" placeholder="Search..." style={styles.searchInput} />
+  </div>
+
+  <div style={styles.navRight}>
+    {/* Notification Icon */}
+    <div style={styles.notificationIcon} title="Notifications">
+      🔔
+      <span style={styles.notificationDot}></span>
+    </div>
+
+    {/* Profile Image */}
+    <img
+      src={profileImage || '/Images/default-user.png'}
+      alt="Profile"
+      onClick={toggleDropdown}
+      style={{
+        width: '40px',
+        height: '40px',
+        borderRadius: '50%',
+        cursor: 'pointer',
+        objectFit: 'cover',
+        border: '2px solid #FA9A51',
+      }}
+    />
 
           {dropdownOpen && (
             <div style={styles.dropdown}>
@@ -535,6 +544,29 @@ const LandingPage = () => {
 };
 
 const styles = {
+  navRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+  },
+  
+  notificationIcon: {
+    position: 'relative',
+    fontSize: '24px',
+    cursor: 'pointer',
+    color: '#555',
+  },
+  
+  notificationDot: {
+    position: 'absolute',
+    top: '0px',
+    right: '0px',
+    width: '8px',
+    height: '8px',
+    backgroundColor: 'red',
+    borderRadius: '50%',
+  },
+  
   fullscreenOverlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,
