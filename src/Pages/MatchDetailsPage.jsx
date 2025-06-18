@@ -8,6 +8,26 @@ const MatchDetailsPage = () => {
   const [owner, setOwner] = useState(null);
   const [pets, setPets] = useState([]);
 
+  const handleConfirmMatch = async () => {
+    try {
+      await axios.post(
+        'http://localhost:5000/api/confirm-match',
+        { senderId: userId },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      alert('Match confirmed! Notification sent.');
+    } catch (err) {
+      if (err.response?.status === 400) {
+        alert('You are already matched with this user.');
+      } else {
+        console.error('Error confirming match:', err);
+      }
+    }
+  };
+  
+
   const fetchMatchDetails = async () => {
     try {
       const { data } = await axios.get(`http://localhost:5000/api/match-details/${userId}`, {
@@ -52,6 +72,22 @@ const MatchDetailsPage = () => {
         <p><strong>Email:</strong> {owner.email}</p>
         <p><strong>Address:</strong> {owner.address}</p>
         <p><strong>Phone:</strong> {owner.phone}</p>
+
+        <button
+  onClick={handleConfirmMatch}
+  style={{
+    marginTop: '12px',
+    padding: '8px 16px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer'
+  }}
+>
+  Connect Back
+</button>
+
       </div>
 
       {/* Pets Section */}

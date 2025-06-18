@@ -668,6 +668,34 @@ app.get('/api/my-matches', authenticateToken, async (req, res) => {
 
 
 
+app.post('/api/confirm-match', authenticateToken, async (req, res) => {
+  const { senderId } = req.body;
+  const recipientId = req.user.id;
+
+  // Check if match exists
+  const existing = await pool.query(
+    'SELECT * FROM matches WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)',
+    [senderId, recipientId]
+  );
+
+  if (existing.rows.length > 0) {
+    return res.status(400).json({ message: 'Match already exists' });
+  }
+
+  // Insert match
+  await pool.query('INSERT INTO matches (user1_id, user2_id) VALUES ($1, $2)', [senderId, recipientId]);
+
+  // Notify both users
+  await pool.query(
+    `INSERT INTO notifications (sender_id, recipient_id, message, status)
+     VALUES
+      ($1, $2, $3, 'pending'),
+      ($2, $1, $3, 'pending')`,
+    [recipientId, senderId, 'You found a match!']
+  );
+
+  res.json({ message: 'Match confirmed and notification sent to both users.' });
+});
 
 
 
