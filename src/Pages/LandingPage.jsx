@@ -14,7 +14,20 @@ const LandingPage = () => {
   const handlePets = () => navigate('/pets');
   const [searchQuery, setSearchQuery] = useState('');
 const [filteredPets, setFilteredPets] = useState([]);
+const [notifications, setNotifications] = useState([]);
+const [showNotifications, setShowNotifications] = useState(false);
 
+
+const fetchNotifications = async () => {
+  try {
+    const res = await axios.get('http://localhost:5000/api/notifications', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setNotifications(res.data);
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error);
+  }
+};
   const handleLogout = () => {
     localStorage.removeItem('googleEmail');
     localStorage.removeItem('token');
@@ -45,7 +58,8 @@ const [filteredPets, setFilteredPets] = useState([]);
 
   useEffect(() => {
     fetchPets();
-    fetchProfilePicture(); // 👈 Add this call
+    fetchProfilePicture();
+    fetchNotifications(); // 👈 Now it's declared above
   }, []);
 
   const handleSearch = () => {
@@ -199,6 +213,21 @@ const currentPet = activePets[currentIndex];
     }
   };
 
+  const handleConnect = async (petId, ownerId) => {
+    try {
+      const res = await axios.post(
+        'http://localhost:5000/api/connect-request',
+        { petId, recipientId: ownerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(res.data.message || 'Connect request sent!');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to send connect request.');
+    }
+  };
+  
+
   return (
     <div style={styles.pageContainer}>
       {/* NAVBAR */}
@@ -223,10 +252,15 @@ const currentPet = activePets[currentIndex];
 
   <div style={styles.navRight}>
     {/* Notification Icon */}
-    <div style={styles.notificationIcon} title="Notifications">
-      🔔
-      <span style={styles.notificationDot}></span>
-    </div>
+    <div
+  style={styles.notificationIcon}
+  title="Notifications"
+  onClick={() => setShowNotifications(!showNotifications)}
+>
+  🔔
+  {notifications.length > 0 && <span style={styles.notificationDot}></span>}
+</div>
+
 
     {/* Profile Image */}
     <img
@@ -242,6 +276,21 @@ const currentPet = activePets[currentIndex];
         border: '2px solid #FA9A51',
       }}
     />
+
+{showNotifications && (
+  <div style={styles.notificationDropdown}>
+    {notifications.length === 0 ? (
+      <p style={styles.notificationItem}>No new notifications</p>
+    ) : (
+      notifications.map((notif, idx) => (
+        <div key={idx} style={styles.notificationItem}>
+          🐾 {notif.message}
+        </div>
+      ))
+    )}
+  </div>
+)}
+
 
           {dropdownOpen && (
             <div style={styles.dropdown}>
@@ -368,7 +417,7 @@ const currentPet = activePets[currentIndex];
 
         <button
   style={styles.connectButton}
-  onClick={() => alert(`Connect request sent for ${currentPet.name}`)}
+  onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
   aria-label="Connect pet"
 >
   🐾 Connect
@@ -593,22 +642,38 @@ const styles = {
     gap: '16px',
   },
   
-  notificationIcon: {
-    position: 'relative',
-    fontSize: '24px',
-    cursor: 'pointer',
-    color: '#555',
+  notificationDropdown: {
+    position: 'absolute',
+    top: '60px',
+    right: '80px',
+    width: '300px',
+    background: '#fff',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    padding: '10px',
+    zIndex: 999,
+  },
+  
+  notificationItem: {
+    padding: '8px',
+    borderBottom: '1px solid #eee',
+    fontSize: '14px',
+    color: '#000',
   },
   
   notificationDot: {
-    position: 'absolute',
-    top: '0px',
-    right: '0px',
-    width: '8px',
-    height: '8px',
     backgroundColor: 'red',
+    color: 'white',
     borderRadius: '50%',
+    width: '10px',
+    height: '10px',
+    display: 'inline-block',
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
   },
+  
   
   fullscreenOverlay: {
     position: 'fixed',

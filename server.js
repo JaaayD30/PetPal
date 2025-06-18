@@ -506,6 +506,44 @@ app.delete('/api/pets/:id', authenticateToken, async (req, res) => {
   }
 });
 
+app.post('/api/connect-request', authenticateToken, async (req, res) => {
+  const { petId, recipientId } = req.body;
+  const senderId = req.user.id;
+
+  try {
+    // Save the connect request as a notification
+    await pool.query(
+      `INSERT INTO notifications (sender_id, recipient_id, message, created_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [senderId, recipientId, `You received a connection request for a pet!`]
+    );
+
+    res.json({ message: 'Request sent!' });
+  } catch (error) {
+    console.error('Error sending connection request:', error);
+    res.status(500).json({ message: 'Failed to send request.' });
+  }
+});
+
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT * FROM notifications WHERE recipient_id = $1 ORDER BY created_at DESC`,
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ message: 'Failed to fetch notifications' });
+  }
+});
+
+
+
+
+
 
 
 
