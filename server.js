@@ -577,6 +577,78 @@ app.delete('/api/notifications', authenticateToken, async (req, res) => {
 });
 
 
+// 1. GET Match Details (owner + pets)
+app.get('/api/match-details/:senderId', authenticateToken, async (req, res) => {
+  const { senderId } = req.params;
+
+  try {
+    const userResult = await pool.query('SELECT id, full_name, address, phone FROM users1 WHERE id = $1', [senderId]);
+    const petResult = await pool.query('SELECT * FROM pets WHERE user_id = $1', [senderId]);
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Owner not found' });
+    }
+
+    res.json({ owner: userResult.rows[0], pets: petResult.rows });
+  } catch (err) {
+    console.error('Error fetching match details:', err);
+    res.status(500).json({ message: 'Failed to fetch match details' });
+  }
+});
+
+// 2. POST Confirm Match
+app.post('/api/confirm-match', authenticateToken, async (req, res) => {
+  const { senderId } = req.body;
+  const recipientId = req.user.id;
+
+  try {
+    // Prevent duplicate matches
+    const existing = await pool.query(
+      'SELECT * FROM matches WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)',
+      [senderId, recipientId]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: 'Match already exists' });
+    }
+
+    // Insert mutual match
+    await pool.query('INSERT INTO matches (user1_id, user2_id) VALUES ($1, $2)', [senderId, recipientId]);
+
+    // Notify both users
+    await pool.query(
+      `INSERT INTO notifications (sender_id, recipient_id, message, status)
+       VALUES
+        ($1, $2, $3, 'pending'),
+        ($2, $1, $3, 'pending')`,
+      [recipientId, senderId, 'You found a match!']
+    );
+
+    res.json({ message: 'Match confirmed and notification sent to both users.' });
+  } catch (err) {
+    console.error('Error confirming match:', err);
+    res.status(500).json({ message: 'Failed to confirm match' });
+  }
+});
+
+// Optional: Fetch matches for logged-in user
+app.get('/api/my-matches', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const matches = await pool.query(
+      'SELECT * FROM matches WHERE user1_id = $1 OR user2_id = $1',
+      [userId]
+    );
+    res.json(matches.rows);
+  } catch (err) {
+    console.error('Error fetching matches:', err);
+    res.status(500).json({ message: 'Failed to fetch matches' });
+  }
+});
+
+
+
 
 
 

@@ -302,16 +302,21 @@ const currentPet = activePets[currentIndex];
                 </button>
               </div>
               {notifications.map((notif) => (
-                <div key={notif.id} style={styles.notificationItem}>
-                  🐾 <span style={{ color: 'black' }}>{notif.message}</span>
-                  <button
-                    onClick={() => clearNotification(notif.id)}
-                    style={styles.clearOneButton}
-                  >
-                    ❌
-                  </button>
-                </div>
-              ))}
+  <div key={notif.id} style={styles.notificationItem}>
+    <span
+      onClick={() => navigate(`/match-details/${notif.sender_id}`)} // 👈 Use sender_id or relevant userId
+      style={{ color: 'black', cursor: 'pointer', textDecoration: 'underline' }}
+    >
+      🐾 {notif.message}
+    </span>
+    <button
+      onClick={() => clearNotification(notif.id)}
+      style={styles.clearOneButton}
+    >
+      ❌
+    </button>
+  </div>
+))}
             </>
           )}
         </div>
