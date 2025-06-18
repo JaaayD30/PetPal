@@ -12,6 +12,9 @@ const LandingPage = () => {
   const handleProfile = () => navigate('/profile');
   const handleFavorites = () => navigate ('/favorites');
   const handlePets = () => navigate('/pets');
+  const [searchQuery, setSearchQuery] = useState('');
+const [filteredPets, setFilteredPets] = useState([]);
+
   const handleLogout = () => {
     localStorage.removeItem('googleEmail');
     localStorage.removeItem('token');
@@ -44,6 +47,28 @@ const LandingPage = () => {
     fetchPets();
     fetchProfilePicture(); // 👈 Add this call
   }, []);
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setFilteredPets([]);
+      return;
+    }
+  
+    const query = searchQuery.toLowerCase();
+  
+    const results = pets.filter((pet) => {
+      return (
+        (pet.breed && pet.breed.toLowerCase().includes(query)) ||
+        (pet.blood_type && pet.blood_type.toLowerCase().includes(query)) ||
+        (pet.age && pet.age.toString().includes(query)) ||
+        (pet.address && pet.address.toLowerCase().includes(query))
+      );
+    });
+  
+    setFilteredPets(results);
+    setCurrentIndex(0); // reset to first result
+  };
+  
   
   const fetchProfilePicture = async () => {
     try {
@@ -74,7 +99,10 @@ const LandingPage = () => {
   
   
 
-  const currentPet = pets[currentIndex];
+  const activePets = filteredPets.length > 0 ? filteredPets : pets;
+const currentPet = activePets[currentIndex];
+
+
 
   const fetchPets = () => {
     setLoading(true);
@@ -92,12 +120,15 @@ const LandingPage = () => {
   
 
   const handlePrev = () => {
-    setCurrentIndex(prev => (prev === 0 ? pets.length - 1 : prev - 1));
+    const list = filteredPets.length > 0 ? filteredPets : pets;
+    setCurrentIndex((prev) => (prev === 0 ? list.length - 1 : prev - 1));
   };
-
+  
   const handleNext = () => {
-    setCurrentIndex(prev => (prev === pets.length - 1 ? 0 : prev + 1));
+    const list = filteredPets.length > 0 ? filteredPets : pets;
+    setCurrentIndex((prev) => (prev === list.length - 1 ? 0 : prev + 1));
   };
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -175,7 +206,19 @@ const LandingPage = () => {
   <div style={styles.logo}>🐾 PetPal</div>
 
   <div style={styles.searchContainer}>
-    <input type="text" placeholder="Search..." style={styles.searchInput} />
+  <input
+  type="text"
+  placeholder="Search by breed, blood type, age, address..."
+  style={styles.searchInput}
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  }}
+/>
+
   </div>
 
   <div style={styles.navRight}>
@@ -222,72 +265,74 @@ const LandingPage = () => {
   <button onClick={handlePrev} style={styles.navButton}>Prev</button>
 
   {expandedPetIndex !== currentIndex && (
-  <div
-    style={styles.card}
-    onClick={() => toggleExpandPet(currentIndex)}
-    role="button"
-    tabIndex={0}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        toggleExpandPet(currentIndex);
-      }
-    }}
-  >
-    {loading ? (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-    ) : pets.length === 0 ? (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
-    ) : (
-      <>
-        <h2>{pets[currentIndex].name}</h2>
-        <div style={styles.cardContent}>
-          <div style={styles.imageSection}>
-            {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
-              pets[currentIndex].images.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`${pets[currentIndex].name} image ${idx + 1}`}
-                  style={styles.largeImage}
-                  loading="lazy"
-                />
-              ))
-            ) : (
-              <p>No images available</p>
-            )}
-
-{fullscreenImage && (
-  <div
-    style={styles.fullscreenOverlay}
-    onClick={() => setFullscreenImage(null)}
-    role="dialog"
-    aria-modal="true"
-  >
-    <img
-      src={fullscreenImage}
-      alt="Fullscreen pet"
-      style={styles.fullscreenImage}
-      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image itself
-    />
-    <button
-      onClick={() => setFullscreenImage(null)}
-      style={styles.fullscreenCloseButton}
-      aria-label="Close fullscreen image"
+    <div
+      style={styles.card}
+      onClick={() => toggleExpandPet(currentIndex)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          toggleExpandPet(currentIndex);
+        }
+      }}
     >
-      ×
-    </button>
-  </div>
-)}
+      {loading ? (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+      ) : activePets.length === 0 ? (
+        <div style={{ padding: '2rem', textAlign: 'center' }}>
+          No match found for "{searchQuery}"
+        </div>
+      ) : (
+        <>
+          <h2>{currentPet.name}</h2>
+          <div style={styles.cardContent}>
+            <div style={styles.imageSection}>
+              {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                currentPet.images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt={`${currentPet.name} image ${idx + 1}`}
+                    style={styles.largeImage}
+                    loading="lazy"
+                  />
+                ))
+              ) : (
+                <p>No images available</p>
+              )}
+
+              {fullscreenImage && (
+                <div
+                  style={styles.fullscreenOverlay}
+                  onClick={() => setFullscreenImage(null)}
+                  role="dialog"
+                  aria-modal="true"
+                >
+                  <img
+                    src={fullscreenImage}
+                    alt="Fullscreen pet"
+                    style={styles.fullscreenImage}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <button
+                    onClick={() => setFullscreenImage(null)}
+                    style={styles.fullscreenCloseButton}
+                    aria-label="Close fullscreen image"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
             <div style={styles.detailsSection}>
-              <p><b>Breed:</b> {pets[currentIndex].breed}</p>
-              <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
-              <p><b>Age:</b> {pets[currentIndex].age}</p>
-              <p><b>Sex:</b> {pets[currentIndex].sex}</p>
-              <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
-              <p><b>Address:</b> {pets[currentIndex].address}</p>
-              <p><b>Details:</b> {pets[currentIndex].details}</p>
+              <p><b>Breed:</b> {currentPet.breed}</p>
+              <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+              <p><b>Age:</b> {currentPet.age}</p>
+              <p><b>Sex:</b> {currentPet.sex}</p>
+              <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+              <p><b>Address:</b> {currentPet.address}</p>
+              <p><b>Details:</b> {currentPet.details}</p>
             </div>
           </div>
         </>
@@ -295,57 +340,49 @@ const LandingPage = () => {
     </div>
   )}
 
-{/* Expanded modal */}
-{expandedPetIndex === currentIndex && (
-  <div
-    style={styles.modalOverlay}
-    onClick={() => {
-      if (!fullscreenImage) {
-        toggleExpandPet(null); // Close modal only if fullscreen image not open
-      } else {
-        setFullscreenImage(null); // If fullscreen image open, close that first
-      }
-    }}
-  >
+  {/* Expanded modal */}
+  {expandedPetIndex === currentIndex && activePets.length > 0 && (
     <div
-      style={{ ...styles.card, ...styles.cardExpanded }}
-      onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking inside
-      role="dialog"
-      tabIndex={-1}
+      style={styles.modalOverlay}
+      onClick={() => {
+        if (!fullscreenImage) {
+          toggleExpandPet(null);
+        } else {
+          setFullscreenImage(null);
+        }
+      }}
     >
-      {/* Show only the current pet's favorite button */}
-      <button
-        style={styles.heartButton}
-        onClick={() => handleFavorite(pets[currentIndex])}
-        aria-label="Heart pet"
+      <div
+        style={{ ...styles.card, ...styles.cardExpanded }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        tabIndex={-1}
       >
-        ❤️
-      </button>
+        <button
+          style={styles.heartButton}
+          onClick={() => handleFavorite(currentPet)}
+          aria-label="Heart pet"
+        >
+          ❤️
+        </button>
 
-      {loading ? (
-        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-      ) : pets.length === 0 ? (
-        <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
-      ) : (
         <>
-          <h2>{pets[currentIndex].name}</h2>
+          <h2>{currentPet.name}</h2>
           <div style={styles.cardContent}>
             <div style={styles.imageSection}>
-              {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
-                pets[currentIndex].images.map((img, idx) => (
+              {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                currentPet.images.map((img, idx) => (
                   <img
                     key={idx}
                     src={img}
-                    alt={`${pets[currentIndex].name} image ${idx + 1}`}
+                    alt={`${currentPet.name} image ${idx + 1}`}
                     style={styles.largeImage}
                     loading="lazy"
-                    onClick={() => setFullscreenImage(img)} // open fullscreen image
+                    onClick={() => setFullscreenImage(img)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        setFullscreenImage(img);
-                      }
+                      if (e.key === 'Enter') setFullscreenImage(img);
                     }}
                   />
                 ))
@@ -364,7 +401,7 @@ const LandingPage = () => {
                     src={fullscreenImage}
                     alt="Fullscreen pet"
                     style={styles.fullscreenImage}
-                    onClick={(e) => e.stopPropagation()} // prevent closing when clicking image
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <button
                     onClick={() => setFullscreenImage(null)}
@@ -377,25 +414,22 @@ const LandingPage = () => {
               )}
             </div>
             <div style={styles.detailsSection}>
-              <p><b>Breed:</b> {pets[currentIndex].breed}</p>
-              <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
-              <p><b>Age:</b> {pets[currentIndex].age}</p>
-              <p><b>Sex:</b> {pets[currentIndex].sex}</p>
-              <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
-              <p><b>Address:</b> {pets[currentIndex].address}</p>
-              <p><b>Details:</b> {pets[currentIndex].details}</p>
+              <p><b>Breed:</b> {currentPet.breed}</p>
+              <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+              <p><b>Age:</b> {currentPet.age}</p>
+              <p><b>Sex:</b> {currentPet.sex}</p>
+              <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+              <p><b>Address:</b> {currentPet.address}</p>
+              <p><b>Details:</b> {currentPet.details}</p>
             </div>
           </div>
         </>
-      )}
+      </div>
     </div>
-  </div>
-)}
-
+  )}
 
   <button onClick={handleNext} style={styles.navButton}>Next</button>
 </div>
-
 
 
       {/* POPUP FORM */}
