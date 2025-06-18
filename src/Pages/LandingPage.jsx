@@ -17,6 +17,29 @@ const [filteredPets, setFilteredPets] = useState([]);
 const [notifications, setNotifications] = useState([]);
 const [showNotifications, setShowNotifications] = useState(false);
 
+const clearNotification = async (notifId) => {
+  try {
+    await axios.delete(`http://localhost:5000/api/notifications/${notifId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setNotifications((prev) => prev.filter((n) => n.id !== notifId));
+  } catch (err) {
+    console.error('Failed to delete notification:', err);
+  }
+};
+
+const clearAllNotifications = async () => {
+  try {
+    await axios.delete('http://localhost:5000/api/notifications', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    setNotifications([]);
+  } catch (err) {
+    console.error('Failed to clear all notifications:', err);
+  }
+};
+
+
 
 const fetchNotifications = async () => {
   try {
@@ -235,73 +258,101 @@ const currentPet = activePets[currentIndex];
   <div style={styles.logo}>🐾 PetPal</div>
 
   <div style={styles.searchContainer}>
-  <input
-  type="text"
-  placeholder="Search by breed, blood type, age, address..."
-  style={styles.searchInput}
-  value={searchQuery}
-  onChange={(e) => setSearchQuery(e.target.value)}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  }}
-/>
-
+    <input
+      type="text"
+      placeholder="Search by breed, blood type, age, address..."
+      style={styles.searchInput}
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          handleSearch();
+        }
+      }}
+    />
   </div>
 
   <div style={styles.navRight}>
-    {/* Notification Icon */}
-    <div
-  style={styles.notificationIcon}
-  title="Notifications"
-  onClick={() => setShowNotifications(!showNotifications)}
->
-  🔔
-  {notifications.length > 0 && <span style={styles.notificationDot}></span>}
-</div>
+    {/* 🔔 Notification Bell and Dropdown */}
+    <div style={{ position: 'relative', marginRight: '10px' }}>
+      <div
+        style={styles.notificationIcon}
+        title="Notifications"
+        onClick={() => setShowNotifications(!showNotifications)}
+      >
+        🔔
+        {notifications.length > 0 && (
+          <span style={styles.notificationDot}></span>
+        )}
+      </div>
 
-
-    {/* Profile Image */}
-    <img
-      src={profileImage || '/Images/default-user.png'}
-      alt="Profile"
-      onClick={toggleDropdown}
-      style={{
-        width: '40px',
-        height: '40px',
-        borderRadius: '50%',
-        cursor: 'pointer',
-        objectFit: 'cover',
-        border: '2px solid #FA9A51',
-      }}
-    />
-
-{showNotifications && (
-  <div style={styles.notificationDropdown}>
-    {notifications.length === 0 ? (
-      <p style={styles.notificationItem}>No new notifications</p>
-    ) : (
-      notifications.map((notif, idx) => (
-        <div key={idx} style={styles.notificationItem}>
-          🐾 {notif.message}
-        </div>
-      ))
-    )}
-  </div>
-)}
-
-
-          {dropdownOpen && (
-            <div style={styles.dropdown}>
-              <button onClick={handleProfile} style={styles.dropdownItem}>View Profile</button>
-              <button onClick={handlePets} style={styles.dropdownItem}>Pets</button>
-              <button onClick={handleFavorites} style={styles.dropdownItem}>Favorites</button>
-              <button onClick={handleLogout} style={styles.dropdownItem}>Log Out</button>
-            </div>
+      {showNotifications && (
+        <div style={styles.notificationDropdown}>
+          {notifications.length === 0 ? (
+            <p style={styles.notificationItem}>No new notifications</p>
+          ) : (
+            <>
+              <div style={styles.dropdownHeader}>
+                <strong>Notifications</strong>
+                <button
+                  onClick={clearAllNotifications}
+                  style={styles.clearAllButton}
+                >
+                  ✖
+                </button>
+              </div>
+              {notifications.map((notif) => (
+                <div key={notif.id} style={styles.notificationItem}>
+                  🐾 <span style={{ color: 'black' }}>{notif.message}</span>
+                  <button
+                    onClick={() => clearNotification(notif.id)}
+                    style={styles.clearOneButton}
+                  >
+                    ❌
+                  </button>
+                </div>
+              ))}
+            </>
           )}
         </div>
-      </nav>
+      )}
+    </div>
+
+    {/* 👤 Profile Image and Dropdown */}
+    <div style={{ position: 'relative' }}>
+      <img
+        src={profileImage || '/Images/default-user.png'}
+        alt="Profile"
+        onClick={toggleDropdown}
+        style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          cursor: 'pointer',
+          objectFit: 'cover',
+          border: '2px solid #FA9A51',
+        }}
+      />
+      {dropdownOpen && (
+        <div style={styles.dropdown}>
+          <button onClick={handleProfile} style={styles.dropdownItem}>
+            View Profile
+          </button>
+          <button onClick={handlePets} style={styles.dropdownItem}>
+            Pets
+          </button>
+          <button onClick={handleFavorites} style={styles.dropdownItem}>
+            Favorites
+          </button>
+          <button onClick={handleLogout} style={styles.dropdownItem}>
+            Log Out
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+</nav>
+
 
       {/* HEADER */}
       <header style={styles.header}>
@@ -644,37 +695,62 @@ const styles = {
   
   notificationDropdown: {
     position: 'absolute',
-    top: '60px',
-    right: '80px',
-    width: '300px',
-    background: '#fff',
+    top: '120%', // below the bell
+    right: 0,
+    backgroundColor: 'white',
     border: '1px solid #ccc',
     borderRadius: '8px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-    padding: '10px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    width: '250px',
     zIndex: 999,
+    padding: '10px',
   },
   
   notificationItem: {
-    padding: '8px',
-    borderBottom: '1px solid #eee',
     fontSize: '14px',
-    color: '#000',
+    color: 'black',
+    padding: '5px 0',
+    borderBottom: '1px solid #eee',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   
   notificationDot: {
-    backgroundColor: 'red',
-    color: 'white',
-    borderRadius: '50%',
-    width: '10px',
-    height: '10px',
-    display: 'inline-block',
     position: 'absolute',
-    top: '8px',
-    right: '8px',
+    top: 0,
+    right: 0,
+    height: '10px',
+    width: '10px',
+    backgroundColor: 'red',
+    borderRadius: '50%',
   },
   
+  clearAllButton: {
+    background: 'none',
+    border: 'none',
+    color: '#888',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
   
+  clearOneButton: {
+    background: 'none',
+    border: 'none',
+    color: '#888',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
+  
+  dropdownHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '8px',
+    fontWeight: 'bold',
+  },  
+  
+
   fullscreenOverlay: {
     position: 'fixed',
     top: 0, left: 0, right: 0, bottom: 0,

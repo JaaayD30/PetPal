@@ -513,10 +513,11 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
   try {
     // Save the connect request as a notification
     await pool.query(
-      `INSERT INTO notifications (sender_id, recipient_id, message, created_at)
-       VALUES ($1, $2, $3, NOW())`,
-      [senderId, recipientId, `You received a connection request for a pet!`]
+      `INSERT INTO notifications (sender_id, recipient_id, pet_id, message, created_at)
+       VALUES ($1, $2, $3, $4, NOW())`,
+      [senderId, recipientId, petId, `You received a connection request for a pet!`]
     );
+    
 
     res.json({ message: 'Request sent!' });
   } catch (error) {
@@ -540,6 +541,40 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
   }
 });
 
+app.delete('/api/notifications/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  console.log('Attempting to delete notif ID:', id);
+  console.log('Authenticated user:', req.user.id);
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM notifications WHERE id = $1 AND recipient_id = $2 RETURNING *',
+      [id, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      console.log('No matching notification or unauthorized');
+      return res.status(404).json({ message: 'Notification not found or not authorized' });
+    }
+
+    res.json({ message: 'Notification deleted' });
+  } catch (err) {
+    console.error('Delete single notification error:', err);
+    res.status(500).json({ message: 'Failed to delete notification' });
+  }
+});
+
+
+
+app.delete('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM notifications WHERE recipient_id = $1', [req.user.id]);
+    res.json({ message: 'All notifications cleared' });
+  } catch (err) {
+    console.error('Delete all notifications error:', err);
+    res.status(500).json({ message: 'Failed to clear notifications' });
+  }
+});
 
 
 

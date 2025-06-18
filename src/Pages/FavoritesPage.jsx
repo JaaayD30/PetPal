@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
 const FavoritesPage = () => {
   const [favoritePets, setFavoritePets] = useState([]);
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
@@ -16,6 +18,20 @@ const FavoritesPage = () => {
     const updated = favoritePets.filter(pet => pet.id !== id);
     setFavoritePets(updated);
     localStorage.setItem('favorites', JSON.stringify(updated));
+  };
+
+  const handleConnect = async (petId, ownerId) => {
+    try {
+      const res = await axios.post(
+        'http://localhost:5000/api/connect-request',
+        { petId, recipientId: ownerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(res.data.message || 'Connect request sent!');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to send connect request.');
+    }
   };
 
   return (
@@ -54,12 +70,22 @@ const FavoritesPage = () => {
                   <p><strong>Address:</strong> {pet.address}</p>
                   <p><strong>Details:</strong> {pet.details}</p>
 
-                  <button
-                    onClick={() => removeFromFavorites(pet.id)}
-                    style={styles.removeButton}
-                  >
-                    Remove from Favorites
-                  </button>
+                  {/* Button Row */}
+                  <div style={styles.buttonRow}>
+                    <button
+                      onClick={() => removeFromFavorites(pet.id)}
+                      style={styles.removeButton}
+                    >
+                      Remove from Favorites
+                    </button>
+                    <button
+                      style={styles.connectButton}
+                      onClick={() => handleConnect(pet.id, pet.user_id)}
+                    >
+                      🐾 Connect
+                    </button>
+                  </div>
+
                 </div>
               </div>
             </div>
@@ -106,13 +132,11 @@ const styles = {
     gap: '12px',
   },
   imageSection: {
-    flex: '1 1 40%',
     display: 'flex',
     flexWrap: 'wrap',
     gap: '10px',
     justifyContent: 'center',
   },
-  
   largeImage: {
     width: '150px',
     height: '150px',
@@ -121,13 +145,26 @@ const styles = {
     cursor: 'pointer',
     boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
   },
-  
   detailsSection: {
     marginTop: '10px',
   },
-  removeButton: {
+  buttonRow: {
     marginTop: '10px',
+    display: 'flex',
+    justifyContent: 'flex-start',
+    gap: '10px',
+  },
+  removeButton: {
     background: '#ff4d4f',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '8px 14px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
+  connectButton: {
+    background: '#28a745',
     color: '#fff',
     border: 'none',
     borderRadius: '6px',
