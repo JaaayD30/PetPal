@@ -366,6 +366,15 @@ const currentPet = activePets[currentIndex];
           ❤️
         </button>
 
+        <button
+  style={styles.connectButton}
+  onClick={() => alert(`Connect request sent for ${currentPet.name}`)}
+  aria-label="Connect pet"
+>
+  🐾 Connect
+</button>
+
+
         <>
           <h2>{currentPet.name}</h2>
           <div style={styles.cardContent}>
@@ -849,6 +858,24 @@ const styles = {
     border: 'none',
     fontSize: '2rem',
     cursor: 'pointer',
+  },
+  
+  connectButton: {
+    position: 'absolute',
+    bottom: '20px',
+    right: '20px',
+    backgroundColor: '#FA9A51',
+    color: '#fff',
+    padding: '10px 18px',
+    border: 'none',
+    borderRadius: '30px',
+    fontWeight: 'bold',
+    fontSize: '16px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
   },
   
 
