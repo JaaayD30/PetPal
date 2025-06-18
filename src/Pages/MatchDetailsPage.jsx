@@ -38,7 +38,7 @@ const MatchDetailsPage = () => {
       }}>
         {/* Profile image */}
         <img
-          src={owner.profile_image || '/Images/default-user.png'}
+          src={owner.base64image ? `data:image/jpeg;base64,${owner.base64image}` : '/Images/default-user.png'}
           alt="Owner"
           style={{
             width: 100,

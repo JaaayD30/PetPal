@@ -577,19 +577,38 @@ app.delete('/api/notifications', authenticateToken, async (req, res) => {
 });
 
 
-// 1. GET Match Details (owner + pets)
+// ✅ Enhanced Match Details API: includes pet images
+// ✅ Enhanced Match Details API: includes pet images and profile image
 app.get('/api/match-details/:senderId', authenticateToken, async (req, res) => {
   const { senderId } = req.params;
 
   try {
-    const userResult = await pool.query('SELECT id, full_name, address, phone FROM users1 WHERE id = $1', [senderId]);
-    const petResult = await pool.query('SELECT * FROM pets WHERE user_id = $1', [senderId]);
+    const userResult = await pool.query(
+      `SELECT id, full_name, email, address, phone, encode(profile_picture, 'base64') AS base64image
+       FROM users1
+       WHERE id = $1`,
+      [senderId]
+    );
+
+    
+    
 
     if (userResult.rows.length === 0) {
       return res.status(404).json({ message: 'Owner not found' });
     }
 
-    res.json({ owner: userResult.rows[0], pets: petResult.rows });
+    const petsResult = await pool.query('SELECT * FROM pets WHERE user_id = $1', [senderId]);
+    const pets = petsResult.rows;
+
+    for (const pet of pets) {
+      const imagesResult = await pool.query(
+        "SELECT encode(image, 'base64') AS base64image FROM pet_images WHERE pet_id = $1",
+        [pet.id]
+      );
+      pet.images = imagesResult.rows.map(row => `data:image/jpeg;base64,${row.base64image}`);
+    }
+
+    res.json({ owner: userResult.rows[0], pets });
   } catch (err) {
     console.error('Error fetching match details:', err);
     res.status(500).json({ message: 'Failed to fetch match details' });
