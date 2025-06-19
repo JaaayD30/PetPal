@@ -331,13 +331,13 @@ const PetDetailsPage = () => {
                       src={imgSrc}
                       alt={`Pet Image ${idx + 1}`}
                       style={{
-                        maxWidth: '150px',
-                        maxHeight: '150px',
+                        width: '80px',
+                        height: '80px',
                         borderRadius: '8px',
                         objectFit: 'cover',
                         cursor: 'pointer',
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                        transition: 'transform 0.2s',
+                        boxShadow: '0 1px 5px rgba(0,0,0,0.15)',
+                        transition: 'transform 0.2s ease-in-out',
                       }}
                       onClick={() => setModalImage(imgSrc)}
                       onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.05)')}
@@ -347,18 +347,10 @@ const PetDetailsPage = () => {
                 </div>
               )}
 
-              <button
-                style={editButtonStyle}
-                onClick={() => handleEditClick(pet)}
-              >
-                Edit
-              </button>
-              <button
-                style={{ ...cancelButtonStyle, marginLeft: '10px' }}
-                onClick={() => handleDeleteClick(pet.id)}
-              >
-                Delete
-              </button>
+<div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+  <button style={editButtonStyle} onClick={() => handleEditClick(pet)}>Edit</button>
+  <button style={cancelButtonStyle} onClick={() => handleDeleteClick(pet.id)}>Delete</button>
+</div>
             </>
           )}
         </div>
@@ -417,49 +409,65 @@ const PetDetailsPage = () => {
 
 const gridStyle = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(4, 280px)', // 4 cards per row
-  gap: '50px 70px', // 40px row gap, 32px column gap
+  gridTemplateColumns: 'repeat(4, 280px)', // 4 fixed-width cards
   justifyContent: 'center',
+  columnGap: '80px',
+  rowGap: '50px',
   marginTop: '40px',
+  padding: '0 20px',
 };
+
 
 
 
 
 const cardStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  height: '100%', // Ensure full height for spacing
   borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
   padding: '20px',
   backgroundColor: '#fff',
   width: '280px',
-  flex: '0 0 auto',
+  position: 'relative',
 };
 
 
 const styles = {
   formLabel: {
-    fontWeight: 'bold',
+    fontWeight: '500',
     display: 'block',
-    marginBottom: '5px',
-    marginTop: '10px',
+    marginBottom: '6px',
+    marginTop: '12px',
+    color: '#444',
   },
   formInput: {
     width: '100%',
-    padding: '8px',
+    padding: '10px',
     borderRadius: '6px',
     border: '1px solid #ccc',
-    marginBottom: '10px',
+    marginBottom: '12px',
+    fontSize: '16px',
+    lineHeight: '1.4',
+    outline: 'none',
   },
   formButtons: {
     display: 'flex',
     gap: '10px',
-    marginTop: '10px',
+    justifyContent: 'flex-end',
+    marginTop: '16px',
   },
   imagePreviewContainer: {
     display: 'flex',
     flexWrap: 'wrap',
     gap: '10px',
     marginBottom: '10px',
+    backgroundColor: '#fafafa',
+    padding: '8px',
+    borderRadius: '6px',
+    border: '1px solid #eee',
   },
   imageWrapper: {
     position: 'relative',
@@ -491,15 +499,14 @@ const styles = {
 };
 
 const containerStyle = {
-  maxWidth: '900px',
-  margin: '40px auto',  // centers container horizontally with vertical spacing
-  padding: '20px',      // add some padding inside the container
+  maxWidth: '1000px',
+  margin: '40px auto',
+  padding: '0 20px',
   fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',  // centers children horizontally
+  alignItems: 'center',
 };
-
 
 const headerStyle = {
   textAlign: 'center',
@@ -518,12 +525,13 @@ const inputStyle = {
 };
 
 const buttonStyle = {
-  padding: '8px 12px',
+  padding: '10px 16px',
   borderRadius: '6px',
   border: 'none',
   cursor: 'pointer',
   fontWeight: 'bold',
-  marginRight: '10px',
+  fontSize: '14px',
+  transition: 'background 0.3s, transform 0.2s',
 };
 
 const saveButtonStyle = {
@@ -543,5 +551,4 @@ const editButtonStyle = {
   backgroundColor: '#f28b39',
   color: 'white',
 };
-
 export default PetDetailsPage;
