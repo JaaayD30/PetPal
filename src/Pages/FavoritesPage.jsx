@@ -43,58 +43,102 @@ const FavoritesPage = () => {
       ) : (
         <div style={styles.cardGrid}>
           {favoritePets.map((pet) => (
-            <div key={pet.id} style={styles.card}>
-              <div style={styles.cardContent}>
-                <div style={styles.imageSection}>
-                  {Array.isArray(pet.images) && pet.images.length > 0 ? (
-                    pet.images.map((img, idx) => (
-                      <img
-                        key={idx}
-                        src={img}
-                        alt={`${pet.name} ${idx + 1}`}
-                        style={styles.largeImage}
-                      />
-                    ))
-                  ) : (
-                    <p>No images</p>
-                  )}
-                </div>
+            <div
+  key={pet.id}
+  style={{
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    padding: '20px',
+    backgroundColor: '#fff',
+    width: '280px',
+    flex: '0 0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    height: '100%', // ensure card fills height
+  }}
+>
+  <div style={{ flexGrow: 1 }}>
+    <h3 style={{ color: '#f28b39' }}>{pet.name}</h3>
+    <p><strong>Breed:</strong> {pet.breed}</p>
+    <p><strong>Blood Type:</strong> {pet.blood_type || pet.bloodType}</p>
+    <p><strong>Age:</strong> {pet.age} months</p>
+    <p><strong>Sex:</strong> {pet.sex}</p>
+    <p><strong>Weight:</strong> {pet.kilos} kg</p>
+    <p><strong>Address:</strong> {pet.address}</p>
+    <p><strong>Details:</strong> {pet.details}</p>
 
-                <div style={styles.detailsSection}>
-                  <h3>{pet.name}</h3>
-                  <p><strong>Breed:</strong> {pet.breed}</p>
-                  <p><strong>Blood Type:</strong> {pet.blood_type || pet.bloodType}</p>
-                  <p><strong>Age:</strong> {pet.age} months</p>
-                  <p><strong>Sex:</strong> {pet.sex}</p>
-                  <p><strong>Weight:</strong> {pet.kilos} kg</p>
-                  <p><strong>Address:</strong> {pet.address}</p>
-                  <p><strong>Details:</strong> {pet.details}</p>
+    {Array.isArray(pet.images) && pet.images.length > 0 && (
+      <div
+        style={{
+          display: 'flex',
+          gap: '10px',
+          marginBottom: '10px',
+          flexWrap: 'wrap',
+        }}
+      >
+        {pet.images.map((img, idx) => (
+          <img
+            key={idx}
+            src={img}
+            alt={`Pet ${idx + 1}`}
+            style={{
+              maxWidth: '150px',
+              maxHeight: '150px',
+              borderRadius: '8px',
+              objectFit: 'cover',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+              transition: 'transform 0.2s',
+            }}
+            onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+            onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+          />
+        ))}
+      </div>
+    )}
+  </div>
 
-                  {/* Button Row */}
-                  <div style={styles.buttonRow}>
-                    <button
-                      onClick={() => removeFromFavorites(pet.id)}
-                      style={styles.removeButton}
-                    >
-                      Remove from Favorites
-                    </button>
-                    <button
-                      style={styles.connectButton}
-                      onClick={() => handleConnect(pet.id, pet.user_id)}
-                    >
-                      🐾 Connect
-                    </button>
-                  </div>
+  {/* Buttons pushed to bottom */}
+  <div style={{ marginTop: 'auto', display: 'flex', justifyContent: 'flex-start', gap: '10px' }}>
+    <button
+      onClick={() => removeFromFavorites(pet.id)}
+      style={{
+        padding: '8px 12px',
+        borderRadius: '6px',
+        border: 'none',
+        backgroundColor: '#f44336',
+        color: '#fff',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+      }}
+    >
+      Remove from Favorites
+    </button>
+    <button
+      style={{
+        padding: '8px 12px',
+        borderRadius: '6px',
+        border: 'none',
+        backgroundColor: '#4CAF50',
+        color: '#fff',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+      }}
+      onClick={() => handleConnect(pet.id, pet.user_id)}
+    >
+      🐾 Connect
+    </button>
+  </div>
+</div>
 
-                </div>
-              </div>
-            </div>
           ))}
         </div>
       )}
     </div>
   );
 };
+  
 
 const styles = {
   pageContainer: {
@@ -115,9 +159,12 @@ const styles = {
   },
   cardGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-    gap: '24px',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '50px 70px',
+    justifyContent: 'center',
+    marginTop: '40px',
   },
+  
   card: {
     backgroundColor: '#fff',
     borderRadius: '12px',
