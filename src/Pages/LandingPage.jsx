@@ -17,6 +17,9 @@ const [filteredPets, setFilteredPets] = useState([]);
 const [notifications, setNotifications] = useState([]);
 const [showNotifications, setShowNotifications] = useState(false);
 
+const [showAllImagesModal, setShowAllImagesModal] = useState(false);
+
+
 const clearNotification = async (notifId) => {
   try {
     await axios.delete(`http://localhost:5000/api/notifications/${notifId}`, {
@@ -393,19 +396,35 @@ const currentPet = activePets[currentIndex];
           <h2>{currentPet.name}</h2>
           <div style={styles.cardContent}>
             <div style={styles.imageSection}>
-              {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
-                currentPet.images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    alt={`${currentPet.name} image ${idx + 1}`}
-                    style={styles.largeImage}
-                    loading="lazy"
-                  />
-                ))
-              ) : (
-                <p>No images available</p>
-              )}
+            {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+  <>
+    {currentPet.images.slice(0, 2).map((img, idx) => (
+      <img
+        key={idx}
+        src={img}
+        alt={`${currentPet.name} image ${idx + 1}`}
+        style={styles.largeImage}
+        onClick={() => setFullscreenImage(img)}
+      />
+    ))}
+
+    {currentPet.images.length > 2 && (
+      <div
+        style={styles.imageOverlay}
+        onClick={() => setExpandedPetIndex(currentIndex)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') setExpandedPetIndex(currentIndex);
+        }}
+      >
+        +{currentPet.images.length - 2} more
+      </div>
+    )}
+  </>
+) : (
+  <p>No images available</p>
+)}
 
               {fullscreenImage && (
                 <div
@@ -484,25 +503,40 @@ const currentPet = activePets[currentIndex];
           <h2>{currentPet.name}</h2>
           <div style={styles.cardContent}>
             <div style={styles.imageSection}>
-              {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
-                currentPet.images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    alt={`${currentPet.name} image ${idx + 1}`}
-                    style={styles.largeImage}
-                    loading="lazy"
-                    onClick={() => setFullscreenImage(img)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') setFullscreenImage(img);
-                    }}
-                  />
-                ))
-              ) : (
-                <p>No images available</p>
-              )}
+            {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+  <>
+    {currentPet.images.slice(0, 2).map((img, idx) => (
+      <img
+        key={idx}
+        src={img}
+        alt={`${currentPet.name} image ${idx + 1}`}
+        style={styles.largeImage}
+        onClick={() => setFullscreenImage(img)}
+      />
+    ))}
+
+    {currentPet.images.length > 2 && (
+      <div
+        style={styles.imageOverlay}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowAllImagesModal(true);
+        }}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') setShowAllImagesModal(true);
+        }}
+      >
+        +{currentPet.images.length - 2} more
+      </div>
+    )}
+  </>
+) : (
+  <p>No images available</p>
+)}
+
+
 
               {fullscreenImage && (
                 <div
@@ -544,6 +578,36 @@ const currentPet = activePets[currentIndex];
 
   <button onClick={handleNext} style={styles.navButton}>Next</button>
 </div>
+
+{showAllImagesModal && (
+  <div
+    style={styles.fullscreenOverlay}
+    onClick={() => setShowAllImagesModal(false)}
+  >
+    <div
+      style={styles.allImagesModal}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <h3 style={{ textAlign: 'center' }}>{currentPet.name} — All Images</h3>
+      <div style={styles.allImagesGrid}>
+        {currentPet.images.map((img, idx) => (
+          <img
+            key={idx}
+            src={img}
+            alt={`Image ${idx + 1}`}
+            style={styles.fullImageThumbnail}
+          />
+        ))}
+      </div>
+      <button
+        onClick={() => setShowAllImagesModal(false)}
+        style={styles.fullscreenCloseButton}
+      >
+        × Close
+      </button>
+    </div>
+  </div>
+)}
 
 
       {/* POPUP FORM */}
@@ -875,6 +939,30 @@ const styles = {
     color: '#333',
     lineHeight: '1.4',
   },
+
+  allImagesModal: {
+    background: '#fff',
+    padding: '20px',
+    borderRadius: '12px',
+    maxWidth: '80vw',
+    maxHeight: '80vh',
+    overflowY: 'auto',
+  },
+  
+  allImagesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+    gap: '10px',
+    marginTop: '10px',
+  },
+  
+  fullImageThumbnail: {
+    width: '100%',
+    height: 'auto',
+    objectFit: 'cover',
+    borderRadius: '8px',
+  },
+  
 
   // Other styles (navbar, search, dropdown, form, etc.) remain unchanged
   navbar: {
