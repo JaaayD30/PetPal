@@ -3,69 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 const LandingPage = () => {
-  const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
+  // State
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const toggleDropdown = () => setDropdownOpen(open => !open);
   const [profileImage, setProfileImage] = useState(null);
-  const handleProfile = () => navigate('/profile');
-  const handleFavorites = () => navigate ('/favorites');
-  const handlePets = () => navigate('/pets');
-  const handleConnected = () => navigate('/connectedmatches');
   const [currentUserId, setCurrentUserId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-const [filteredPets, setFilteredPets] = useState([]);
-const [notifications, setNotifications] = useState([]);
-const [showNotifications, setShowNotifications] = useState(false);
-
-const [showAllImagesModal, setShowAllImagesModal] = useState(false);
-
-
-const clearNotification = async (notifId) => {
-  try {
-    await axios.delete(`http://localhost:5000/api/notifications/${notifId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setNotifications((prev) => prev.filter((n) => n.id !== notifId));
-  } catch (err) {
-    console.error('Failed to delete notification:', err);
-  }
-};
-
-const clearAllNotifications = async () => {
-  try {
-    await axios.delete('http://localhost:5000/api/notifications', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setNotifications([]);
-  } catch (err) {
-    console.error('Failed to clear all notifications:', err);
-  }
-};
-
-
-
-const fetchNotifications = async () => {
-  try {
-    const res = await axios.get('http://localhost:5000/api/notifications', {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setNotifications(res.data);
-  } catch (error) {
-    console.error('Failed to fetch notifications:', error);
-  }
-};
-  const handleLogout = () => {
-    localStorage.removeItem('googleEmail');
-    localStorage.removeItem('token');
-    navigate('/');
-    console.log('User logged out');
-  };
+  const [filteredPets, setFilteredPets] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showAllImagesModal, setShowAllImagesModal] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [expandedPetIndex, setExpandedPetIndex] = useState(null);
+
   const [formData, setFormData] = useState({
     images: [],
     name: '',
@@ -77,75 +33,45 @@ const fetchNotifications = async () => {
     kilos: '',
     details: '',
   });
-  const [fullscreenImage, setFullscreenImage] = useState(null);
-  const [expandedPetIndex, setExpandedPetIndex] = useState(null);
 
+  // Navigation Handlers
+  const handleProfile = () => navigate('/profile');
+  const handleFavorites = () => navigate('/favorites');
+  const handlePets = () => navigate('/pets');
+  const handleConnected = () => navigate('/connectedmatches');
+  const handleLogout = () => {
+    localStorage.removeItem('googleEmail');
+    localStorage.removeItem('token');
+    navigate('/');
+    console.log('User logged out');
+  };
+
+  // Toggle
+  const toggleDropdown = () => setDropdownOpen(prev => !prev);
   const toggleExpandPet = (index) => {
     setExpandedPetIndex(prev => (prev === index ? null : index));
   };
 
+  // Derived Data
+  const activePets = filteredPets.length > 0 ? filteredPets : pets;
+  const currentPet = activePets[currentIndex];
+
+  // Effects
   useEffect(() => {
     fetchPets();
     fetchProfilePicture();
-    fetchNotifications(); // 👈 Now it's declared above
+    fetchNotifications();
   }, []);
 
-  const handleSearch = () => {
-    if (!searchQuery.trim()) {
-      setFilteredPets([]);
-      return;
+  useEffect(() => {
+    if (token) {
+      const base64Url = token.split('.')[1];
+      const decodedValue = JSON.parse(atob(base64Url));
+      setCurrentUserId(decodedValue.id);
     }
-  
-    const query = searchQuery.toLowerCase();
-  
-    const results = pets.filter((pet) => {
-      return (
-        (pet.breed && pet.breed.toLowerCase().includes(query)) ||
-        (pet.blood_type && pet.blood_type.toLowerCase().includes(query)) ||
-        (pet.age && pet.age.toString().includes(query)) ||
-        (pet.address && pet.address.toLowerCase().includes(query))
-      );
-    });
-  
-    setFilteredPets(results);
-    setCurrentIndex(0); // reset to first result
-  };
-  
-  
-  const fetchProfilePicture = async () => {
-    try {
-      const res = await axios.get('http://localhost:5000/api/users/profile-picture', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.data.image) {
-        setProfileImage(res.data.image); // already a data URL
-      }
-    } catch (error) {
-      console.error('Error fetching profile picture:', error);
-    }
-  };
-  
-  const handleFavorite = (pet) => {
-    const existingFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    const alreadyFavorited = existingFavorites.some((fav) => fav.id === pet.id);
-    if (alreadyFavorited) {
-      alert(`${pet.name} is already in favorites.`);
-      return;
-    }
-    const updatedFavorites = [...existingFavorites, pet];
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-    alert(`${pet.name} added to favorites!`);
-  };
-  
-  
+  }, []);
 
-  const activePets = filteredPets.length > 0 ? filteredPets : pets;
-const currentPet = activePets[currentIndex];
-
-
-
+  // Fetchers
   const fetchPets = () => {
     setLoading(true);
     fetch('http://localhost:5000/api/all-pets')
@@ -159,19 +85,85 @@ const currentPet = activePets[currentIndex];
         setLoading(false);
       });
   };
-  
 
+  const fetchProfilePicture = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/users/profile-picture', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.data.image) {
+        setProfileImage(res.data.image);
+      }
+    } catch (error) {
+      console.error('Error fetching profile picture:', error);
+    }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(res.data);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  // Notification Handlers
+  const clearNotification = async (notifId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/notifications/${notifId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(prev => prev.filter(n => n.id !== notifId));
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await axios.delete('http://localhost:5000/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear all notifications:', err);
+    }
+  };
+
+  // Search
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setFilteredPets([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const results = pets.filter(pet =>
+      (pet.breed && pet.breed.toLowerCase().includes(query)) ||
+      (pet.blood_type && pet.blood_type.toLowerCase().includes(query)) ||
+      (pet.age && pet.age.toString().includes(query)) ||
+      (pet.address && pet.address.toLowerCase().includes(query))
+    );
+
+    setFilteredPets(results);
+    setCurrentIndex(0);
+  };
+
+  // Pet Navigation
   const handlePrev = () => {
     const list = filteredPets.length > 0 ? filteredPets : pets;
-    setCurrentIndex((prev) => (prev === 0 ? list.length - 1 : prev - 1));
+    setCurrentIndex(prev => (prev === 0 ? list.length - 1 : prev - 1));
   };
-  
+
   const handleNext = () => {
     const list = filteredPets.length > 0 ? filteredPets : pets;
-    setCurrentIndex((prev) => (prev === list.length - 1 ? 0 : prev + 1));
+    setCurrentIndex(prev => (prev === list.length - 1 ? 0 : prev + 1));
   };
-  
 
+  // Form Handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -241,12 +233,26 @@ const currentPet = activePets[currentIndex];
     }
   };
 
+  const handleFavorite = (pet) => {
+    const existingFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    const alreadyFavorited = existingFavorites.some(fav => fav.id === pet.id);
+
+    if (alreadyFavorited) {
+      alert(`${pet.name} is already in favorites.`);
+      return;
+    }
+
+    const updatedFavorites = [...existingFavorites, pet];
+    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+    alert(`${pet.name} added to favorites!`);
+  };
+
   const handleConnect = async (petId, ownerId) => {
     if (ownerId === currentUserId) {
       alert("You cannot connect to your own pet.");
       return;
     }
-  
+
     try {
       const res = await axios.post(
         'http://localhost:5000/api/connect-request',
@@ -255,25 +261,14 @@ const currentPet = activePets[currentIndex];
       );
       alert(res.data.message || 'Connect request sent!');
     } catch (error) {
-      if (error.response && error.response.data && error.response.data.message) {
-        alert(error.response.data.message); // e.g. "You already sent a connection. Please wait for the response."
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
       } else {
         console.error(error);
         alert('Failed to send connect request.');
       }
     }
   };
-  
-
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    const base64Url = token.split('.')[1];
-    const decodedValue = JSON.parse(atob(base64Url));
-    setCurrentUserId(decodedValue.id);
-  }
-}, []);
-
   
 
   return (
@@ -429,18 +424,33 @@ useEffect(() => {
         src={img}
         alt={`${currentPet.name} image ${idx + 1}`}
         style={styles.largeImage}
-        onClick={() => setFullscreenImage(img)}
+        onClick={() => {
+          if (expandedPetIndex === currentIndex) {
+            setFullscreenImage(img);
+          }
+        }}
       />
     ))}
-
-    {currentPet.images.length > 2 && (
+     {currentPet.images.length > 2 && (
       <div
         style={styles.imageOverlay}
-        onClick={() => setExpandedPetIndex(currentIndex)}
+        onClick={() => {
+          if (expandedPetIndex === currentIndex) {
+            setShowAllImagesModal(true);
+          } else {
+            toggleExpandPet(currentIndex);
+          }
+        }}
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') setExpandedPetIndex(currentIndex);
+          if (e.key === 'Enter') {
+            if (expandedPetIndex === currentIndex) {
+              setShowAllImagesModal(true);
+            } else {
+              toggleExpandPet(currentIndex);
+            }
+          }
         }}
       >
         +{currentPet.images.length - 2} more
