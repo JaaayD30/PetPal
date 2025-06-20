@@ -506,25 +506,37 @@ app.delete('/api/pets/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// server.js
 app.post('/api/connect-request', authenticateToken, async (req, res) => {
   const { petId, recipientId } = req.body;
   const senderId = req.user.id;
 
-  try {
-    // Save the connect request as a notification
-    await pool.query(
-      `INSERT INTO notifications (sender_id, recipient_id, pet_id, message, created_at)
-       VALUES ($1, $2, $3, $4, NOW())`,
-      [senderId, recipientId, petId, `You received a connection request for a pet!`]
-    );
-    
+  if (recipientId === senderId) {
+    return res.status(400).json({ message: 'You cannot send a request to yourself.' });
+  }
 
-    res.json({ message: 'Request sent!' });
+  try {
+    const existing = await pool.query(
+      'SELECT * FROM notifications WHERE sender_id = $1 AND recipient_id = $2 AND type = $3',
+      [senderId, recipientId, 'connect']
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: 'You already sent a connection. Please wait for the response.' });
+    }
+
+    await pool.query(
+      'INSERT INTO notifications (sender_id, recipient_id, type, message) VALUES ($1, $2, $3, $4)',
+      [senderId, recipientId, 'connect', 'wants to connect with you']
+    );
+
+    res.status(200).json({ message: 'Connect request sent!' });
   } catch (error) {
-    console.error('Error sending connection request:', error);
-    res.status(500).json({ message: 'Failed to send request.' });
+    console.error('Connect request failed:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 app.get('/api/notifications', authenticateToken, async (req, res) => {
   const userId = req.user.id;
@@ -697,6 +709,49 @@ app.post('/api/confirm-match', authenticateToken, async (req, res) => {
   res.json({ message: 'Match confirmed and notification sent to both users.' });
 });
 
+
+// Get detailed matches (profile info of matched users)
+app.get('/api/my-matches/details', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.id, u.full_name, u.email, u.address, u.phone,
+        encode(u.profile_picture, 'base64') AS base64image
+      FROM matches m
+      JOIN users1 u 
+        ON u.id = CASE 
+                    WHEN m.user1_id = $1 THEN m.user2_id 
+                    ELSE m.user1_id 
+                 END
+      WHERE m.user1_id = $1 OR m.user2_id = $1
+    `, [userId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching matched users with details:', err);
+    res.status(500).json({ message: 'Failed to fetch matches' });
+  }
+});
+
+
+app.delete('/api/matches/:id', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const matchUserId = parseInt(req.params.id, 10);
+
+  try {
+    const result = await pool.query(`
+      DELETE FROM matches 
+      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+    `, [userId, matchUserId]);
+
+    res.json({ message: 'Match removed successfully' });
+  } catch (err) {
+    console.error('Error removing match:', err);
+    res.status(500).json({ message: 'Failed to remove match' });
+  }
+});
 
 
 

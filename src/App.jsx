@@ -11,6 +11,7 @@ import ResetPassword from './Pages/ResetPassword';
 import ForgotPassword from './Pages/ForgotPassword';
 import FavoritesPage from './Pages/FavoritesPage';
 import MatchDetailsPage from './Pages/MatchDetailsPage';
+import ConnectedMatches from './Pages/ConnectedMatches';
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -38,6 +39,7 @@ function App() {
           <Route path='/forgot-password' element={<ForgotPassword/>} />
           <Route path='/favorites' element={<FavoritesPage/>} />
           <Route path='/match-details/:userId' element={<MatchDetailsPage />} />
+          <Route path='/connectedmatches' element={<ConnectedMatches />} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>

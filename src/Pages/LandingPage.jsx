@@ -12,6 +12,8 @@ const LandingPage = () => {
   const handleProfile = () => navigate('/profile');
   const handleFavorites = () => navigate ('/favorites');
   const handlePets = () => navigate('/pets');
+  const handleConnected = () => navigate('/connectedmatches');
+  const [currentUserId, setCurrentUserId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 const [filteredPets, setFilteredPets] = useState([]);
 const [notifications, setNotifications] = useState([]);
@@ -240,6 +242,11 @@ const currentPet = activePets[currentIndex];
   };
 
   const handleConnect = async (petId, ownerId) => {
+    if (ownerId === currentUserId) {
+      alert("You cannot connect to your own pet.");
+      return;
+    }
+  
     try {
       const res = await axios.post(
         'http://localhost:5000/api/connect-request',
@@ -248,10 +255,25 @@ const currentPet = activePets[currentIndex];
       );
       alert(res.data.message || 'Connect request sent!');
     } catch (error) {
-      console.error(error);
-      alert('Failed to send connect request.');
+      if (error.response && error.response.data && error.response.data.message) {
+        alert(error.response.data.message); // e.g. "You already sent a connection. Please wait for the response."
+      } else {
+        console.error(error);
+        alert('Failed to send connect request.');
+      }
     }
   };
+  
+
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    const base64Url = token.split('.')[1];
+    const decodedValue = JSON.parse(atob(base64Url));
+    setCurrentUserId(decodedValue.id);
+  }
+}, []);
+
   
 
   return (
@@ -351,6 +373,9 @@ const currentPet = activePets[currentIndex];
           </button>
           <button onClick={handleFavorites} style={styles.dropdownItem}>
             Favorites
+          </button>
+          <button onClick={handleConnected} style={styles.dropdownItem}>
+            Matched
           </button>
           <button onClick={handleLogout} style={styles.dropdownItem}>
             Log Out
