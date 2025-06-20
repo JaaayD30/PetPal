@@ -418,9 +418,6 @@ const gridStyle = {
 };
 
 
-
-
-
 const cardStyle = {
   display: 'flex',
   flexDirection: 'column',
@@ -551,4 +548,5 @@ const editButtonStyle = {
   backgroundColor: '#f28b39',
   color: 'white',
 };
+
 export default PetDetailsPage;
