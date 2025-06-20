@@ -1,4 +1,12 @@
 const styles = {
+    pageContainer: {
+        margin: 0,
+        padding: 0,
+        boxSizing: 'border-box',
+        overflowX: 'hidden', // ✅ Prevent horizontal scroll
+      },
+      
+      
     navRight: {
       display: 'flex',
       alignItems: 'center',
@@ -105,15 +113,23 @@ const styles = {
     },
   
     navButton: {
-      padding: '0.5rem 1rem',
-      fontSize: '1rem',
-      borderRadius: '5px',
-      border: 'none',
-      backgroundColor: '#f28b39',
-      color: 'white',
-      cursor: 'pointer',
-      userSelect: 'none',
+        padding: '10px 20px',
+        fontSize: '16px',
+        borderRadius: '8px',
+        border: '2px solid #FA9A51',
+        backgroundColor: 'white',
+        cursor: 'pointer',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     },
+
+    buttonContainerRight: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        marginTop: '1rem',
+        gap: '5rem',
+        paddingRight: '16rem',
+      },
+      
   
     // Card styles
     card: {
@@ -207,18 +223,24 @@ const styles = {
     },
     
   
-    // Other styles (navbar, search, dropdown, form, etc.) remain unchanged
     navbar: {
-      backgroundColor: '#f28b39',
-      display: 'flex',
-      justifyContent: 'center',
-      padding: '0.75rem 1rem',
-      color: 'white',
-      alignItems: 'center',
-      position: 'sticky',
-      top: 0,
-      zIndex: 10,
-    },
+        position: 'fixed',          // Always at top
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100vw',             // Full viewport width
+        backgroundColor: '#f28b39',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.75rem 2rem',    // Adjust padding as needed
+        color: 'white',
+        zIndex: 1000,
+        boxSizing: 'border-box',
+      },
+      
+      
+          
   
     logo: {
       fontWeight: 'bold',
@@ -274,7 +296,8 @@ const styles = {
   
     header: {
       textAlign: 'center',
-      marginTop: '1rem',
+      marginTop: '7rem',
+      marginBottom: '4rem',
     },
   
     title: {

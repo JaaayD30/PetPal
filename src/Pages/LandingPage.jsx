@@ -531,8 +531,6 @@ const LandingPage = () => {
     {/* Pet Card on the right */}
     <div style={{ flex: '1' }}>
       <div style={styles.cardNavigation}>
-        <button onClick={handlePrev} style={styles.navButton}>Prev</button>
-  
         {expandedPetIndex !== currentIndex && (
           <div
             style={styles.card}
@@ -792,12 +790,16 @@ const LandingPage = () => {
     </div>
   </div>
 )}
-
-<button onClick={handleNext} style={styles.navButton}>Next</button>
 </div>
 </div>
 </div>
       )}
+
+<div style={styles.buttonContainerRight}>
+  <button onClick={handlePrev} style={styles.navButton}>Prev</button>
+  <button onClick={handleNext} style={styles.navButton}>Next</button>
+</div>
+
 
 {showAllImagesModal && (
   <div

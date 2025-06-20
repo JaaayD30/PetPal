@@ -538,9 +538,10 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
 
     // ✅ Insert new connect request
     await pool.query(
-      'INSERT INTO notifications (sender_id, recipient_id, type, message) VALUES ($1, $2, $3, $4)',
-      [senderId, recipientId, 'connect', 'wants to connect with you']
+      'INSERT INTO notifications (sender_id, recipient_id, message) VALUES ($1, $2, $3)',
+      [senderId, recipientId, 'wants to connect with you']
     );
+    
 
     res.status(200).json({ message: 'Connect request sent!' });
   } catch (error) {
