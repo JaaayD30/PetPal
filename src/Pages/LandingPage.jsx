@@ -89,16 +89,18 @@ const LandingPage = () => {
 
   const fetchProfilePicture = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/users/profile-picture', {
-        headers: { Authorization: `Bearer ${token}` },
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/users/profile-picture', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
-      if (res.data.image) {
-        setProfileImage(res.data.image);
-      }
+      setProfileImage(response.data.image);
     } catch (error) {
-      console.error('Error fetching profile picture:', error);
+      console.error('Error fetching profile image', error);
     }
   };
+  
 
   const fetchNotifications = async () => {
     try {

@@ -27,17 +27,24 @@ const ProfilePage = () => {
     }
 
     const fetchProfilePicture = async () => {
-      const token = localStorage.getItem('token');
       try {
-        const res = await axios.get('http://localhost:5000/api/users/profile-picture', {
-          headers: { Authorization: `Bearer ${token}` },
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:5000/api/users/profile-picture', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-        if (res.data.image) setProfileImage(res.data.image);
-
-      } catch (err) {
-        console.error('Error fetching profile image', err);
+    
+        if (response.data.image) {
+          setProfileImage(response.data.image);
+        } else {
+          setProfileImage(null); // No image found
+        }
+      } catch (error) {
+        console.error('Error fetching profile image', error);
       }
     };
+    
 
     fetchProfilePicture();
   }, [location, navigate]);
