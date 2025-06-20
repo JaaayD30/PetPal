@@ -447,7 +447,7 @@ const LandingPage = () => {
       {currentPetCoords && (
   <div style={{ display: 'flex', width: '100%', margin: '20px 0' }}>
     {/* Map on the left */}
-    <div style={{ flex: '1', height: '400px', marginRight: '20px' }}>
+    <div style={{ flex: '1', height: '500px', marginRight: '20px' }}>
       <MapContainer
         center={[currentPetCoords.lat, currentPetCoords.lon]}
         zoom={14}
@@ -459,22 +459,71 @@ const LandingPage = () => {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
-        <Marker
-          position={[currentPetCoords.lat, currentPetCoords.lon]}
-          icon={L.icon({
-            iconUrl: currentPet?.images?.[0] || '/Images/default-pet.png',
-            iconSize: [40, 40],
-            iconAnchor: [20, 40],
-            popupAnchor: [0, -40],
-            className: 'leaflet-pet-icon',
-          })}
-        >
-          <Popup>
-            <strong>{currentPet.name}</strong><br />
-            {currentPet.breed}<br />
-            {currentPet.address}
-          </Popup>
-        </Marker>
+<Marker
+  position={[currentPetCoords.lat, currentPetCoords.lon]}
+  icon={L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        position: relative;
+        width: 40px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      ">
+        <!-- Circle head -->
+        <div style="
+          width: 40px;
+          height: 40px;
+          background: orange;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+          z-index: 2;
+        ">
+          <div style="
+            width: 30px;
+            height: 30px;
+            background: white;
+            border-radius: 50%;
+            overflow: hidden;
+          ">
+            <img 
+              src="${currentPet?.images?.[0] || '/Images/default-pet.png'}" 
+              alt="pet"
+              style="width: 100%; height: 100%; object-fit: cover;" 
+            />
+          </div>
+        </div>
+
+        <!-- Pin tail -->
+        <div style="
+          width: 0;
+          height: 0;
+          border-left: 10px solid transparent;
+          border-right: 10px solid transparent;
+          border-top: 16px solid orange;
+          margin-top: -2px;
+          z-index: 1;
+        "></div>
+      </div>
+    `,
+    iconSize: [40, 56],
+    iconAnchor: [20, 56],
+    popupAnchor: [0, -56],
+  })}
+>
+  <Popup>
+    <strong>${currentPet.name}</strong><br />
+    ${currentPet.breed}<br />
+    ${currentPet.address}
+  </Popup>
+</Marker>
+
         <MapFollower coords={currentPetCoords} />
       </MapContainer>
     </div>
