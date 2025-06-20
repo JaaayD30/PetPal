@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styles from '../Styles/LandingPageStyles';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { useRef } from 'react'; // add this if not yet imported
+
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -35,6 +40,22 @@ const LandingPage = () => {
     details: '',
   });
 
+  //maps
+  const [currentPetCoords, setCurrentPetCoords] = useState(null);
+  const mapRef = useRef();
+  const MapFollower = ({ coords }) => {
+    const map = useMap();
+    useEffect(() => {
+      if (coords) {
+        map.setView([coords.lat, coords.lon], 14, {
+          animate: true,
+        });
+      }
+    }, [coords]);
+    return null;
+  };
+  
+
   // Navigation Handlers
   const handleProfile = () => navigate('/profile');
   const handleFavorites = () => navigate('/favorites');
@@ -58,6 +79,31 @@ const LandingPage = () => {
   const currentPet = activePets[currentIndex];
 
   // Effects
+  useEffect(() => {
+    const geocodeAddress = async () => {
+      if (!currentPet?.address) return;
+  
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(currentPet.address)}`
+        );
+        const data = await response.json();
+  
+        if (data && data.length > 0) {
+          setCurrentPetCoords({
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon),
+          });
+        }
+      } catch (error) {
+        console.error("Geocoding error:", error);
+        setCurrentPetCoords(null);
+      }
+    };
+  
+    geocodeAddress();
+  }, [currentPet]);
+  
   useEffect(() => {
     fetchPets();
     fetchProfilePicture();
@@ -397,12 +443,46 @@ const LandingPage = () => {
           Connecting Pet Owners with Potential Blood Donors
         </p>
       </header>
-  
-      {/* PET CARD + NAVIGATION */}
+
+      {currentPetCoords && (
+  <div style={{ display: 'flex', width: '100%', margin: '20px 0' }}>
+    {/* Map on the left */}
+    <div style={{ flex: '1', height: '400px', marginRight: '20px' }}>
+      <MapContainer
+        center={[currentPetCoords.lat, currentPetCoords.lon]}
+        zoom={14}
+        scrollWheelZoom={false}
+        ref={mapRef}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap contributors"
+        />
+        <Marker
+          position={[currentPetCoords.lat, currentPetCoords.lon]}
+          icon={L.icon({
+            iconUrl: currentPet?.images?.[0] || '/Images/default-pet.png',
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+            popupAnchor: [0, -40],
+            className: 'leaflet-pet-icon',
+          })}
+        >
+          <Popup>
+            <strong>{currentPet.name}</strong><br />
+            {currentPet.breed}<br />
+            {currentPet.address}
+          </Popup>
+        </Marker>
+        <MapFollower coords={currentPetCoords} />
+      </MapContainer>
+    </div>
+
+    {/* Pet Card on the right */}
+    <div style={{ flex: '1' }}>
       <div style={styles.cardNavigation}>
-        <button onClick={handlePrev} style={styles.navButton}>
-          Prev
-        </button>
+        <button onClick={handlePrev} style={styles.navButton}>Prev</button>
   
         {expandedPetIndex !== currentIndex && (
           <div
@@ -524,10 +604,13 @@ const LandingPage = () => {
                     </p>
                   </div>
                 </div>
+                
               </>
             )}
           </div>
         )}
+
+        
 
 {/* Expanded modal */}
 {expandedPetIndex === currentIndex && activePets.length > 0 && (
@@ -663,6 +746,9 @@ const LandingPage = () => {
 
 <button onClick={handleNext} style={styles.navButton}>Next</button>
 </div>
+</div>
+</div>
+      )}
 
 {showAllImagesModal && (
   <div
@@ -693,6 +779,7 @@ const LandingPage = () => {
     </div>
   </div>
 )}
+
 
 
       {/* POPUP FORM */}
@@ -827,7 +914,6 @@ const LandingPage = () => {
           </div>
         </div>
       )}
-
       {/* FLOATING ADD BUTTON */}
       <button
         onClick={() => setShowForm(true)}
@@ -836,7 +922,9 @@ const LandingPage = () => {
       >
         +
       </button>
+
     </div>
+    
   );
 };
 
