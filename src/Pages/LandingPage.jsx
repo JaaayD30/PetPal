@@ -499,117 +499,138 @@ const LandingPage = () => {
     </div>
   )}
 
-  {/* Expanded modal */}
-  {expandedPetIndex === currentIndex && activePets.length > 0 && (
+{/* Expanded modal */}
+{expandedPetIndex === currentIndex && activePets.length > 0 && (
+  <div
+    style={styles.modalOverlay}
+    onClick={() => {
+      if (!fullscreenImage) {
+        toggleExpandPet(null);
+      } else {
+        setFullscreenImage(null);
+      }
+    }}
+  >
     <div
-      style={styles.modalOverlay}
-      onClick={() => {
-        if (!fullscreenImage) {
-          toggleExpandPet(null);
-        } else {
-          setFullscreenImage(null);
-        }
-      }}
+      style={{ ...styles.card, ...styles.cardExpanded }}
+      onClick={(e) => e.stopPropagation()}
+      role="dialog"
+      tabIndex={-1}
     >
-      <div
-        style={{ ...styles.card, ...styles.cardExpanded }}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        tabIndex={-1}
+      <button
+        style={styles.heartButton}
+        onClick={() => handleFavorite(currentPet)}
+        aria-label="Heart pet"
       >
-        <button
-          style={styles.heartButton}
-          onClick={() => handleFavorite(currentPet)}
-          aria-label="Heart pet"
-        >
-          ❤️
-        </button>
+        ❤️
+      </button>
 
-        <button
-  style={styles.connectButton}
-  onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
-  aria-label="Connect pet"
->
-  🐾 Connect
-</button>
+      <button
+        style={styles.connectButton}
+        onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
+        aria-label="Connect pet"
+      >
+        🐾 Connect
+      </button>
 
-
-        <>
-          <h2>{currentPet.name}</h2>
-          <div style={styles.cardContent}>
-            <div style={styles.imageSection}>
-            {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
-  <>
-    {currentPet.images.slice(0, 2).map((img, idx) => (
-      <img
+      <>
+        <h2>{currentPet.name}</h2>
+        <div style={styles.cardContent}>
+        <div style={styles.imageSection}>
+  {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+    currentPet.images.slice(0, 2).map((img, idx) => (
+      <div
         key={idx}
-        src={img}
-        alt={`${currentPet.name} image ${idx + 1}`}
-        style={styles.largeImage}
-        onClick={() => setFullscreenImage(img)}
-      />
-    ))}
-
-    {currentPet.images.length > 2 && (
-      <div
-        style={styles.imageOverlay}
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowAllImagesModal(true);
+        style={{
+          position: 'relative',
+          width: '150px',
+          height: '150px',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          cursor: 'pointer',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          backgroundColor: 'rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(2px)',
         }}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') setShowAllImagesModal(true);
+        onClick={() => {
+          if (idx === 1 && currentPet.images.length > 2) {
+            setShowAllImagesModal(true);
+          } else {
+            setFullscreenImage(img);
+          }
         }}
       >
-        +{currentPet.images.length - 2} more
+        <img
+          src={img}
+          alt={`${currentPet.name} image ${idx + 1}`}
+          style={styles.largeImage}
+        />
+        {idx === 1 && currentPet.images.length > 2 && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              color: '#fff',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            +{currentPet.images.length - 2}
+          </div>
+        )}
       </div>
-    )}
-  </>
-) : (
-  <p>No images available</p>
+    ))
+  ) : (
+    <p>No images available</p>
+  )}
+
+            {fullscreenImage && (
+              <div
+                style={styles.fullscreenOverlay}
+                onClick={() => setFullscreenImage(null)}
+                role="dialog"
+                aria-modal="true"
+              >
+                <img
+                  src={fullscreenImage}
+                  alt="Fullscreen pet"
+                  style={styles.fullscreenImage}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  onClick={() => setFullscreenImage(null)}
+                  style={styles.fullscreenCloseButton}
+                  aria-label="Close fullscreen image"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div style={styles.detailsSection}>
+            <p><b>Breed:</b> {currentPet.breed}</p>
+            <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+            <p><b>Age:</b> {currentPet.age}</p>
+            <p><b>Sex:</b> {currentPet.sex}</p>
+            <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+            <p><b>Address:</b> {currentPet.address}</p>
+            <p><b>Details:</b> {currentPet.details}</p>
+          </div>
+        </div>
+      </>
+    </div>
+  </div>
 )}
 
-
-
-              {fullscreenImage && (
-                <div
-                  style={styles.fullscreenOverlay}
-                  onClick={() => setFullscreenImage(null)}
-                  role="dialog"
-                  aria-modal="true"
-                >
-                  <img
-                    src={fullscreenImage}
-                    alt="Fullscreen pet"
-                    style={styles.fullscreenImage}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <button
-                    onClick={() => setFullscreenImage(null)}
-                    style={styles.fullscreenCloseButton}
-                    aria-label="Close fullscreen image"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-            </div>
-            <div style={styles.detailsSection}>
-              <p><b>Breed:</b> {currentPet.breed}</p>
-              <p><b>Blood Type:</b> {currentPet.blood_type}</p>
-              <p><b>Age:</b> {currentPet.age}</p>
-              <p><b>Sex:</b> {currentPet.sex}</p>
-              <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
-              <p><b>Address:</b> {currentPet.address}</p>
-              <p><b>Details:</b> {currentPet.details}</p>
-            </div>
-          </div>
-        </>
-      </div>
-    </div>
-  )}
 
   <button onClick={handleNext} style={styles.navButton}>Next</button>
 </div>
