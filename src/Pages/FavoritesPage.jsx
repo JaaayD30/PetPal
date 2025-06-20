@@ -16,23 +16,15 @@ const FavoritesPage = () => {
     }
     setFavoritePets(validFavorites);
 
-    axios
-      .get('http://localhost:5000/api/my-matches/details', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(res => {
-        const matchedUserIds = res.data.map(match => match.id);
-        setConnectedUsers(matchedUserIds);
-      })
-      .catch(err => {
-        console.error('Failed to fetch match list:', err);
-      });
+    axios.get('http://localhost:5000/api/my-matches/details', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then(res => setConnectedUsers(res.data.map(match => match.id)))
+    .catch(err => console.error('Failed to fetch match list:', err));
   }, []);
 
   const removeFromFavorites = (id) => {
-    const confirmed = window.confirm('Are you sure you want to remove this pet from favorites?');
-    if (!confirmed) return;
-
+    if (!window.confirm('Are you sure you want to remove this pet from favorites?')) return;
     const updated = favoritePets.filter(pet => pet.id !== id);
     setFavoritePets(updated);
     localStorage.setItem('favorites', JSON.stringify(updated));
@@ -78,48 +70,43 @@ const FavoritesPage = () => {
                 <p><strong>Details:</strong> {pet.details}</p>
 
                 {Array.isArray(pet.images) && pet.images.length > 0 && (
-  <div style={styles.imageSection}>
-    {/* First image */}
-    <img
-      src={pet.images[0]}
-      alt="Pet 1"
-      style={styles.largeImage}
-      onClick={() => openImageModal(pet.images)}
-      onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-      onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-    />
+                  <div style={styles.imageSection}>
+                    {/* First image */}
+                    <img
+                      src={pet.images[0]}
+                      alt="Pet 1"
+                      style={styles.largeImage}
+                      onClick={() => openImageModal(pet.images)}
+                      onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                    />
 
-    {/* Second image + overlay (only if at least 2 images exist) */}
-    {pet.images.length > 1 && (
-      <div
-        style={{ ...styles.largeImage, position: 'relative', cursor: 'pointer' }}
-        onClick={() => openImageModal(pet.images)}
-        onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-        onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-      >
-        <img
-          src={pet.images[1]}
-          alt="Pet 2"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
-        />
-        {pet.images.length > 2 && (
-          <div style={styles.moreOverlay}>
-            +{pet.images.length - 2} more
-          </div>
-        )}
-      </div>
-    )}
-  </div>
-)}
-
-
+                    {/* Second image + overlay */}
+                    {pet.images.length > 1 && (
+                      <div
+                        style={{ ...styles.largeImage, position: 'relative', cursor: 'pointer' }}
+                        onClick={() => openImageModal(pet.images)}
+                        onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                        onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                      >
+                        <img
+                          src={pet.images[1]}
+                          alt="Pet 2"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
+                        />
+                        {pet.images.length > 2 && (
+                          <div style={styles.moreOverlay}>
+                            +{pet.images.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div style={styles.buttonRow}>
-                <button
-                  onClick={() => removeFromFavorites(pet.id)}
-                  style={styles.removeButton}
-                >
+                <button onClick={() => removeFromFavorites(pet.id)} style={styles.removeButton}>
                   Remove from Favorites
                 </button>
                 <button
@@ -139,17 +126,11 @@ const FavoritesPage = () => {
         </div>
       )}
 
-      {/* Image Preview Modal */}
       {showModal && (
         <div style={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             {previewImages.map((img, idx) => (
-              <img
-                key={idx}
-                src={img}
-                alt={`Preview ${idx + 1}`}
-                style={styles.modalImage}
-              />
+              <img key={idx} src={img} alt={`Preview ${idx + 1}`} style={styles.modalImage} />
             ))}
           </div>
         </div>
@@ -188,11 +169,15 @@ const styles = {
     padding: '20px',
     backgroundColor: '#fff',
     width: '280px',
-    flex: '0 0 auto',
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
     height: '100%',
+  },
+  imageSection: {
+    display: 'flex',
+    gap: '10px',
+    marginTop: '10px',
   },
   largeImage: {
     width: '140px',
@@ -201,19 +186,6 @@ const styles = {
     objectFit: 'cover',
     boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
     transition: 'transform 0.2s',
-  },
-  imageSection: {
-    display: 'flex',
-    gap: '10px',
-    marginTop: '10px',
-  },
-  moreBox: {
-    backgroundColor: '#e0e0e0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    cursor: 'pointer',
   },
   moreOverlay: {
     position: 'absolute',
