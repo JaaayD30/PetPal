@@ -516,6 +516,17 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
   }
 
   try {
+    // 🚨 Check if they're already matched (still in DB)
+    const matchCheck = await pool.query(`
+      SELECT * FROM matches
+      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+    `, [senderId, recipientId]);
+
+    if (matchCheck.rows.length > 0) {
+      return res.status(400).json({ message: 'You already connected to this user.' });
+    }
+
+    // 🚨 Check if a connect request was already sent
     const existing = await pool.query(
       'SELECT * FROM notifications WHERE sender_id = $1 AND recipient_id = $2 AND type = $3',
       [senderId, recipientId, 'connect']
@@ -525,6 +536,7 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'You already sent a connection. Please wait for the response.' });
     }
 
+    // ✅ Insert new connect request
     await pool.query(
       'INSERT INTO notifications (sender_id, recipient_id, type, message) VALUES ($1, $2, $3, $4)',
       [senderId, recipientId, 'connect', 'wants to connect with you']
@@ -536,6 +548,7 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 
 app.get('/api/notifications', authenticateToken, async (req, res) => {
