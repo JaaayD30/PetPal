@@ -817,6 +817,11 @@ const LandingPage = () => {
           </div>
         )}
 
+<div style={styles.buttonContainerRight}>
+  <button onClick={handlePrev} style={styles.navButton}>Prev</button>
+  <button onClick={handleNext} style={styles.navButton}>Next</button>
+</div>
+
         
 
 {/* Expanded modal */}
@@ -954,11 +959,6 @@ const LandingPage = () => {
 </div>
 </div>
       )}
-
-<div style={styles.buttonContainerRight}>
-  <button onClick={handlePrev} style={styles.navButton}>Prev</button>
-  <button onClick={handleNext} style={styles.navButton}>Next</button>
-</div>
 
 
 {showAllImagesModal && (

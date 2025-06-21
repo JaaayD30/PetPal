@@ -50,7 +50,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     padding: '1.5rem',
-    // ❌ Remove height: '400px'
+    border: '1px solid transparent',
     justifyContent: 'space-between',
   },
   
@@ -186,13 +186,12 @@ const styles = {
     cursor: 'pointer',
     fontWeight: 'bold',
   },
-  
   buttonContainerRight: {
     display: 'flex',
-    justifyContent: 'flex-end',
-    marginTop: '1rem',
-    gap: '5rem',
-    paddingRight: '16rem',
+    justifyContent: 'center', // ✅ Center buttons horizontally
+    alignItems: 'center',
+    gap: '1rem',               // ✅ Add spacing between buttons
+    marginTop: '1.5rem',       // ✅ Space from pet card above
   },
   card: {
     width: '100%',
