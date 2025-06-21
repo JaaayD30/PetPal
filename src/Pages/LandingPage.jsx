@@ -42,6 +42,60 @@ const LandingPage = () => {
 
   //maps
   const [currentPetCoords, setCurrentPetCoords] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [nearbyPets, setNearbyPets] = useState([]);
+
+  const handleShowNearbyPets = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+  
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const userCoords = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        };
+        setUserLocation(userCoords);
+  
+        // Filter pets within 10km
+        const petsWithinRadius = pets.filter((pet) => {
+          if (!pet.lat || !pet.lon) return false;
+          const distance = getDistanceFromLatLonInKm(
+            userCoords.lat,
+            userCoords.lon,
+            pet.lat,
+            pet.lon
+          );
+          return distance <= 10;
+        });
+  
+        setNearbyPets(petsWithinRadius);
+      },
+      (error) => {
+        alert("Location access denied. Cannot show nearby pets.");
+        console.error(error);
+      }
+    );
+  };
+
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+  
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance;
+  }
+  
 
   const mapRef = useRef();
   const MapFollower = ({ coords }) => {
@@ -530,8 +584,79 @@ const LandingPage = () => {
   </Popup>
 </Marker>
 
+{userLocation &&
+  nearbyPets.map((pet, index) => {
+    const isSelected = pet.id === currentPet?.id;
+
+    return (
+      <Marker
+        key={index}
+        position={[pet.lat, pet.lon]}
+        icon={L.divIcon({
+          className: '',
+          html: `
+            <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            ">
+              <div style="
+                width: ${isSelected ? '48px' : '40px'};
+                height: ${isSelected ? '48px' : '40px'};
+                border-radius: 50%;
+                overflow: hidden;
+                border: 3px solid ${isSelected ? 'red' : 'orange'};
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+              ">
+                <img 
+                  src="${pet.images?.[0] || '/Images/default-pet.png'}"
+                  style="width: 100%; height: 100%; object-fit: cover;" 
+                />
+              </div>
+              <div style="
+                width: 0;
+                height: 0;
+                border-left: 10px solid transparent;
+                border-right: 10px solid transparent;
+                border-top: 16px solid ${isSelected ? 'red' : 'orange'};
+                margin-top: -2px;
+              "></div>
+            </div>
+          `,
+          iconSize: [isSelected ? 48 : 40, 56],
+          iconAnchor: [20, 56],
+          popupAnchor: [0, -56],
+        })}
+      >
+        <Popup>
+          <strong>{pet.name}</strong><br />
+          {pet.breed}<br />
+          {pet.address}
+        </Popup>
+      </Marker>
+    );
+  })}
+
+
         <MapFollower coords={currentPetCoords} />
       </MapContainer>
+
+      <button
+  onClick={handleShowNearbyPets}
+  style={{
+    marginTop: '1rem',
+    padding: '10px 20px',
+    backgroundColor: '#FA9A51',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  }}
+>
+  Locate Nearby Pets
+</button>
+
+
     </div>
 
 
