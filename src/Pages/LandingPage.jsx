@@ -781,29 +781,58 @@ const LandingPage = () => {
               <div style={styles.imageSection}>
                 {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
                   <>
-                    {currentPet.images.slice(0, 2).map((img, idx) => (
-                      <img
-                        key={idx}
-                        src={img}
-                        alt={`${currentPet.name} image ${idx + 1}`}
-                        style={styles.largeImage}
-                        onClick={() => setFullscreenImage(img)}
-                      />
-                    ))}
-                    {currentPet.images.length > 2 && (
-                      <div
-                        style={styles.imageOverlay}
-                        onClick={() => setShowAllImagesModal(true)}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        +{currentPet.images.length - 2} more
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p>No images available</p>
-                )}
+      {/* Show 1st image normally */}
+      <img
+        src={currentPet.images[0]}
+        alt={`${currentPet.name} image 1`}
+        style={styles.largeImage}
+        onClick={() => setFullscreenImage(currentPet.images[0])}
+      />
+
+      {/* Show 2nd image with overlay if there are more than 1 */}
+      {currentPet.images.length > 1 && (
+        <div
+          style={{
+            position: 'relative',
+            width: '150px',
+            height: '150px',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+            marginLeft: '0.5rem',
+          }}
+          onClick={() => setShowAllImagesModal(true)}
+        >
+          <img
+            src={currentPet.images[1]}
+            alt={`${currentPet.name} image 2`}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(2px)' }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              color: '#fff',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            +{currentPet.images.length - 1}
+          </div>
+        </div>
+      )}
+    </>
+  ) : (
+    <p>No images available</p>
+  )}
 
                 {fullscreenImage && (
                   <div
@@ -892,21 +921,128 @@ const LandingPage = () => {
 
         <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
         <div style={styles.cardContent}>
-          <div style={styles.imageSection}>
-            {currentPet.images?.length > 0 ? (
-              currentPet.images.slice(0, 2).map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`${currentPet.name} image ${idx + 1}`}
-                  style={styles.largeImage}
-                  onClick={() => setFullscreenImage(img)}
-                />
-              ))
-            ) : (
-              <p>No images</p>
-            )}
-          </div>
+        <div style={styles.imageSection}>
+  {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+    <>
+      {currentPet.images.slice(0, 2).map((img, idx) => (
+        <div
+          key={idx}
+          style={{
+            position: 'relative',
+            width: '150px',
+            height: '150px',
+            borderRadius: '12px',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            backdropFilter: 'blur(4px)',
+            transition: 'transform 0.3s ease',
+          }}
+          onClick={() => {
+            if (idx === 1 && currentPet.images.length > 2) {
+              setShowAllImagesModal(true);
+            } else {
+              setFullscreenImage(img);
+            }
+          }}
+        >
+          <img
+            src={img}
+            alt={`${currentPet.name} image ${idx + 1}`}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+          {idx === 1 && currentPet.images.length > 2 && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                color: '#fff',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              +{currentPet.images.length - 2}
+            </div>
+          )}
+        </div>
+      ))}
+    </>
+  ) : (
+    <p>No images available</p>
+  )}
+</div>
+{showAllImagesModal && (
+  <div
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0,0,0,0.65)',
+      zIndex: 2000,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: '2rem',
+      padding: '3rem',
+      overflowY: 'auto',
+    }}
+    onClick={() => setShowAllImagesModal(false)}
+  >
+    {currentPet.images.map((img, idx) => (
+      <div
+        key={idx}
+        style={{
+          width: '260px',
+          height: '260px',
+          borderRadius: '18px',
+          overflow: 'hidden',
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          cursor: 'pointer',
+          transition: 'transform 0.3s ease',
+        }}
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent background close
+          setFullscreenImage(img);
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+        }}
+      >
+        <img
+          src={img}
+          alt={`Image ${idx + 1}`}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          }}
+        />
+      </div>
+    ))}
+  </div>
+)}
+
           <div style={styles.detailsSection}>
             <p><b>Breed:</b> {currentPet.breed}</p>
             <p><b>Blood Type:</b> {currentPet.blood_type}</p>
