@@ -156,8 +156,13 @@ const LandingPage = () => {
   // Toggle
   const toggleDropdown = () => setDropdownOpen(prev => !prev);
   const toggleExpandPet = (index) => {
-    setExpandedPetIndex(prev => (prev === index ? null : index));
+    if (expandedPetIndex === index) {
+      setExpandedPetIndex(null);
+    } else {
+      setExpandedPetIndex(index);
+    }
   };
+  
 
   // Derived Data
   const activePets = filteredPets.length > 0 ? filteredPets : pets;
@@ -740,7 +745,7 @@ const LandingPage = () => {
    <div
     style={{
       position: 'absolute',
-      top: '80px',
+      top: '200px',
       left: '20px',
       width: '360px',
       maxHeight: '80vh',
@@ -762,6 +767,15 @@ const LandingPage = () => {
           </div>
         ) : (
           <>
+          <div
+  style={{ cursor: 'pointer' }}
+  onClick={() => toggleExpandPet(currentIndex)}
+  role="button"
+  tabIndex={0}
+  onKeyDown={(e) => {
+    if (e.key === 'Enter') toggleExpandPet(currentIndex);
+  }}
+>
             <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
             <div style={styles.cardContent}>
               <div style={styles.imageSection}>
@@ -825,6 +839,7 @@ const LandingPage = () => {
                 <p><b>Details:</b> {currentPet.details}</p>
               </div>
             </div>
+            </div>
 
             <div style={styles.buttonContainerRight}>
               <button onClick={handlePrev} style={styles.navButton}>Prev</button>
@@ -851,31 +866,26 @@ const LandingPage = () => {
     </div>
   </div>
 
-  {/* Expanded Modal */}
-  {expandedPetIndex === currentIndex && activePets.length > 0 && (
+  {/* Expanded Modal View */}
+  {expandedPetIndex === currentIndex && (
     <div
       style={styles.modalOverlay}
-      onClick={() =>
-        fullscreenImage ? setFullscreenImage(null) : toggleExpandPet(null)
-      }
+      onClick={() => setExpandedPetIndex(null)}
     >
       <div
         style={{ ...styles.card, ...styles.cardExpanded }}
         onClick={(e) => e.stopPropagation()}
-        role="dialog"
       >
+        {/* Action Buttons */}
         <button
           style={styles.heartButton}
           onClick={() => handleFavorite(currentPet)}
-          aria-label="Heart pet"
         >
           ❤️
         </button>
-
         <button
           style={styles.connectButton}
           onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
-          aria-label="Connect pet"
         >
           🐾 Connect
         </button>
@@ -883,62 +893,26 @@ const LandingPage = () => {
         <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
         <div style={styles.cardContent}>
           <div style={styles.imageSection}>
-            {currentPet.images.slice(0, 2).map((img, idx) => (
-              <div
-                key={idx}
-                style={{
-                  position: 'relative',
-                  width: '150px',
-                  height: '150px',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  backgroundColor: 'rgba(255,255,255,0.05)',
-                  backdropFilter: 'blur(2px)',
-                }}
-                onClick={() =>
-                  idx === 1 && currentPet.images.length > 2
-                    ? setShowAllImagesModal(true)
-                    : setFullscreenImage(img)
-                }
-              >
+            {currentPet.images?.length > 0 ? (
+              currentPet.images.slice(0, 2).map((img, idx) => (
                 <img
+                  key={idx}
                   src={img}
                   alt={`${currentPet.name} image ${idx + 1}`}
                   style={styles.largeImage}
+                  onClick={() => setFullscreenImage(img)}
                 />
-                {idx === 1 && currentPet.images.length > 2 && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                      color: '#fff',
-                      fontSize: '20px',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    +{currentPet.images.length - 2}
-                  </div>
-                )}
-              </div>
-            ))}
+              ))
+            ) : (
+              <p>No images</p>
+            )}
           </div>
-
           <div style={styles.detailsSection}>
             <p><b>Breed:</b> {currentPet.breed}</p>
             <p><b>Blood Type:</b> {currentPet.blood_type}</p>
             <p><b>Age:</b> {currentPet.age}</p>
             <p><b>Sex:</b> {currentPet.sex}</p>
-            <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+            <p><b>Weight:</b> {currentPet.kilos} kg</p>
             <p><b>Address:</b> {currentPet.address}</p>
             <p><b>Details:</b> {currentPet.details}</p>
           </div>
@@ -946,40 +920,46 @@ const LandingPage = () => {
       </div>
     </div>
   )}
+    {fullscreenImage && (
+    <div
+      style={styles.fullscreenOverlay}
+      onClick={() => setFullscreenImage(null)}
+    >
+      <img
+        src={fullscreenImage}
+        alt="Fullscreen pet"
+        style={styles.fullscreenImage}
+        onClick={(e) => e.stopPropagation()}
+      />
+      <button
+        onClick={() => setFullscreenImage(null)}
+        style={styles.fullscreenCloseButton}
+      >
+        ×
+      </button>
+    </div>
+  )}
 </div>
       )}
 
 
-{showAllImagesModal && (
-  <div
-    style={styles.fullscreenOverlay}
-    onClick={() => setShowAllImagesModal(false)}
-  >
-    <div
-      style={styles.allImagesModal}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h3 style={{ textAlign: 'center' }}>{currentPet.name} — All Images</h3>
-      <div style={styles.allImagesGrid}>
-        {currentPet.images.map((img, idx) => (
-          <img
-            key={idx}
-            src={img}
-            alt={`Image ${idx + 1}`}
-            style={styles.fullImageThumbnail}
-          />
-        ))}
-      </div>
+  {/* Fullscreen Image Viewer */}
+  {fullscreenImage && (
+    <div style={styles.fullscreenOverlay} onClick={() => setFullscreenImage(null)}>
+      <img
+        src={fullscreenImage}
+        alt="Fullscreen"
+        style={styles.fullscreenImage}
+        onClick={(e) => e.stopPropagation()}
+      />
       <button
-        onClick={() => setShowAllImagesModal(false)}
         style={styles.fullscreenCloseButton}
+        onClick={() => setFullscreenImage(null)}
       >
-        × Close
+        ×
       </button>
     </div>
-  </div>
-)}
-
+  )}
 
 
       {/* POPUP FORM */}

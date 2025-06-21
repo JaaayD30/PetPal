@@ -291,7 +291,7 @@ const styles = {
     alignItems: 'center',
     padding: '0.75rem 2rem',
     color: 'white',
-    zIndex: 1000,
+    zIndex: 1100,
     boxSizing: 'border-box',
   },
   logo: {
