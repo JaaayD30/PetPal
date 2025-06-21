@@ -597,15 +597,16 @@ const LandingPage = () => {
       </header>
 
       {currentPetCoords && (
-  <div style={styles.mainContent}>
-    {/* Map on the left */}
-    <div style={styles.mapCard}>
+  <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+
+    <div style={{ flex: 1, borderRadius: '12px', overflow: 'hidden' }}>
       <MapContainer
         center={[currentPetCoords.lat, currentPetCoords.lon]}
         zoom={14}
         scrollWheelZoom={false}
         ref={mapRef}
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: '120vh', width: '100vw', position: 'relative', // 👈 important
+          zIndex: 0, }}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -733,277 +734,203 @@ const LandingPage = () => {
 
         <MapFollower coords={currentPetCoords} />
       </MapContainer>
+      </div>
 
-      <button
-  onClick={handleShowNearbyPets}
-  style={{
-    marginTop: '1rem',
-    padding: '10px 20px',
-    backgroundColor: '#FA9A51',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  }}
->
-  Locate Nearby Pets
-</button>
-
-
-    </div>
-
-
-    {/* Pet Card on the right */}
-    <div style={styles.petCard}>
-  <div style={styles.petCardContent}>
-        {expandedPetIndex !== currentIndex && (
-          <div
-            style={styles.card}
-            onClick={() => toggleExpandPet(currentIndex)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                toggleExpandPet(currentIndex);
-              }
-            }}
-          >
-            {loading ? (
-              <div style={{ padding: '2rem', textAlign: 'center' }}>
-                Loading pets...
-              </div>
-            ) : activePets.length === 0 ? (
-              <div style={{ padding: '2rem', textAlign: 'center' }}>
-                No match found for "{searchQuery}"
-              </div>
-            ) : (
-              <>
-                <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
-                <div style={styles.cardContent}>
-                  <div style={styles.imageSection}>
-                    {Array.isArray(currentPet.images) &&
-                    currentPet.images.length > 0 ? (
-                      <>
-                        {currentPet.images.slice(0, 2).map((img, idx) => (
-                          <img
-                            key={idx}
-                            src={img}
-                            alt={`${currentPet.name} image ${idx + 1}`}
-                            style={styles.largeImage}
-                            onClick={() => {
-                              if (expandedPetIndex === currentIndex) {
-                                setFullscreenImage(img);
-                              }
-                            }}
-                          />
-                        ))}
-                        {currentPet.images.length > 2 && (
-                          <div
-                            style={styles.imageOverlay}
-                            onClick={() => {
-                              if (expandedPetIndex === currentIndex) {
-                                setShowAllImagesModal(true);
-                              } else {
-                                toggleExpandPet(currentIndex);
-                              }
-                            }}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                if (expandedPetIndex === currentIndex) {
-                                  setShowAllImagesModal(true);
-                                } else {
-                                  toggleExpandPet(currentIndex);
-                                }
-                              }
-                            }}
-                          >
-                            +{currentPet.images.length - 2} more
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <p>No images available</p>
-                    )}
-  
-                    {fullscreenImage && (
-                      <div
-                        style={styles.fullscreenOverlay}
-                        onClick={() => setFullscreenImage(null)}
-                        role="dialog"
-                        aria-modal="true"
-                      >
-                        <img
-                          src={fullscreenImage}
-                          alt="Fullscreen pet"
-                          style={styles.fullscreenImage}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                        <button
-                          onClick={() => setFullscreenImage(null)}
-                          style={styles.fullscreenCloseButton}
-                          aria-label="Close fullscreen image"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    )}
-                  </div>
-  
-                  <div style={styles.detailsSection}>
-                    <p>
-                      <b>Breed:</b> {currentPet.breed}
-                    </p>
-                    <p>
-                      <b>Blood Type:</b> {currentPet.blood_type}
-                    </p>
-                    <p>
-                      <b>Age:</b> {currentPet.age}
-                    </p>
-                    <p>
-                      <b>Sex:</b> {currentPet.sex}
-                    </p>
-                    <p>
-                      <b>Weight (kgs):</b> {currentPet.kilos}
-                    </p>
-                    <p>
-                      <b>Address:</b> {currentPet.address}
-                    </p>
-                    <p>
-                      <b>Details:</b> {currentPet.details}
-                    </p>
-                  </div>
-                </div>
-                
-              </>
-            )}
-          </div>
-        )}
-
-<div style={styles.buttonContainerRight}>
-  <button onClick={handlePrev} style={styles.navButton}>Prev</button>
-  <button onClick={handleNext} style={styles.navButton}>Next</button>
-</div>
-
-        
-
-{/* Expanded modal */}
-{expandedPetIndex === currentIndex && activePets.length > 0 && (
-  <div
-    style={styles.modalOverlay}
-    onClick={() => {
-      if (!fullscreenImage) {
-        toggleExpandPet(null);
-      } else {
-        setFullscreenImage(null);
-      }
+   {/* Floating Pet Card */}
+   <div
+    style={{
+      position: 'absolute',
+      top: '80px',
+      left: '20px',
+      width: '360px',
+      maxHeight: '80vh',
+      overflowY: 'auto',
+      background: 'rgba(255, 255, 255, 0.95)',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+      borderRadius: '12px',
+      padding: '1rem',
+      zIndex: 1000,
     }}
   >
+    <div style={styles.petCard}>
+      <div style={styles.petCardContent}>
+        {loading ? (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+        ) : activePets.length === 0 ? (
+          <div style={{ padding: '2rem', textAlign: 'center' }}>
+            No match found for "{searchQuery}"
+          </div>
+        ) : (
+          <>
+            <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
+            <div style={styles.cardContent}>
+              <div style={styles.imageSection}>
+                {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                  <>
+                    {currentPet.images.slice(0, 2).map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt={`${currentPet.name} image ${idx + 1}`}
+                        style={styles.largeImage}
+                        onClick={() => setFullscreenImage(img)}
+                      />
+                    ))}
+                    {currentPet.images.length > 2 && (
+                      <div
+                        style={styles.imageOverlay}
+                        onClick={() => setShowAllImagesModal(true)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        +{currentPet.images.length - 2} more
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p>No images available</p>
+                )}
+
+                {fullscreenImage && (
+                  <div
+                    style={styles.fullscreenOverlay}
+                    onClick={() => setFullscreenImage(null)}
+                    role="dialog"
+                    aria-modal="true"
+                  >
+                    <img
+                      src={fullscreenImage}
+                      alt="Fullscreen pet"
+                      style={styles.fullscreenImage}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                      onClick={() => setFullscreenImage(null)}
+                      style={styles.fullscreenCloseButton}
+                      aria-label="Close fullscreen image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div style={styles.detailsSection}>
+                <p><b>Breed:</b> {currentPet.breed}</p>
+                <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+                <p><b>Age:</b> {currentPet.age}</p>
+                <p><b>Sex:</b> {currentPet.sex}</p>
+                <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+                <p><b>Address:</b> {currentPet.address}</p>
+                <p><b>Details:</b> {currentPet.details}</p>
+              </div>
+            </div>
+
+            <div style={styles.buttonContainerRight}>
+              <button onClick={handlePrev} style={styles.navButton}>Prev</button>
+              <button onClick={handleNext} style={styles.navButton}>Next</button>
+            </div>
+
+            <button
+              onClick={handleShowNearbyPets}
+              style={{
+                marginTop: '1rem',
+                padding: '10px 20px',
+                backgroundColor: '#FA9A51',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+              }}
+            >
+              Locate Nearby Pets
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* Expanded Modal */}
+  {expandedPetIndex === currentIndex && activePets.length > 0 && (
     <div
-      style={{ ...styles.card, ...styles.cardExpanded }}
-      onClick={(e) => e.stopPropagation()}
-      role="dialog"
-      tabIndex={-1}
+      style={styles.modalOverlay}
+      onClick={() =>
+        fullscreenImage ? setFullscreenImage(null) : toggleExpandPet(null)
+      }
     >
-      <button
-        style={styles.heartButton}
-        onClick={() => handleFavorite(currentPet)}
-        aria-label="Heart pet"
+      <div
+        style={{ ...styles.card, ...styles.cardExpanded }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
       >
-        ❤️
-      </button>
+        <button
+          style={styles.heartButton}
+          onClick={() => handleFavorite(currentPet)}
+          aria-label="Heart pet"
+        >
+          ❤️
+        </button>
 
-      <button
-        style={styles.connectButton}
-        onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
-        aria-label="Connect pet"
-      >
-        🐾 Connect
-      </button>
+        <button
+          style={styles.connectButton}
+          onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
+          aria-label="Connect pet"
+        >
+          🐾 Connect
+        </button>
 
-      <>
-      <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
         <div style={styles.cardContent}>
           <div style={styles.imageSection}>
-            {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
-              currentPet.images.slice(0, 2).map((img, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    position: 'relative',
-                    width: '150px',
-                    height: '150px',
-                    borderRadius: '8px',
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
-                    border: '1px solid rgba(255,255,255,0.2)',
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    backdropFilter: 'blur(2px)',
-                  }}
-                  onClick={() => {
-                    if (idx === 1 && currentPet.images.length > 2) {
-                      setShowAllImagesModal(true);
-                    } else {
-                      setFullscreenImage(img);
-                    }
-                  }}
-                >
-                  <img
-                    src={img}
-                    alt={`${currentPet.name} image ${idx + 1}`}
-                    style={styles.largeImage}
-                  />
-                  {idx === 1 && currentPet.images.length > 2 && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        color: '#fff',
-                        fontSize: '20px',
-                        fontWeight: 'bold',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                    >
-                      +{currentPet.images.length - 2}
-                    </div>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p>No images available</p>
-            )}
-
-            {fullscreenImage && (
+            {currentPet.images.slice(0, 2).map((img, idx) => (
               <div
-                style={styles.fullscreenOverlay}
-                onClick={() => setFullscreenImage(null)}
-                role="dialog"
-                aria-modal="true"
+                key={idx}
+                style={{
+                  position: 'relative',
+                  width: '150px',
+                  height: '150px',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  backgroundColor: 'rgba(255,255,255,0.05)',
+                  backdropFilter: 'blur(2px)',
+                }}
+                onClick={() =>
+                  idx === 1 && currentPet.images.length > 2
+                    ? setShowAllImagesModal(true)
+                    : setFullscreenImage(img)
+                }
               >
                 <img
-                  src={fullscreenImage}
-                  alt="Fullscreen pet"
-                  style={styles.fullscreenImage}
-                  onClick={(e) => e.stopPropagation()}
+                  src={img}
+                  alt={`${currentPet.name} image ${idx + 1}`}
+                  style={styles.largeImage}
                 />
-                <button
-                  onClick={() => setFullscreenImage(null)}
-                  style={styles.fullscreenCloseButton}
-                  aria-label="Close fullscreen image"
-                >
-                  ×
-                </button>
+                {idx === 1 && currentPet.images.length > 2 && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                      color: '#fff',
+                      fontSize: '20px',
+                      fontWeight: 'bold',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    +{currentPet.images.length - 2}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
 
           <div style={styles.detailsSection}>
@@ -1016,12 +943,9 @@ const LandingPage = () => {
             <p><b>Details:</b> {currentPet.details}</p>
           </div>
         </div>
-      </>
+      </div>
     </div>
-  </div>
-)}
-</div>
-</div>
+  )}
 </div>
       )}
 

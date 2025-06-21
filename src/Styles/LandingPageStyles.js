@@ -54,6 +54,7 @@ const styles = {
     justifyContent: 'space-between',
   },
   
+  
 
   petCardContent: {
     display: 'flex',
