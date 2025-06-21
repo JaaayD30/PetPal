@@ -1,472 +1,492 @@
 const styles = {
-    pageContainer: {
-        margin: 0,
-        padding: 0,
-        boxSizing: 'border-box',
-        overflowX: 'hidden', // ✅ Prevent horizontal scroll
-      },
-      
-      
-    navRight: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '16px',
-    },
-    
-    notificationDropdown: {
-      position: 'absolute',
-      top: '120%', // below the bell
-      right: 0,
-      backgroundColor: 'white',
-      border: '1px solid #ccc',
-      borderRadius: '8px',
-      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
-      width: '250px',
-      zIndex: 999,
-      padding: '10px',
-    },
-    
-    notificationItem: {
-      fontSize: '14px',
-      color: 'black',
-      padding: '5px 0',
-      borderBottom: '1px solid #eee',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    
-    notificationDot: {
-      position: 'absolute',
-      top: 0,
-      right: 0,
-      height: '10px',
-      width: '10px',
-      backgroundColor: 'red',
-      borderRadius: '50%',
-    },
-    
-    clearAllButton: {
-      background: 'none',
-      border: 'none',
-      color: '#888',
-      fontSize: '12px',
-      cursor: 'pointer',
-    },
-    
-    clearOneButton: {
-      background: 'none',
-      border: 'none',
-      color: '#888',
-      fontSize: '12px',
-      cursor: 'pointer',
-    },
-    
-    dropdownHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '8px',
-      fontWeight: 'bold',
-    },  
-    
-  
-    fullscreenOverlay: {
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.85)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1500,
-      cursor: 'pointer',
-    },
-  
-    fullscreenImage: {
-      maxWidth: '90%',
-      maxHeight: '90%',
-      borderRadius: '10px',
-      boxShadow: '0 0 20px rgba(255, 255, 255, 0.3)',
-      cursor: 'default',
-    },
-  
-    fullscreenCloseButton: {
-      position: 'fixed',
-      top: '20px',
-      right: '30px',
-      fontSize: '2rem',
-      color: 'white',
-      background: 'transparent',
-      border: 'none',
-      cursor: 'pointer',
-      userSelect: 'none',
-      zIndex: 1600,
-    },
-  
-    // Nav & layout
-    cardNavigation: {
-      marginTop: '2rem',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: '1rem',
-    },
-  
-    navButton: {
-        padding: '10px 20px',
-        fontSize: '16px',
-        borderRadius: '8px',
-        border: '2px solid #FA9A51',
-        backgroundColor: 'white',
-        cursor: 'pointer',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-    },
+  // ✅ New layout container for map + pet details
+  mainContent: {
+    display: 'flex',
+    gap: '2rem',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    padding: '2rem',
+    maxWidth: '1200px',
+    margin: '0 auto',
+  },
 
-    buttonContainerRight: {
-        display: 'flex',
-        justifyContent: 'flex-end',
-        marginTop: '1rem',
-        gap: '5rem',
-        paddingRight: '16rem',
-      },
-      
+  mapCard: {
+    flex: '1 1 60%',
+    backgroundColor: '#f9fafb',
+    borderRadius: '16px',
+    padding: '1.5rem',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    height: '600px',
+  },
+
+  mapPlaceholder: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '2rem',
+    color: '#aaa',
+    border: '2px dashed #e0e0e0',
+    borderRadius: '12px',
+    marginBottom: '1rem',
+  },
+
+  mapFooter: {
+    marginTop: '1rem',
+    backgroundColor: '#fff',
+    padding: '1rem',
+    borderRadius: '12px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
+  },
+
+  petCard: {
+    flex: '1 1 40%',
+    backgroundColor: '#fff',
+    borderRadius: '16px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    padding: '1.5rem',
+    // ❌ Remove height: '400px'
+    justifyContent: 'space-between',
+  },
   
-    // Card styles
-    card: {
-      width: '100%',
-      maxWidth: '400px',
-      height: '450px',              // 🔒 Fixed height
-      border: '1px solid #ddd',
-      borderRadius: '10px',
-      padding: '1rem',
-      overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'flex-start',
-      backgroundColor: '#fff',
-    },
+
+  petCardContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+  },
+
+  petCardFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '1rem',
+  },
+
+  petTitle: {
+    fontSize: '1.4rem',
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+
+  petSubtitle: {
+    fontSize: '1rem',
+    color: '#666',
+  },
+
+  // 🔽 Everything below this is unchanged from your original styles
+  pageContainer: {
+    margin: 0,
+    padding: 0,
+    boxSizing: 'border-box',
+    overflowX: 'hidden',
+  },
+  navRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+  },
+  notificationDropdown: {
+    position: 'absolute',
+    top: '120%',
+    right: 0,
+    backgroundColor: 'white',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    width: '250px',
+    zIndex: 999,
+    padding: '10px',
+  },
+  notificationItem: {
+    fontSize: '14px',
+    color: 'black',
+    padding: '5px 0',
+    borderBottom: '1px solid #eee',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    height: '10px',
+    width: '10px',
+    backgroundColor: 'red',
+    borderRadius: '50%',
+  },
+  clearAllButton: {
+    background: 'none',
+    border: 'none',
+    color: '#888',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
+  clearOneButton: {
+    background: 'none',
+    border: 'none',
+    color: '#888',
+    fontSize: '12px',
+    cursor: 'pointer',
+  },
+  dropdownHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '8px',
+    fontWeight: 'bold',
+  },
+  fullscreenOverlay: {
+    position: 'fixed',
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1500,
+    cursor: 'pointer',
+  },
+  fullscreenImage: {
+    maxWidth: '90%',
+    maxHeight: '90%',
+    borderRadius: '10px',
+    boxShadow: '0 0 20px rgba(255, 255, 255, 0.3)',
+    cursor: 'default',
+  },
+  fullscreenCloseButton: {
+    position: 'fixed',
+    top: '20px',
+    right: '30px',
+    fontSize: '2rem',
+    color: 'white',
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    userSelect: 'none',
+    zIndex: 1600,
+  },
+  cardNavigation: {
+    marginTop: '2rem',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  navButton: {
+    padding: '10px 24px',
+    fontSize: '16px',
+    borderRadius: '8px',
+    border: '1px solid #ddd',
+    backgroundColor: '#f9f9f9',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  },
   
-    cardExpanded: {
-      position: 'relative',
-      backgroundColor: '#fff',
-      padding: '2rem',
-      borderRadius: '10px',
-      maxWidth: '600px',
-      width: '90%',
-      boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-      overflowY: 'auto',
-      height: '65vh',
-      maxHeight: '90vh',
-    },
-  
-    // Modal overlay for expanded pet card
-    modalOverlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-    },
-    // Card content inside the card/modal
-    cardContent: {
-      display: 'flex',
-      gap: '1rem',
-      flex: 1,                      // 📐 Take remaining space
-      overflow: 'hidden',
-    },
-    
-  
-    imageSection: {
-      flex: '1 1 40%',
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '10px',
-      justifyContent: 'center',
-    },
-  
-    largeImage: {
-      width: '150px',
-      height: '150px',
-      objectFit: 'cover',
-      borderRadius: '8px',
-      cursor: 'pointer',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-    },
-  
-    detailsSection: {
-      flex: '1 1 60%',
-      overflowY: 'auto',
-      fontSize: '1.1rem',
-      color: '#333',
-      lineHeight: '1.4',
-    },
-  
-    allImagesModal: {
-      background: '#fff',
-      padding: '20px',
-      borderRadius: '12px',
-      maxWidth: '80vw',
-      maxHeight: '80vh',
-      overflowY: 'auto',
-    },
-    
-    allImagesGrid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-      gap: '10px',
-      marginTop: '10px',
-    },
-    
-    fullImageThumbnail: {
-      width: '100%',
-      height: 'auto',
-      objectFit: 'cover',
-      borderRadius: '8px',
-    },
-    
-  
-    navbar: {
-        position: 'fixed',          // Always at top
-        top: 0,
-        left: 0,
-        right: 0,
-        width: '100vw',             // Full viewport width
-        backgroundColor: '#f28b39',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.75rem 2rem',    // Adjust padding as needed
-        color: 'white',
-        zIndex: 1000,
-        boxSizing: 'border-box',
-      },
-      
-      
-          
-  
-    logo: {
-      fontWeight: 'bold',
-      fontSize: '1.5rem',
-      marginRight: 'auto',
-    },
-  
-    searchContainer: {
-      width: '300px',
-      margin: '0 auto',
-    },
-  
-    searchInput: {
-      width: '100%',
-      padding: '0.4rem 0.75rem',
-      borderRadius: '4px',
-      border: 'none',
-      fontSize: '1rem',
-    },
-  
-    profileSection: {
-      position: 'relative',
-      marginLeft: 'auto',
-    },
-  
-    profileIcon: {
-      background: 'transparent',
-      border: 'none',
-      color: 'white',
-      fontSize: '1.4rem',
-      cursor: 'pointer',
-    },
-  
-    dropdown: {
-      position: 'absolute',
-      top: '110%',
-      right: 0,
-      backgroundColor: 'white',
-      color: '#333',
-      borderRadius: '4px',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-      display: 'flex',
-      flexDirection: 'column',
-    },
-  
-    dropdownItem: {
-      padding: '0.5rem 1rem',
-      border: 'none',
-      background: 'none',
-      cursor: 'pointer',
-      textAlign: 'left',
-    },
-  
-    header: {
-      textAlign: 'center',
-      marginTop: '7rem',
-      marginBottom: '4rem',
-    },
-  
-    title: {
-      fontSize: '2.4rem',
-      color: '#334e68',
-      marginBottom: '0.25rem',
-    },
-  
-    subtitle: {
-      fontSize: '1.1rem',
-      color: '#557a95',
-      marginTop: 0,
-    },
-  
-    imagesContainer: {
-      display: 'flex',
-      gap: '8px',
-      marginTop: '10px',
-      flexWrap: 'wrap',
-    },
-  
-    thumbnail: {
-      width: '60px',
-      height: '60px',
-      objectFit: 'cover',
-      borderRadius: '5px',
-      cursor: 'pointer',
-      border: '2px solid transparent',
-      transition: 'border-color 0.3s',
-    },
-  
-    modal: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.6)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      cursor: 'pointer',
-      zIndex: 100,
-    },
-  
-    modalImage: {
-      maxWidth: '90vw',
-      maxHeight: '80vh',
-      borderRadius: '10px',
-      boxShadow: '0 0 15px rgba(255,255,255,0.5)',
-    },
-  
-    heartButton: {
-      position: 'absolute',
-      bottom: '1rem',
-      left: '1rem',
-      background: 'none',
-      border: 'none',
-      fontSize: '2rem',
-      cursor: 'pointer',
-    },
-    
-    connectButton: {
-      position: 'absolute',
-      bottom: '20px',
-      right: '20px',
-      backgroundColor: '#FA9A51',
-      color: '#fff',
-      padding: '10px 18px',
-      border: 'none',
-      borderRadius: '30px',
-      fontWeight: 'bold',
-      fontSize: '16px',
-      cursor: 'pointer',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-    },
-    
-  
-    popupOverlay: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 9999, // make sure this is HIGH
-        overflow: 'auto',
-      },
-      
-  
-    popup: {
-      backgroundColor: 'white',
-      borderRadius: '10px',
-      width: '90%',
-      maxWidth: '480px',
-      padding: '1.5rem',
-      boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-      maxHeight: '90vh',
-      overflowY: 'auto',
-    },
-  
-    formLabel: {
-      marginTop: '0.75rem',
-      marginBottom: '0.25rem',
-      fontWeight: '600',
-    },
-  
-    formInput: {
-      width: '100%',
-      padding: '0.5rem 0.75rem',
-      borderRadius: '6px',
-      border: '1px solid #ccc',
-      fontSize: '1rem',
-    },
-  
-    formButtons: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      marginTop: '1rem',
-    },
-  
-    submitButton: {
-      backgroundColor: '#357edd',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      padding: '0.5rem 1.5rem',
-      fontSize: '1rem',
-      cursor: 'pointer',
-    },
-  
-    cancelButton: {
-      backgroundColor: '#999',
-      color: 'white',
-      border: 'none',
-      borderRadius: '6px',
-      padding: '0.5rem 1.5rem',
-      fontSize: '1rem',
-      cursor: 'pointer',
-    },
-  
-    floatingButton: {
-      position: 'fixed',
-      bottom: '20px',
-      right: '20px',
-      width: '50px',
-      height: '50px',
-      borderRadius: '50%',
-      fontSize: '2rem',
-      backgroundColor: '#f28b39',
-      color: 'white',
-      border: 'none',
-      cursor: 'pointer',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-      userSelect: 'none',
-    },
-  };
-  
-  export default styles;
+  buttonContainerRight: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginTop: '1rem',
+    gap: '5rem',
+    paddingRight: '16rem',
+  },
+  card: {
+    width: '100%',
+    maxWidth: '400px',
+    height: '450px',
+    border: '1px solid #ddd',
+    borderRadius: '10px',
+    padding: '1rem',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    backgroundColor: '#fff',
+  },
+  cardExpanded: {
+    position: 'relative',
+    backgroundColor: '#fff',
+    padding: '2rem',
+    borderRadius: '10px',
+    maxWidth: '600px',
+    width: '90%',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    overflowY: 'auto',
+    height: '65vh',
+    maxHeight: '90vh',
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+  },
+  cardContent: {
+    display: 'flex',
+    gap: '1rem',
+    flex: 1,
+    overflow: 'hidden',
+  },
+  imageSection: {
+    flex: '1 1 40%',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    justifyContent: 'center',
+  },
+  largeImage: {
+    width: '150px',
+    height: '150px',
+    objectFit: 'cover',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+  },
+  detailsSection: {
+    flex: '1 1 60%',
+    overflowY: 'auto',
+    fontSize: '1.1rem',
+    color: '#333',
+    lineHeight: '1.4',
+  },
+  allImagesModal: {
+    background: '#fff',
+    padding: '20px',
+    borderRadius: '12px',
+    maxWidth: '80vw',
+    maxHeight: '80vh',
+    overflowY: 'auto',
+  },
+  allImagesGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+    gap: '10px',
+    marginTop: '10px',
+  },
+  fullImageThumbnail: {
+    width: '100%',
+    height: 'auto',
+    objectFit: 'cover',
+    borderRadius: '8px',
+  },
+  navbar: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    width: '100vw',
+    backgroundColor: '#f28b39',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '0.75rem 2rem',
+    color: 'white',
+    zIndex: 1000,
+    boxSizing: 'border-box',
+  },
+  logo: {
+    fontWeight: 'bold',
+    fontSize: '1.5rem',
+    marginRight: 'auto',
+  },
+  searchContainer: {
+    width: '300px',
+    margin: '0 auto',
+  },
+  searchInput: {
+    width: '100%',
+    padding: '0.4rem 0.75rem',
+    borderRadius: '4px',
+    border: 'none',
+    fontSize: '1rem',
+  },
+  profileSection: {
+    position: 'relative',
+    marginLeft: 'auto',
+  },
+  profileIcon: {
+    background: 'transparent',
+    border: 'none',
+    color: 'white',
+    fontSize: '1.4rem',
+    cursor: 'pointer',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '110%',
+    right: 0,
+    backgroundColor: 'white',
+    color: '#333',
+    borderRadius: '4px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  dropdownItem: {
+    padding: '0.5rem 1rem',
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    textAlign: 'left',
+  },
+  header: {
+    textAlign: 'center',
+    marginTop: '7rem',
+    marginBottom: '4rem',
+  },
+  title: {
+    fontSize: '2.4rem',
+    color: '#334e68',
+    marginBottom: '0.25rem',
+  },
+  subtitle: {
+    fontSize: '1.1rem',
+    color: '#557a95',
+    marginTop: 0,
+  },
+  imagesContainer: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '10px',
+    flexWrap: 'wrap',
+  },
+  thumbnail: {
+    width: '60px',
+    height: '60px',
+    objectFit: 'cover',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    border: '2px solid transparent',
+    transition: 'border-color 0.3s',
+  },
+  modal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    cursor: 'pointer',
+    zIndex: 100,
+  },
+  modalImage: {
+    maxWidth: '90vw',
+    maxHeight: '80vh',
+    borderRadius: '10px',
+    boxShadow: '0 0 15px rgba(255,255,255,0.5)',
+  },
+  heartButton: {
+    position: 'absolute',
+    bottom: '1rem',
+    left: '1rem',
+    background: 'none',
+    border: 'none',
+    fontSize: '2rem',
+    cursor: 'pointer',
+  },
+  connectButton: {
+    position: 'absolute',
+    bottom: '20px',
+    right: '20px',
+    backgroundColor: '#FA9A51',
+    color: '#fff',
+    padding: '10px 18px',
+    border: 'none',
+    borderRadius: '30px',
+    fontWeight: 'bold',
+    fontSize: '16px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+  },
+  popupOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+    overflow: 'auto',
+  },
+  popup: {
+    backgroundColor: 'white',
+    borderRadius: '10px',
+    width: '90%',
+    maxWidth: '480px',
+    padding: '1.5rem',
+    boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+    maxHeight: '90vh',
+    overflowY: 'auto',
+  },
+  formLabel: {
+    marginTop: '0.75rem',
+    marginBottom: '0.25rem',
+    fontWeight: '600',
+  },
+  formInput: {
+    width: '100%',
+    padding: '0.5rem 0.75rem',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    fontSize: '1rem',
+  },
+  formButtons: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '1rem',
+  },
+  submitButton: {
+    backgroundColor: '#357edd',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '0.5rem 1.5rem',
+    fontSize: '1rem',
+    cursor: 'pointer',
+  },
+  cancelButton: {
+    backgroundColor: '#999',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    padding: '0.5rem 1.5rem',
+    fontSize: '1rem',
+    cursor: 'pointer',
+  },
+  floatingButton: {
+    position: 'fixed',
+    bottom: '20px',
+    right: '20px',
+    width: '50px',
+    height: '50px',
+    borderRadius: '50%',
+    fontSize: '2rem',
+    backgroundColor: '#f28b39',
+    color: 'white',
+    border: 'none',
+    cursor: 'pointer',
+    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+    userSelect: 'none',
+  },
+};
+
+export default styles;

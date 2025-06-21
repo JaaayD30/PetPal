@@ -532,9 +532,9 @@ const LandingPage = () => {
       </header>
 
       {currentPetCoords && (
-  <div style={{ display: 'flex', width: '100%', margin: '20px 0' }}>
+  <div style={styles.mainContent}>
     {/* Map on the left */}
-    <div style={{ flex: '1', height: '500px', marginRight: '20px',marginLeft: '35px', zIndex: 0 }}>
+    <div style={styles.mapCard}>
       <MapContainer
         center={[currentPetCoords.lat, currentPetCoords.lon]}
         zoom={14}
@@ -689,8 +689,8 @@ const LandingPage = () => {
 
 
     {/* Pet Card on the right */}
-    <div style={{ flex: '1' }}>
-      <div style={styles.cardNavigation}>
+    <div style={styles.petCard}>
+  <div style={styles.petCardContent}>
         {expandedPetIndex !== currentIndex && (
           <div
             style={styles.card}
