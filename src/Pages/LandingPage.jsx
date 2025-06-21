@@ -449,19 +449,47 @@ const LandingPage = () => {
         <div style={styles.logo}>🐾 PetPal</div>
   
         <div style={styles.searchContainer}>
-          <input
-            type="text"
-            placeholder="Search by breed, blood type, age, address..."
-            style={styles.searchInput}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
-              }
-            }}
-          />
-        </div>
+  <div style={styles.searchInputWrapper}>
+    <input
+      type="text"
+      placeholder="Search by breed, blood type, age, address..."
+      style={styles.searchInput}
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          handleSearch();
+        }
+      }}
+    />
+    {searchQuery && (
+      <button
+  onClick={() => {
+    const currentPetId = currentPet?.id;
+
+    // Clear search query and filtered pets
+    setSearchQuery('');
+    setFilteredPets([]);
+
+    // Try to find the same pet in the full pet list
+    const indexInFull = pets.findIndex(p => p.id === currentPetId);
+
+    // Update the currentIndex to that pet if found, otherwise default to 0
+    setCurrentIndex(indexInFull !== -1 ? indexInFull : 0);
+    localStorage.setItem('currentIndex', indexInFull !== -1 ? indexInFull : 0);
+  }}
+  style={styles.inputClearButton}
+>
+  ×
+</button>
+
+    )}
+  </div>
+</div>
+
+
+
+
   
         <div style={styles.navRight}>
           {/* 🔔 Notification Bell and Dropdown */}

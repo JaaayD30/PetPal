@@ -299,19 +299,39 @@ const styles = {
     marginRight: 'auto',
   },
   searchContainer: {
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)', // still slightly left
-    width: '360px', // ⬅️ widened from 300px
+    width: '310px',
+    margin: '0 auto',
+    transform: 'translateX(-60%)', 
+  },
+  
+  searchInputWrapper: {
+    position: 'relative',
+    width: '100%',
   },
   
   searchInput: {
     width: '100%',
-    padding: '0.5rem 1rem', // ⬅️ slightly more padding
-    borderRadius: '4px',
-    border: 'none',
-    fontSize: '1rem',
+    padding: '10px 36px 10px 12px', // leave space for the × button
+    borderRadius: '20px',
+    border: '1px solid #ccc',
+    fontSize: '14px',
   },
+  
+  inputClearButton: {
+    position: 'absolute',
+    right: '10px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'transparent',
+    border: 'none',
+    fontSize: '16px',
+    color: '#666',
+    cursor: 'pointer',
+    padding: '0',
+    lineHeight: '1',
+  },
+  
+  
   profileSection: {
     position: 'relative',
     marginLeft: 'auto',
