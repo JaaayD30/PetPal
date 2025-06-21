@@ -745,11 +745,10 @@ const LandingPage = () => {
    <div
     style={{
       position: 'absolute',
-      top: '200px',
+      top: '100px',
       left: '20px',
       width: '360px',
-      maxHeight: '80vh',
-      overflowY: 'auto',
+      height: 'auto',
       background: 'rgba(255, 255, 255, 0.95)',
       boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
       borderRadius: '12px',
@@ -783,11 +782,11 @@ const LandingPage = () => {
                   <>
       {/* Show 1st image normally */}
       <img
-        src={currentPet.images[0]}
-        alt={`${currentPet.name} image 1`}
-        style={styles.largeImage}
-        onClick={() => setFullscreenImage(currentPet.images[0])}
-      />
+  src={currentPet.images[0]}
+  alt={`${currentPet.name} image 1`}
+  style={styles.largeImage}
+/>
+
 
       {/* Show 2nd image with overlay if there are more than 1 */}
       {currentPet.images.length > 1 && (
@@ -802,7 +801,6 @@ const LandingPage = () => {
             boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
             marginLeft: '0.5rem',
           }}
-          onClick={() => setShowAllImagesModal(true)}
         >
           <img
             src={currentPet.images[1]}
@@ -984,6 +982,8 @@ const LandingPage = () => {
     <p>No images available</p>
   )}
 </div>
+
+
 {showAllImagesModal && (
   <div
     style={{
@@ -1056,6 +1056,8 @@ const LandingPage = () => {
       </div>
     </div>
   )}
+
+
     {fullscreenImage && (
     <div
       style={styles.fullscreenOverlay}
