@@ -299,9 +299,11 @@ const styles = {
     marginRight: 'auto',
   },
   searchContainer: {
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-60%)', // Shifted slightly left from center
     width: '300px',
-    margin: '0 auto',
-  },
+  },  
   searchInput: {
     width: '100%',
     padding: '0.4rem 0.75rem',
