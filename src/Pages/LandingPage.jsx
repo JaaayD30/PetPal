@@ -145,11 +145,13 @@ const LandingPage = () => {
   const handlePets = () => navigate('/pets');
   const handleConnected = () => navigate('/connectedmatches');
   const handleLogout = () => {
-    localStorage.removeItem('googleEmail');
     localStorage.removeItem('token');
+    localStorage.removeItem('googleEmail');
+    localStorage.removeItem('shuffledPets');
+    localStorage.removeItem('currentIndex');
     navigate('/');
-    console.log('User logged out');
   };
+  
 
   // Toggle
   const toggleDropdown = () => setDropdownOpen(prev => !prev);
@@ -206,12 +208,29 @@ const LandingPage = () => {
     try {
       const res = await fetch('http://localhost:5000/api/all-pets');
       const data = await res.json();
-      setPets(data);
+  
+      let shuffledPets = [];
+  
+      if (localStorage.getItem('shuffledPets')) {
+        shuffledPets = JSON.parse(localStorage.getItem('shuffledPets'));
+      } else {
+        shuffledPets = shuffleArray(data);
+        localStorage.setItem('shuffledPets', JSON.stringify(shuffledPets));
+      }
+  
+      setPets(shuffledPets);
+  
+      const savedIndex = parseInt(localStorage.getItem('currentIndex'), 10);
+      if (!isNaN(savedIndex)) {
+        setCurrentIndex(savedIndex);
+      }
+  
       setLoading(false);
     } catch (error) {
       console.error('Error fetching pets:', error);
     }
   };
+  
   
   useEffect(() => {
     fetchPets();
@@ -288,15 +307,20 @@ const LandingPage = () => {
   };
 
   // Pet Navigation
-  const handlePrev = () => {
-    const list = filteredPets.length > 0 ? filteredPets : pets;
-    setCurrentIndex(prev => (prev === 0 ? list.length - 1 : prev - 1));
-  };
-
   const handleNext = () => {
     const list = filteredPets.length > 0 ? filteredPets : pets;
-    setCurrentIndex(prev => (prev === list.length - 1 ? 0 : prev + 1));
+    const newIndex = currentIndex === list.length - 1 ? 0 : currentIndex + 1;
+    setCurrentIndex(newIndex);
+    localStorage.setItem('currentIndex', newIndex);
   };
+  
+  const handlePrev = () => {
+    const list = filteredPets.length > 0 ? filteredPets : pets;
+    const newIndex = currentIndex === 0 ? list.length - 1 : currentIndex - 1;
+    setCurrentIndex(newIndex);
+    localStorage.setItem('currentIndex', newIndex);
+  };
+  
 
   // Form Handlers
   const handleChange = (e) => {
@@ -405,6 +429,17 @@ const LandingPage = () => {
       }
     }
   };
+
+  //suffle array
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+  
   
 
   return (

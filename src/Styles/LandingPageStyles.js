@@ -301,12 +301,13 @@ const styles = {
   searchContainer: {
     position: 'absolute',
     left: '50%',
-    transform: 'translateX(-60%)', // Shifted slightly left from center
-    width: '300px',
-  },  
+    transform: 'translateX(-50%)', // still slightly left
+    width: '360px', // ⬅️ widened from 300px
+  },
+  
   searchInput: {
     width: '100%',
-    padding: '0.4rem 0.75rem',
+    padding: '0.5rem 1rem', // ⬅️ slightly more padding
     borderRadius: '4px',
     border: 'none',
     fontSize: '1rem',
