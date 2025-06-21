@@ -534,7 +534,7 @@ const LandingPage = () => {
       {currentPetCoords && (
   <div style={{ display: 'flex', width: '100%', margin: '20px 0' }}>
     {/* Map on the left */}
-    <div style={{ flex: '1', height: '500px', marginRight: '20px', zIndex: 0 }}>
+    <div style={{ flex: '1', height: '500px', marginRight: '20px',marginLeft: '35px', zIndex: 0 }}>
       <MapContainer
         center={[currentPetCoords.lat, currentPetCoords.lon]}
         zoom={14}
@@ -714,7 +714,7 @@ const LandingPage = () => {
               </div>
             ) : (
               <>
-                <h2>{currentPet.name}</h2>
+                <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
                 <div style={styles.cardContent}>
                   <div style={styles.imageSection}>
                     {Array.isArray(currentPet.images) &&
@@ -854,7 +854,7 @@ const LandingPage = () => {
       </button>
 
       <>
-        <h2>{currentPet.name}</h2>
+      <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
         <div style={styles.cardContent}>
           <div style={styles.imageSection}>
             {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (

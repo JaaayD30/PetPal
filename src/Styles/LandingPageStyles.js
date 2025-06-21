@@ -133,13 +133,17 @@ const styles = {
   
     // Card styles
     card: {
-      cursor: 'pointer',
-      backgroundColor: 'white',
-      padding: '1rem 1.5rem',
-      borderRadius: '8px',
-      boxShadow: '0 3px 8px rgba(0,0,0,0.1)',
+      width: '100%',
       maxWidth: '400px',
-      margin: '0 1rem',
+      height: '450px',              // 🔒 Fixed height
+      border: '1px solid #ddd',
+      borderRadius: '10px',
+      padding: '1rem',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      backgroundColor: '#fff',
     },
   
     cardExpanded: {
@@ -171,9 +175,11 @@ const styles = {
     // Card content inside the card/modal
     cardContent: {
       display: 'flex',
-      gap: '1.5rem',
-      alignItems: 'flex-start',
+      gap: '1rem',
+      flex: 1,                      // 📐 Take remaining space
+      overflow: 'hidden',
     },
+    
   
     imageSection: {
       flex: '1 1 40%',
@@ -194,6 +200,7 @@ const styles = {
   
     detailsSection: {
       flex: '1 1 60%',
+      overflowY: 'auto',
       fontSize: '1.1rem',
       color: '#333',
       lineHeight: '1.4',
