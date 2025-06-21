@@ -313,9 +313,6 @@ app.post('/api/pets', authenticateToken, async (req, res) => {
       lat = parseFloat(geoData[0].lat);
       lon = parseFloat(geoData[0].lon);
     }
-
-    console.log('📍 Geocode result:', geoData);
-    console.log('📍 Coordinates:', lat, lon);
     
 
     // 🐶 Insert pet into `pets` table
