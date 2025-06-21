@@ -71,7 +71,9 @@ const LandingPage = () => {
           return distance <= 10;
         });
   
-        setNearbyPets(petsWithinRadius);
+        // Slightly offset markers with same coordinates
+        const adjustedPets = offsetDuplicateMarkers(petsWithinRadius);
+        setNearbyPets(adjustedPets);
       },
       (error) => {
         alert("Location access denied. Cannot show nearby pets.");
@@ -79,6 +81,32 @@ const LandingPage = () => {
       }
     );
   };
+  
+
+  // Utility to slightly offset pets with duplicate coordinates
+  function offsetDuplicateMarkers(pets) {
+    const seen = new Map();
+  
+    return pets.map(pet => {
+      const key = `${pet.lat},${pet.lon}`;
+      if (seen.has(key)) {
+        const count = seen.get(key) + 1;
+        seen.set(key, count);
+  
+        const offset = 0.0001 * count; // ~11 meters per duplicate
+        return {
+          ...pet,
+          lat: pet.lat + offset,
+          lon: pet.lon + offset,
+        };
+      } else {
+        seen.set(key, 0);
+        return pet;
+      }
+    });
+  }
+  
+  
 
   function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radius of the Earth in km
