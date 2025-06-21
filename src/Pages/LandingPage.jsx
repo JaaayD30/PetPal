@@ -232,10 +232,6 @@ const LandingPage = () => {
   };
   
   
-  useEffect(() => {
-    fetchPets();
-  }, []);
-  
   
 
   const fetchProfilePicture = async () => {
@@ -372,8 +368,15 @@ const LandingPage = () => {
 
       const data = await response.json();
       alert('Pet added successfully!');
-      fetchPets();
-      setPets(prev => [...prev, data.pet]);
+      
+      // ⛔️ Problem: `fetchPets()` will still use old `shuffledPets`
+      // ✅ Fix: Clear and reload
+      localStorage.removeItem('shuffledPets'); // clear stale cache
+      await fetchPets();                        // re-fetch with updated list
+      
+      setCurrentIndex(0);
+      localStorage.setItem('currentIndex', 0);
+      
       setShowForm(false);
       setFormData({
         images: [],
@@ -385,7 +388,6 @@ const LandingPage = () => {
         address: '',
         kilos: '',
         details: '',
-        
       });
     } catch (error) {
       console.error('Error saving pet:', error);
