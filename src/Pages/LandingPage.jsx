@@ -42,6 +42,7 @@ const LandingPage = () => {
 
   //maps
   const [currentPetCoords, setCurrentPetCoords] = useState(null);
+
   const mapRef = useRef();
   const MapFollower = ({ coords }) => {
     const map = useMap();
@@ -119,19 +120,22 @@ const LandingPage = () => {
   }, []);
 
   // Fetchers
-  const fetchPets = () => {
-    setLoading(true);
-    fetch('http://localhost:5000/api/all-pets')
-      .then(res => res.json())
-      .then(data => {
-        setPets(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching pets:', err);
-        setLoading(false);
-      });
+  const fetchPets = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/all-pets');
+      const data = await res.json();
+      setPets(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching pets:', error);
+    }
   };
+  
+  useEffect(() => {
+    fetchPets();
+  }, []);
+  
+  
 
   const fetchProfilePicture = async () => {
     try {
@@ -275,6 +279,7 @@ const LandingPage = () => {
         address: '',
         kilos: '',
         details: '',
+        
       });
     } catch (error) {
       console.error('Error saving pet:', error);
@@ -517,6 +522,7 @@ const LandingPage = () => {
     popupAnchor: [0, -56],
   })}
 >
+  
   <Popup>
     <strong>${currentPet.name}</strong><br />
     ${currentPet.breed}<br />
@@ -527,6 +533,7 @@ const LandingPage = () => {
         <MapFollower coords={currentPetCoords} />
       </MapContainer>
     </div>
+
 
     {/* Pet Card on the right */}
     <div style={{ flex: '1' }}>

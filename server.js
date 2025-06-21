@@ -7,7 +7,7 @@ import { authenticateToken, generateToken } from './jwtUtils.js';
 import dotenv from 'dotenv';
 import { sendResetPasswordEmail } from './emailService.js';
 import crypto from 'crypto';
-
+import fetch from 'node-fetch';
 
 dotenv.config();
 console.log('EMAIL_USER:', process.env.EMAIL_USER);
@@ -276,6 +276,7 @@ app.put('/api/users/profile-picture', authenticateToken, async (req, res) => {
 // ==================== PET ROUTES ====================
 
 // Add pet route with auth
+
 app.post('/api/pets', authenticateToken, async (req, res) => {
   const {
     images,
@@ -286,42 +287,71 @@ app.post('/api/pets', authenticateToken, async (req, res) => {
     sex,
     address,
     kilos,
-    details,
+    details
   } = req.body;
 
-  const userId = req.user.id; // get userId from JWT token
+  const userId = req.user.id;
 
   if (!name || !breed || !bloodType || !age || !sex || !address || !kilos || !details) {
     return res.status(400).json({ message: 'Missing required pet fields' });
   }
 
   try {
-    const petResult = await pool.query(
-      `INSERT INTO pets (user_id, name, breed, blood_type, age, sex, address, kilos, details)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [userId, name, breed, bloodType, age, sex, address, kilos, details]
-    );
+    // 🌐 Geocode address using OpenStreetMap
+    let lat = null;
+    let lon = null;
+
+    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`, {
+      headers: {
+        'User-Agent': 'PetPalApp/1.0 (resonablejmar@gmail.com)' // ← use any valid email
+      }
+    });
+    
+    const geoData = await geoRes.json();
+
+    if (geoData.length > 0) {
+      lat = parseFloat(geoData[0].lat);
+      lon = parseFloat(geoData[0].lon);
+    }
+
+    console.log('📍 Geocode result:', geoData);
+    console.log('📍 Coordinates:', lat, lon);
+    
+
+    // 🐶 Insert pet into `pets` table
+    const insertPetQuery = `
+      INSERT INTO pets (user_id, name, breed, blood_type, age, sex, address, kilos, details, lat, lon)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *;
+    `;
+    const petResult = await pool.query(insertPetQuery, [
+      userId, name, breed, bloodType, age, sex, address, kilos, details, lat, lon
+    ]);
 
     const pet = petResult.rows[0];
 
-    if (images && images.length > 0) {
+    // 🖼️ Store images into `pet_images` table
+    if (images && Array.isArray(images)) {
       for (const base64Image of images) {
         const base64Data = base64Image.split(',')[1];
-        const imgBuffer = Buffer.from(base64Data, 'base64');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
 
         await pool.query(
           'INSERT INTO pet_images (pet_id, image) VALUES ($1, $2)',
-          [pet.id, imgBuffer]
+          [pet.id, imageBuffer]
         );
       }
     }
 
     res.status(201).json({ message: 'Pet added successfully', pet });
-  } catch (err) {
-    console.error('Error adding pet:', err);
+
+  } catch (error) {
+    console.error('Error saving pet:', error);
     res.status(500).json({ message: 'Failed to add pet' });
   }
 });
+
+
 
 app.get('/api/pets', authenticateToken, async (req, res) => {
   const userId = req.user.id;
