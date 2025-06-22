@@ -636,9 +636,6 @@ app.delete('/api/notifications', authenticateToken, async (req, res) => {
   }
 });
 
-
-// ✅ Enhanced Match Details API: includes pet images
-// ✅ Enhanced Match Details API: includes pet images and profile image
 app.get('/api/match-details/:senderId', authenticateToken, async (req, res) => {
   const { senderId } = req.params;
 
@@ -650,8 +647,7 @@ app.get('/api/match-details/:senderId', authenticateToken, async (req, res) => {
       [senderId]
     );
 
-    
-    
+  
 
     if (userResult.rows.length === 0) {
       return res.status(404).json({ message: 'Owner not found' });
@@ -675,16 +671,16 @@ app.get('/api/match-details/:senderId', authenticateToken, async (req, res) => {
   }
 });
 
-// 2. POST Confirm Match
+
 app.post('/api/confirm-match', authenticateToken, async (req, res) => {
   const { senderId } = req.body;
-  const recipientId = req.user.id;
-
+  const currentUserId = req.user.id; // this is Juan (you)
+  
   try {
     // Prevent duplicate matches
     const existing = await pool.query(
       'SELECT * FROM matches WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)',
-      [senderId, recipientId]
+      [senderId, currentUserId]
     );
 
     if (existing.rows.length > 0) {
@@ -692,15 +688,29 @@ app.post('/api/confirm-match', authenticateToken, async (req, res) => {
     }
 
     // Insert mutual match
-    await pool.query('INSERT INTO matches (user1_id, user2_id) VALUES ($1, $2)', [senderId, recipientId]);
+    await pool.query(
+      'INSERT INTO matches (user1_id, user2_id) VALUES ($1, $2)',
+      [senderId, currentUserId]
+    );
 
-    // Notify both users
+    // Get full names
+    const currentUserResult = await pool.query('SELECT full_name FROM users1 WHERE id = $1', [currentUserId]);
+    const senderResult = await pool.query('SELECT full_name FROM users1 WHERE id = $1', [senderId]);
+
+    const currentUserName = currentUserResult.rows[0]?.full_name || 'you';
+    const senderName = senderResult.rows[0]?.full_name || 'the user';
+
+    // Message where each sees the *other* person's name
+    const messageForSender = `You and ${currentUserName} are now matched!`; // shown to Luan
+    const messageForCurrentUser = `You and ${senderName} are now matched!`; // shown to Juan
+
+    // Notify both
     await pool.query(
       `INSERT INTO notifications (sender_id, recipient_id, message, status)
        VALUES
         ($1, $2, $3, 'pending'),
-        ($2, $1, $3, 'pending')`,
-      [recipientId, senderId, 'You found a match!']
+        ($2, $1, $4, 'pending')`,
+      [currentUserId, senderId, messageForSender, messageForCurrentUser]
     );
 
     res.json({ message: 'Match confirmed and notification sent to both users.' });
@@ -710,52 +720,6 @@ app.post('/api/confirm-match', authenticateToken, async (req, res) => {
   }
 });
 
-// Optional: Fetch matches for logged-in user
-app.get('/api/my-matches', authenticateToken, async (req, res) => {
-  const userId = req.user.id;
-
-  try {
-    const matches = await pool.query(
-      'SELECT * FROM matches WHERE user1_id = $1 OR user2_id = $1',
-      [userId]
-    );
-    res.json(matches.rows);
-  } catch (err) {
-    console.error('Error fetching matches:', err);
-    res.status(500).json({ message: 'Failed to fetch matches' });
-  }
-});
-
-
-
-app.post('/api/confirm-match', authenticateToken, async (req, res) => {
-  const { senderId } = req.body;
-  const recipientId = req.user.id;
-
-  // Check if match exists
-  const existing = await pool.query(
-    'SELECT * FROM matches WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)',
-    [senderId, recipientId]
-  );
-
-  if (existing.rows.length > 0) {
-    return res.status(400).json({ message: 'Match already exists' });
-  }
-
-  // Insert match
-  await pool.query('INSERT INTO matches (user1_id, user2_id) VALUES ($1, $2)', [senderId, recipientId]);
-
-  // Notify both users
-  await pool.query(
-    `INSERT INTO notifications (sender_id, recipient_id, message, status)
-     VALUES
-      ($1, $2, $3, 'pending'),
-      ($2, $1, $3, 'pending')`,
-    [recipientId, senderId, 'You found a match!']
-  );
-
-  res.json({ message: 'Match confirmed and notification sent to both users.' });
-});
 
 
 // Get detailed matches (profile info of matched users)

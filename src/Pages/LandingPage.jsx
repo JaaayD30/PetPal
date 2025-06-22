@@ -568,7 +568,7 @@ const LandingPage = () => {
                     }}
                   />
                   <span style={{ color: 'black' }}>
-                    🐾 <strong>{notif.sender_name}</strong> {notif.message}
+                    🐾 {notif.message}
                   </span>
                 </div>
 
