@@ -602,7 +602,7 @@ const LandingPage = () => {
       </header>
 
       {currentPetCoords && (
-        <div style={{ position: 'relative', height: '100vh', width: '100vw', overflow: 'hidden'}}>
+        <div style={{ position: 'relative', height: '100vh', width: '100vw', overflow: 'hidden' }}>
 
           <div style={{ flex: 1, borderRadius: '12px', overflow: 'hidden' }}>
             <MapContainer

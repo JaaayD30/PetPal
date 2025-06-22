@@ -43,7 +43,7 @@ const styles = {
   },
 
 
-  
+
 
   petCardContent: {
     display: 'flex',
@@ -251,7 +251,7 @@ const styles = {
     color: '#333',
     lineHeight: '1.4',
     maxHeight: '300px', // ✅ new
-  },  
+  },
   allImagesModal: {
     background: '#fff',
     padding: '20px',
@@ -295,14 +295,14 @@ const styles = {
   searchContainer: {
     width: '310px',
     margin: '0 auto',
-    transform: 'translateX(-60%)', 
+    transform: 'translateX(-60%)',
   },
-  
+
   searchInputWrapper: {
     position: 'relative',
     width: '100%',
   },
-  
+
   searchInput: {
     width: '100%',
     padding: '10px 36px 10px 12px', // leave space for the × button
@@ -310,7 +310,7 @@ const styles = {
     border: '1px solid #ccc',
     fontSize: '14px',
   },
-  
+
   inputClearButton: {
     position: 'absolute',
     right: '10px',
@@ -324,8 +324,8 @@ const styles = {
     padding: '0',
     lineHeight: '1',
   },
-  
-  
+
+
   profileSection: {
     position: 'relative',
     marginLeft: 'auto',
