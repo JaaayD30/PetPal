@@ -7,6 +7,9 @@ const MatchDetailsPage = () => {
   const token = localStorage.getItem('token');
   const [owner, setOwner] = useState(null);
   const [pets, setPets] = useState([]);
+  const [modalImage, setModalImage] = useState(null);
+  const closeModal = () => setModalImage(null);
+
 
   const handleConfirmMatch = async () => {
     try {
@@ -26,7 +29,6 @@ const MatchDetailsPage = () => {
       }
     }
   };
-  
 
   const fetchMatchDetails = async () => {
     try {
@@ -47,15 +49,8 @@ const MatchDetailsPage = () => {
   if (!owner) return <div>Loading match details...</div>;
 
   return (
-    <div style={{
-      background: '#f8f8f8',
-      borderRadius: 16,
-      padding: 30,
-      boxShadow: '0 2px 12px rgba(0,0,0,0.1)',
-      maxWidth: 1200,
-      margin: '20px auto'
-    }}>
-      {/* Centered Owner Card */}
+    <div>
+      {/* Owner Card */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 30 }}>
         <div style={{
           width: 300,
@@ -80,7 +75,7 @@ const MatchDetailsPage = () => {
           <p><strong>Email:</strong> {owner.email}</p>
           <p><strong>Address:</strong> {owner.address}</p>
           <p><strong>Phone:</strong> {owner.phone}</p>
-  
+
           <button
             onClick={handleConfirmMatch}
             style={{
@@ -97,8 +92,8 @@ const MatchDetailsPage = () => {
           </button>
         </div>
       </div>
-  
-      {/* Container Card for Pets */}
+
+      {/* Pet Cards */}
       <div style={{
         background: '#f8f8f8',
         padding: 20,
@@ -119,54 +114,146 @@ const MatchDetailsPage = () => {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
             gap: 20,
-            justifyContent: 'start' // ensures left-alignment even with fewer than 4 cards
+            justifyContent: 'start'
           }}>
             {pets.map(pet => (
               <div key={pet.id} style={{
                 background: '#fff',
                 borderRadius: 12,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                overflow: 'hidden'
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
               }}>
-                <div style={{ position: 'relative', height: 150 }}>
-                  {Array.isArray(pet.images) && pet.images.length > 0 ? (
+                <h3 style={{ color: '#f28b39', marginBottom: 10 }}>{pet.name}</h3>
+                <p><strong>Breed:</strong> {pet.breed}</p>
+                <p><strong>Blood Type:</strong> {pet.blood_type || pet.bloodType}</p>
+                <p><strong>Age:</strong> {pet.age} months</p>
+                <p><strong>Sex:</strong> {pet.sex}</p>
+                <p><strong>Weight:</strong> {pet.kilos} kg</p>
+                <p><strong>Address:</strong> {pet.address}</p>
+                <p><strong>Details:</strong> {pet.details}</p>
+
+                {Array.isArray(pet.images) && pet.images.length > 0 && (
+                  <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                    {/* First image */}
                     <img
                       src={pet.images[0]}
-                      alt={pet.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      alt="Pet 1"
+                      style={{
+                        width: '100px',
+                        height: '100px',
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s',
+                      }}
+                      onClick={() => setModalImage(pet.images[0])} // first image
+                      onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                      onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                     />
-                  ) : (
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      background: '#e0e0e0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#888'
-                    }}>
-                      No image available
-                    </div>
-                  )}
-                </div>
-                <div style={{ padding: 12 }}>
-                  <h3 style={{ margin: '8px 0' }}>{pet.name}</h3>
-                  <p><strong>Breed:</strong> {pet.breed}</p>
-                  <p><strong>Blood Type:</strong> {pet.blood_type}</p>
-                  <p><strong>Age:</strong> {pet.age} months</p>
-                  <p><strong>Sex:</strong> {pet.sex}</p>
-                  <p><strong>Weight:</strong> {pet.kilos} kg</p>
-                  <p><strong>Address:</strong> {pet.address}</p>
-                </div>
+
+                    {/* Second image + overlay */}
+                    {pet.images.length > 1 && (
+                      <div
+                        style={{
+                          width: '100px',
+                          height: '100px',
+                          position: 'relative',
+                          cursor: 'pointer',
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          transition: 'transform 0.2s',
+                        }}
+                        onClick={() => setModalImage(pet.images[1])} // second image
+                        onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                        onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                      >
+                        <img
+                          src={pet.images[1]}
+                          alt="Pet 2"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        {pet.images.length > 2 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            right: 0,
+                            bottom: 0,
+                            left: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                            color: '#fff',
+                            fontSize: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 8
+                          }}>
+                            +{pet.images.length - 2} more
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {modalImage && (
+  <div
+    onClick={closeModal}
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0,0,0,0.8)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999,
+      cursor: 'pointer',
+    }}
+  >
+    <img
+      src={modalImage}
+      alt="Pet Enlarged"
+      style={{
+        maxHeight: '90%',
+        maxWidth: '90%',
+        borderRadius: '12px',
+        boxShadow: '0 0 15px #fff',
+        cursor: 'auto',
+      }}
+      onClick={(e) => e.stopPropagation()} // prevent closing when clicking image
+    />
+    <button
+      onClick={closeModal}
+      style={{
+        position: 'fixed',
+        top: 20,
+        right: 30,
+        background: 'transparent',
+        border: 'none',
+        fontSize: '2rem',
+        color: '#fff',
+        cursor: 'pointer',
+        fontWeight: 'bold',
+      }}
+      aria-label="Close image"
+    >
+      &times;
+    </button>
+  </div>
+)}
+
     </div>
   );
-  
-  
 };
 
 export default MatchDetailsPage;
