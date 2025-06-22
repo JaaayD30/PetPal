@@ -5,7 +5,9 @@ import styles from '../Styles/LandingPageStyles';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useRef } from 'react'; // add this if not yet imported
+import { useRef } from 'react';
+import { FiUser, FiHeart, FiLogOut, FiUsers, FiGrid } from 'react-icons/fi';
+
 
 
 const LandingPage = () => {
@@ -27,6 +29,8 @@ const LandingPage = () => {
   const [showAllImagesModal, setShowAllImagesModal] = useState(false);
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [expandedPetIndex, setExpandedPetIndex] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
+
 
   const [formData, setFormData] = useState({
     images: [],
@@ -401,18 +405,27 @@ const LandingPage = () => {
   };
 
   const handleFavorite = (pet) => {
-    const existingFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    const alreadyFavorited = existingFavorites.some(fav => fav.id === pet.id);
-
-    if (alreadyFavorited) {
-      alert(`${pet.name} is already in favorites.`);
-      return;
+    try {
+      // Get existing favorites (as pet IDs)
+      const existingFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+  
+      // Check for duplication
+      if (existingFavorites.includes(pet.id)) {
+        alert(`${pet.name} is already in favorites.`);
+        return;
+      }
+  
+      // Add new favorite by ID
+      const updatedFavorites = [...existingFavorites, pet.id];
+      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      alert(`${pet.name} added to favorites!`);
+    } catch (error) {
+      console.error('Failed to save favorite:', error);
+      alert('Unable to save favorite. Storage limit may have been exceeded.');
     }
-
-    const updatedFavorites = [...existingFavorites, pet];
-    localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-    alert(`${pet.name} added to favorites!`);
   };
+  
+  
 
   const handleConnect = async (petId, ownerId) => {
     if (ownerId === currentUserId) {
@@ -572,19 +585,53 @@ const LandingPage = () => {
             />
             {dropdownOpen && (
               <div style={styles.dropdown}>
-                <button onClick={handleProfile} style={styles.dropdownItem}>
+                <button
+                  onClick={handleProfile}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiUser style={styles.dropdownIcon} />
                   View Profile
                 </button>
-                <button onClick={handlePets} style={styles.dropdownItem}>
+
+                <button
+                  onClick={handlePets}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiGrid style={styles.dropdownIcon} />
                   Pets
                 </button>
-                <button onClick={handleFavorites} style={styles.dropdownItem}>
+
+                <button
+                  onClick={handleFavorites}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiHeart style={styles.dropdownIcon} />
                   Favorites
                 </button>
-                <button onClick={handleConnected} style={styles.dropdownItem}>
+
+                <button
+                  onClick={handleConnected}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiUsers style={styles.dropdownIcon} />
                   Matched
                 </button>
-                <button onClick={handleLogout} style={styles.dropdownItem}>
+
+                <button
+                  onClick={handleLogout}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiLogOut style={styles.dropdownIcon} />
                   Log Out
                 </button>
               </div>
@@ -752,8 +799,11 @@ const LandingPage = () => {
 
           </div>
 
+          
           {/* Floating Pet Card */}
           <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             style={{
               position: 'absolute',
               top: '100px',
@@ -765,6 +815,8 @@ const LandingPage = () => {
               borderRadius: '12px',
               padding: '1rem',
               zIndex: 1000,
+              transition: 'all 0.3s ease-in-out',
+              ...(isHovered ? styles.hoverCardStyle : {}),
             }}
           >
 
@@ -902,6 +954,7 @@ const LandingPage = () => {
               )}
             </div>
           </div>
+
 
           {/* Expanded Modal View */}
           {expandedPetIndex === currentIndex && (

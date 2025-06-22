@@ -10,25 +10,37 @@ const FavoritesPage = () => {
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    const storedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    const validFavorites = storedFavorites.filter(p => p && typeof p === 'object');
-    if (validFavorites.length !== storedFavorites.length) {
-      localStorage.setItem('favorites', JSON.stringify(validFavorites));
-    }
-    setFavoritePets(validFavorites);
+    const loadFavoritePets = async () => {
+      const storedFavoriteIds = JSON.parse(localStorage.getItem('favorites')) || [];
 
-    axios.get('http://localhost:5000/api/my-matches/details', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .then(res => setConnectedUsers(res.data.map(match => match.id)))
-    .catch(err => console.error('Failed to fetch match list:', err));
+      try {
+        const res = await axios.get('http://localhost:5000/api/all-pets');
+        const allPets = res.data;
+        const matchedFavorites = allPets.filter(pet => storedFavoriteIds.includes(pet.id));
+        setFavoritePets(matchedFavorites);
+      } catch (error) {
+        console.error('Failed to load favorite pets:', error);
+      }
+
+      try {
+        const res = await axios.get('http://localhost:5000/api/my-matches/details', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setConnectedUsers(res.data.map(match => match.id));
+      } catch (err) {
+        console.error('Failed to fetch match list:', err);
+      }
+    };
+
+    loadFavoritePets();
   }, []);
 
   const removeFromFavorites = (id) => {
     if (!window.confirm('Are you sure you want to remove this pet from favorites?')) return;
     const updated = favoritePets.filter(pet => pet.id !== id);
     setFavoritePets(updated);
-    localStorage.setItem('favorites', JSON.stringify(updated));
+    const updatedIds = updated.map(pet => pet.id);
+    localStorage.setItem('favorites', JSON.stringify(updatedIds));
   };
 
   const handleConnect = async (petId, ownerId) => {
@@ -72,7 +84,6 @@ const FavoritesPage = () => {
 
                 {Array.isArray(pet.images) && pet.images.length > 0 && (
                   <div style={styles.imageSection}>
-                    {/* First image */}
                     <img
                       src={pet.images[0]}
                       alt="Pet 1"
@@ -81,8 +92,6 @@ const FavoritesPage = () => {
                       onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
                       onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                     />
-
-                    {/* Second image + overlay */}
                     {pet.images.length > 1 && (
                       <div
                         style={{ ...styles.largeImage, position: 'relative', cursor: 'pointer' }}
@@ -96,9 +105,7 @@ const FavoritesPage = () => {
                           style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }}
                         />
                         {pet.images.length > 2 && (
-                          <div style={styles.moreOverlay}>
-                            +{pet.images.length - 2} more
-                          </div>
+                          <div style={styles.moreOverlay}>+{pet.images.length - 2} more</div>
                         )}
                       </div>
                     )}
@@ -139,6 +146,5 @@ const FavoritesPage = () => {
     </div>
   );
 };
-
 
 export default FavoritesPage;

@@ -185,6 +185,11 @@ const styles = {
     gap: '1rem',               // ✅ Add spacing between buttons
     marginTop: '1.5rem',       // ✅ Space from pet card above
   },
+  hoverCardStyle: {
+    transition: 'all 0.3s ease-in-out',
+    transform: 'scale(1.02)',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+  },
   card: {
     width: '100%',
     maxWidth: '400px',
@@ -329,32 +334,52 @@ const styles = {
   profileSection: {
     position: 'relative',
     marginLeft: 'auto',
+    cursor: 'pointer',
   },
   profileIcon: {
-    background: 'transparent',
+    background: 'none',
     border: 'none',
-    color: 'white',
-    fontSize: '1.4rem',
+    color: '#fff',
+    fontSize: '1.5rem',
     cursor: 'pointer',
+    transition: 'transform 0.2s ease',
   },
   dropdown: {
     position: 'absolute',
     top: '110%',
     right: 0,
-    backgroundColor: 'white',
-    color: '#333',
-    borderRadius: '4px',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+    backgroundColor: '#fff',
+    borderRadius: '12px',
+    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
+    padding: '8px 0',
+    width: '200px',
+    zIndex: 1000,
     display: 'flex',
     flexDirection: 'column',
   },
+  
   dropdownItem: {
-    padding: '0.5rem 1rem',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    padding: '12px 16px',
+    fontSize: '15px',
+    color: '#333',
+    background: 'transparent',
     border: 'none',
-    background: 'none',
-    cursor: 'pointer',
     textAlign: 'left',
+    cursor: 'pointer',
+    transition: 'background 0.2s ease',
   },
+  
+  dropdownItemHover: {
+    backgroundColor: '#f5f5f5',
+  },
+  
+  dropdownIcon: {
+    fontSize: '16px',
+    color: '#666',
+  },  
   header: {
     textAlign: 'center',
     marginTop: '7rem',

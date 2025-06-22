@@ -6,6 +6,7 @@ const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [editableUser, setEditableUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [hoveredButton, setHoveredButton] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [profileImage, setProfileImage] = useState(null);
@@ -30,21 +31,14 @@ const ProfilePage = () => {
       try {
         const token = localStorage.getItem('token');
         const response = await axios.get('http://localhost:5000/api/users/profile-picture', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-    
-        if (response.data.image) {
-          setProfileImage(response.data.image);
-        } else {
-          setProfileImage(null); // No image found
-        }
+
+        setProfileImage(response.data.image || null);
       } catch (error) {
         console.error('Error fetching profile image', error);
       }
     };
-    
 
     fetchProfilePicture();
   }, [location, navigate]);
@@ -59,6 +53,7 @@ const ProfilePage = () => {
     if (name === 'phone' && (!/^\d*$/.test(value) || value.length > 11)) return;
     setEditableUser((prev) => ({ ...prev, [name]: value }));
   };
+
 
   const handleSave = async () => {
     try {
@@ -93,17 +88,12 @@ const ProfilePage = () => {
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64String = reader.result;
-
         try {
           const token = localStorage.getItem('token');
           await axios.put(
             'http://localhost:5000/api/users/profile-picture',
             { image: base64String },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
+            { headers: { Authorization: `Bearer ${token}` } }
           );
           setProfileImage(`data:image/jpeg;base64,${base64String}`);
           alert('Profile picture updated!');
@@ -118,6 +108,7 @@ const ProfilePage = () => {
 
   if (!editableUser) return <p>Loading...</p>;
 
+  // Styles
   const inputStyle = {
     fontFamily: "'Crimson Text', serif",
     border: '2px solid #FA9A51',
@@ -135,21 +126,34 @@ const ProfilePage = () => {
     display: 'block',
   };
 
-  const buttonStyle = {
+  const resetButtonStyle = {
     padding: '10px 20px',
-    backgroundColor: '#4a90e2',
+    backgroundColor: '#f28b39',
     color: 'white',
     border: 'none',
     borderRadius: '6px',
     fontWeight: 'bold',
     cursor: 'pointer',
-  };
-
-  const resetButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#f28b39',
     marginTop: '10px',
     marginBottom: '20px',
+  };
+
+
+  const simpleButtonStyle = {
+    padding: '10px 16px',
+    fontSize: '15px',
+    border: '1px solid #333',
+    borderRadius: '6px',
+    backgroundColor: 'transparent',
+    color: '#333',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease-in-out',
+  };
+
+  const hoverStyle = {
+    backgroundColor: '#f5f5f5',
+    textDecoration: 'underline',
+    transform: 'scale(1.03)',
   };
 
   return (
@@ -158,7 +162,6 @@ const ProfilePage = () => {
         style={{
           position: 'relative',
           width: '843px',
-          height: 'auto',
           borderRadius: '6px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
           backgroundColor: 'white',
@@ -168,9 +171,9 @@ const ProfilePage = () => {
         <img
           src="/Images/Logo.png"
           alt="PetPal Logo"
-          style={{ width: '240px', height: 'auto', display: 'block', margin: '0 auto 20px' }}
+          style={{ width: '240px', display: 'block', margin: '0 auto 20px' }}
         />
-  
+
         <h1
           style={{
             textAlign: 'center',
@@ -182,7 +185,7 @@ const ProfilePage = () => {
         >
           Welcome To PetPal, {user.fullName}
         </h1>
-  
+
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
           {profileImage && (
             <img
@@ -206,7 +209,7 @@ const ProfilePage = () => {
             />
           )}
         </div>
-  
+
         <div>
           <label style={labelStyle}>FullName:</label>
           <input
@@ -218,7 +221,7 @@ const ProfilePage = () => {
             style={inputStyle}
           />
         </div>
-  
+
         <div style={{ display: 'flex', gap: '30px', marginBottom: '20px' }}>
           <div>
             <label style={labelStyle}>USERNAME:</label>
@@ -236,7 +239,7 @@ const ProfilePage = () => {
             <input type="email" value={editableUser.email} readOnly style={inputStyle} />
           </div>
         </div>
-  
+
         <div style={{ display: 'flex', gap: '30px', marginBottom: '20px' }}>
           <div>
             <label style={labelStyle}>ADDRESS:</label>
@@ -261,7 +264,7 @@ const ProfilePage = () => {
             />
           </div>
         </div>
-  
+
         <div>
           <label style={labelStyle}>PASSWORD:</label>
           <input
@@ -271,7 +274,7 @@ const ProfilePage = () => {
             style={{ ...inputStyle, letterSpacing: '0.3em' }}
           />
         </div>
-  
+
         <div>
           <button
             onClick={async () => {
@@ -284,13 +287,21 @@ const ProfilePage = () => {
                 alert('Failed to send reset link.');
               }
             }}
-            style={resetButtonStyle}
+            onMouseEnter={() => setHoveredButton('reset')}
+            onMouseLeave={() => setHoveredButton(null)}
+            style={{
+              ...simpleButtonStyle,
+              marginTop: '20px',
+              marginBottom: '40px',
+              ...(hoveredButton === 'reset' ? hoverStyle : {}),
+            }}
             type="button"
           >
             Reset Password
           </button>
         </div>
-  
+
+
         <div
           style={{
             position: 'absolute',
@@ -301,26 +312,59 @@ const ProfilePage = () => {
           }}
         >
           {!isEditing ? (
-            <button onClick={() => setIsEditing(true)} style={buttonStyle}>
+            <button
+              onClick={() => setIsEditing(true)}
+              onMouseEnter={() => setHoveredButton('edit')}
+              onMouseLeave={() => setHoveredButton(null)}
+              style={{
+                ...simpleButtonStyle,
+                ...(hoveredButton === 'edit' ? hoverStyle : {}),
+              }}
+            >
               Edit Profile
             </button>
           ) : (
             <>
-              <button onClick={handleSave} style={buttonStyle}>
+              <button
+                onClick={handleSave}
+                onMouseEnter={() => setHoveredButton('save')}
+                onMouseLeave={() => setHoveredButton(null)}
+                style={{
+                  ...simpleButtonStyle,
+                  ...(hoveredButton === 'save' ? hoverStyle : {}),
+                }}
+              >
                 Save Changes
               </button>
-              <button onClick={handleCancel} style={{ ...buttonStyle, backgroundColor: '#ccc' }}>
+              <button
+                onClick={handleCancel}
+                onMouseEnter={() => setHoveredButton('cancel')}
+                onMouseLeave={() => setHoveredButton(null)}
+                style={{
+                  ...simpleButtonStyle,
+                  ...(hoveredButton === 'cancel' ? hoverStyle : {}),
+                }}
+              >
                 Cancel
               </button>
             </>
           )}
-          <button onClick={handleLogout} style={{ ...buttonStyle, backgroundColor: '#e74c3c' }}>
+
+          <button
+            onClick={handleLogout}
+            onMouseEnter={() => setHoveredButton('logout')}
+            onMouseLeave={() => setHoveredButton(null)}
+            style={{
+              ...simpleButtonStyle,
+              ...(hoveredButton === 'logout' ? hoverStyle : {}),
+            }}
+          >
             Log Out
           </button>
         </div>
       </div>
     </div>
   );
-}  
+};
 
 export default ProfilePage;
