@@ -602,7 +602,7 @@ const LandingPage = () => {
       </header>
 
       {currentPetCoords && (
-        <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+        <div style={{ position: 'relative', height: '100vh', width: '100vw', overflow: 'hidden'}}>
 
           <div style={{ flex: 1, borderRadius: '12px', overflow: 'hidden' }}>
             <MapContainer
@@ -611,7 +611,9 @@ const LandingPage = () => {
               scrollWheelZoom={false}
               ref={mapRef}
               style={{
-                height: '120vh', width: '100vw', position: 'relative', // 👈 important
+                height: '120vh',
+                width: '100vw',
+                position: 'relative',
                 zIndex: 0,
               }}
             >
@@ -619,111 +621,118 @@ const LandingPage = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution="&copy; OpenStreetMap contributors"
               />
+
+              {/* Current Pet Marker */}
               <Marker
                 position={[currentPetCoords.lat, currentPetCoords.lon]}
                 icon={L.divIcon({
                   className: '',
                   html: `
-      <div style="
-        position: relative;
-        width: 40px;
-        height: 56px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-      ">
-        <!-- Circle head -->
         <div style="
+          position: relative;
           width: 40px;
-          height: 40px;
-          background: orange;
-          border-radius: 50%;
+          height: 56px;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-          z-index: 2;
+          flex-direction: column;
         ">
           <div style="
-            width: 30px;
-            height: 30px;
-            background: white;
+            width: 40px;
+            height: 40px;
+            background: orange;
             border-radius: 50%;
-            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            z-index: 2;
           ">
-            <img 
-              src="${currentPet?.images?.[0] || '/Images/default-pet.png'}" 
-              alt="pet"
-              style="width: 100%; height: 100%; object-fit: cover;" 
-            />
+            <div style="
+              width: 30px;
+              height: 30px;
+              background: white;
+              border-radius: 50%;
+              overflow: hidden;
+            ">
+              <img 
+                src="${currentPet?.images?.[0] || '/Images/default-pet.png'}" 
+                alt="pet"
+                style="width: 100%; height: 100%; object-fit: cover;" 
+              />
+            </div>
           </div>
+          <div style="
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 16px solid orange;
+            margin-top: -2px;
+            z-index: 1;
+          "></div>
         </div>
-
-        <!-- Pin tail -->
-        <div style="
-          width: 0;
-          height: 0;
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-top: 16px solid orange;
-          margin-top: -2px;
-          z-index: 1;
-        "></div>
-      </div>
-    `,
+      `,
                   iconSize: [40, 56],
                   iconAnchor: [20, 56],
                   popupAnchor: [0, -56],
                 })}
               >
-
                 <Popup>
-                  <strong>${currentPet.name}</strong><br />
-                  ${currentPet.breed}<br />
-                  ${currentPet.address}
+                  <strong>{currentPet.name}</strong><br />
+                  {currentPet.breed}<br />
+                  {currentPet.address}
                 </Popup>
               </Marker>
 
+              {/* Other Nearby Pets */}
               {userLocation &&
                 nearbyPets.map((pet, index) => {
                   const isSelected = pet.id === currentPet?.id;
-
                   return (
                     <Marker
                       key={index}
                       position={[pet.lat, pet.lon]}
+                      eventHandlers={{
+                        click: () => {
+                          const activeIndex = activePets.findIndex(p => p.id === pet.id);
+                          if (activeIndex !== -1) {
+                            setCurrentIndex(activeIndex);
+                            setExpandedPetIndex(null);
+                          }
+                        },
+                      }}
                       icon={L.divIcon({
                         className: '',
                         html: `
-            <div style="
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-            ">
               <div style="
-                width: ${isSelected ? '48px' : '40px'};
-                height: ${isSelected ? '48px' : '40px'};
-                border-radius: 50%;
-                overflow: hidden;
-                border: 3px solid ${isSelected ? 'red' : 'orange'};
-                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
               ">
-                <img 
-                  src="${pet.images?.[0] || '/Images/default-pet.png'}"
-                  style="width: 100%; height: 100%; object-fit: cover;" 
-                />
+                <div style="
+                  width: ${isSelected ? '48px' : '40px'};
+                  height: ${isSelected ? '48px' : '40px'};
+                  border-radius: 50%;
+                  overflow: hidden;
+                  border: 3px solid ${isSelected ? 'red' : 'orange'};
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                ">
+                  <img 
+                    src="${pet.images?.[0] || '/Images/default-pet.png'}"
+                    style="width: 100%; height: 100%; object-fit: cover;" 
+                  />
+                </div>
+                <div style="
+                  width: 0;
+                  height: 0;
+                  border-left: 10px solid transparent;
+                  border-right: 10px solid transparent;
+                  border-top: 16px solid ${isSelected ? 'red' : 'orange'};
+                  margin-top: -2px;
+                "></div>
               </div>
-              <div style="
-                width: 0;
-                height: 0;
-                border-left: 10px solid transparent;
-                border-right: 10px solid transparent;
-                border-top: 16px solid ${isSelected ? 'red' : 'orange'};
-                margin-top: -2px;
-              "></div>
-            </div>
-          `,
+            `,
                         iconSize: [isSelected ? 48 : 40, 56],
                         iconAnchor: [20, 56],
                         popupAnchor: [0, -56],
@@ -738,9 +747,9 @@ const LandingPage = () => {
                   );
                 })}
 
-
               <MapFollower coords={currentPetCoords} />
             </MapContainer>
+
           </div>
 
           {/* Floating Pet Card */}
@@ -758,141 +767,141 @@ const LandingPage = () => {
               zIndex: 1000,
             }}
           >
-            
-              <div style={styles.petCardContent}>
-                {loading ? (
-                  <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-                ) : activePets.length === 0 ? (
-                  <div style={{ padding: '2rem', textAlign: 'center' }}>
-                    No match found for "{searchQuery}"
-                  </div>
-                ) : (
-                  <>
-                    <div
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => toggleExpandPet(currentIndex)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') toggleExpandPet(currentIndex);
-                      }}
-                    >
-                      <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
-                      <div style={styles.cardContent}>
-                        <div style={styles.imageSection}>
-                          {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
-                            <>
-                              {/* Show 1st image normally */}
-                              <img
-                                src={currentPet.images[0]}
-                                alt={`${currentPet.name} image 1`}
-                                style={styles.largeImage}
-                              />
+
+            <div style={styles.petCardContent}>
+              {loading ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+              ) : activePets.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  No match found for "{searchQuery}"
+                </div>
+              ) : (
+                <>
+                  <div
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => toggleExpandPet(currentIndex)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') toggleExpandPet(currentIndex);
+                    }}
+                  >
+                    <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
+                    <div style={styles.cardContent}>
+                      <div style={styles.imageSection}>
+                        {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                          <>
+                            {/* Show 1st image normally */}
+                            <img
+                              src={currentPet.images[0]}
+                              alt={`${currentPet.name} image 1`}
+                              style={styles.largeImage}
+                            />
 
 
-                              {/* Show 2nd image with overlay if there are more than 1 */}
-                              {currentPet.images.length > 1 && (
+                            {/* Show 2nd image with overlay if there are more than 1 */}
+                            {currentPet.images.length > 1 && (
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  width: '150px',
+                                  height: '150px',
+                                  borderRadius: '8px',
+                                  overflow: 'hidden',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                                  marginLeft: '0.5rem',
+                                }}
+                              >
+                                <img
+                                  src={currentPet.images[1]}
+                                  alt={`${currentPet.name} image 2`}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(2px)' }}
+                                />
                                 <div
                                   style={{
-                                    position: 'relative',
-                                    width: '150px',
-                                    height: '150px',
-                                    borderRadius: '8px',
-                                    overflow: 'hidden',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
-                                    marginLeft: '0.5rem',
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                    color: '#fff',
+                                    fontSize: '20px',
+                                    fontWeight: 'bold',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
                                   }}
                                 >
-                                  <img
-                                    src={currentPet.images[1]}
-                                    alt={`${currentPet.name} image 2`}
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(2px)' }}
-                                  />
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      top: 0,
-                                      left: 0,
-                                      width: '100%',
-                                      height: '100%',
-                                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                      color: '#fff',
-                                      fontSize: '20px',
-                                      fontWeight: 'bold',
-                                      display: 'flex',
-                                      justifyContent: 'center',
-                                      alignItems: 'center',
-                                    }}
-                                  >
-                                    +{currentPet.images.length - 1}
-                                  </div>
+                                  +{currentPet.images.length - 1}
                                 </div>
-                              )}
-                            </>
-                          ) : (
-                            <p>No images available</p>
-                          )}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p>No images available</p>
+                        )}
 
-                          {fullscreenImage && (
-                            <div
-                              style={styles.fullscreenOverlay}
+                        {fullscreenImage && (
+                          <div
+                            style={styles.fullscreenOverlay}
+                            onClick={() => setFullscreenImage(null)}
+                            role="dialog"
+                            aria-modal="true"
+                          >
+                            <img
+                              src={fullscreenImage}
+                              alt="Fullscreen pet"
+                              style={styles.fullscreenImage}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <button
                               onClick={() => setFullscreenImage(null)}
-                              role="dialog"
-                              aria-modal="true"
+                              style={styles.fullscreenCloseButton}
+                              aria-label="Close fullscreen image"
                             >
-                              <img
-                                src={fullscreenImage}
-                                alt="Fullscreen pet"
-                                style={styles.fullscreenImage}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                              <button
-                                onClick={() => setFullscreenImage(null)}
-                                style={styles.fullscreenCloseButton}
-                                aria-label="Close fullscreen image"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                              ×
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                        <div style={styles.detailsSection}>
-                          <p><b>Breed:</b> {currentPet.breed}</p>
-                          <p><b>Blood Type:</b> {currentPet.blood_type}</p>
-                          <p><b>Age:</b> {currentPet.age}</p>
-                          <p><b>Sex:</b> {currentPet.sex}</p>
-                          <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
-                          <p><b>Address:</b> {currentPet.address}</p>
-                          <p><b>Details:</b> {currentPet.details}</p>
-                        </div>
+                      <div style={styles.detailsSection}>
+                        <p><b>Breed:</b> {currentPet.breed}</p>
+                        <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+                        <p><b>Age:</b> {currentPet.age}</p>
+                        <p><b>Sex:</b> {currentPet.sex}</p>
+                        <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+                        <p><b>Address:</b> {currentPet.address}</p>
+                        <p><b>Details:</b> {currentPet.details}</p>
                       </div>
                     </div>
+                  </div>
 
-                    <div style={styles.buttonContainerRight}>
-                      <button onClick={handlePrev} style={styles.navButton}>Prev</button>
-                      <button onClick={handleNext} style={styles.navButton}>Next</button>
-                    </div>
+                  <div style={styles.buttonContainerRight}>
+                    <button onClick={handlePrev} style={styles.navButton}>Prev</button>
+                    <button onClick={handleNext} style={styles.navButton}>Next</button>
+                  </div>
 
-                    <button
-                      onClick={handleShowNearbyPets}
-                      style={{
-                        marginTop: '1rem',
-                        padding: '10px 20px',
-                        backgroundColor: '#FA9A51',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Locate Nearby Pets
-                    </button>
-                  </>
-                )}
-              </div>
+                  <button
+                    onClick={handleShowNearbyPets}
+                    style={{
+                      marginTop: '1rem',
+                      padding: '10px 20px',
+                      backgroundColor: '#FA9A51',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Locate Nearby Pets
+                  </button>
+                </>
+              )}
             </div>
+          </div>
 
           {/* Expanded Modal View */}
           {expandedPetIndex === currentIndex && (
