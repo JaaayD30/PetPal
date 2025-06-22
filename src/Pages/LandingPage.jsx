@@ -50,7 +50,7 @@ const LandingPage = () => {
       alert("Geolocation is not supported by your browser.");
       return;
     }
-  
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const userCoords = {
@@ -58,7 +58,7 @@ const LandingPage = () => {
           lon: position.coords.longitude,
         };
         setUserLocation(userCoords);
-  
+
         // Filter pets within 10km
         const petsWithinRadius = pets.filter((pet) => {
           if (!pet.lat || !pet.lon) return false;
@@ -70,7 +70,7 @@ const LandingPage = () => {
           );
           return distance <= 10;
         });
-  
+
         // Slightly offset markers with same coordinates
         const adjustedPets = offsetDuplicateMarkers(petsWithinRadius);
         setNearbyPets(adjustedPets);
@@ -81,18 +81,18 @@ const LandingPage = () => {
       }
     );
   };
-  
+
 
   // Utility to slightly offset pets with duplicate coordinates
   function offsetDuplicateMarkers(pets) {
     const seen = new Map();
-  
+
     return pets.map(pet => {
       const key = `${pet.lat},${pet.lon}`;
       if (seen.has(key)) {
         const count = seen.get(key) + 1;
         seen.set(key, count);
-  
+
         const offset = 0.0001 * count; // ~11 meters per duplicate
         return {
           ...pet,
@@ -105,8 +105,8 @@ const LandingPage = () => {
       }
     });
   }
-  
-  
+
+
 
   function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
     const R = 6371; // Radius of the Earth in km
@@ -115,15 +115,15 @@ const LandingPage = () => {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-  
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return distance;
   }
-  
+
 
   const mapRef = useRef();
   const MapFollower = ({ coords }) => {
@@ -137,7 +137,7 @@ const LandingPage = () => {
     }, [coords]);
     return null;
   };
-  
+
 
   // Navigation Handlers
   const handleProfile = () => navigate('/profile');
@@ -151,7 +151,7 @@ const LandingPage = () => {
     localStorage.removeItem('currentIndex');
     navigate('/');
   };
-  
+
 
   // Toggle
   const toggleDropdown = () => setDropdownOpen(prev => !prev);
@@ -162,7 +162,7 @@ const LandingPage = () => {
       setExpandedPetIndex(index);
     }
   };
-  
+
 
   // Derived Data
   const activePets = filteredPets.length > 0 ? filteredPets : pets;
@@ -172,13 +172,13 @@ const LandingPage = () => {
   useEffect(() => {
     const geocodeAddress = async () => {
       if (!currentPet?.address) return;
-  
+
       try {
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(currentPet.address)}`
         );
         const data = await response.json();
-  
+
         if (data && data.length > 0) {
           setCurrentPetCoords({
             lat: parseFloat(data[0].lat),
@@ -190,10 +190,10 @@ const LandingPage = () => {
         setCurrentPetCoords(null);
       }
     };
-  
+
     geocodeAddress();
   }, [currentPet]);
-  
+
   useEffect(() => {
     fetchPets();
     fetchProfilePicture();
@@ -213,31 +213,31 @@ const LandingPage = () => {
     try {
       const res = await fetch('http://localhost:5000/api/all-pets');
       const data = await res.json();
-  
+
       let shuffledPets = [];
-  
+
       if (localStorage.getItem('shuffledPets')) {
         shuffledPets = JSON.parse(localStorage.getItem('shuffledPets'));
       } else {
         shuffledPets = shuffleArray(data);
         localStorage.setItem('shuffledPets', JSON.stringify(shuffledPets));
       }
-  
+
       setPets(shuffledPets);
-  
+
       const savedIndex = parseInt(localStorage.getItem('currentIndex'), 10);
       if (!isNaN(savedIndex)) {
         setCurrentIndex(savedIndex);
       }
-  
+
       setLoading(false);
     } catch (error) {
       console.error('Error fetching pets:', error);
     }
   };
-  
-  
-  
+
+
+
 
   const fetchProfilePicture = async () => {
     try {
@@ -252,7 +252,7 @@ const LandingPage = () => {
       console.error('Error fetching profile image', error);
     }
   };
-  
+
 
   const fetchNotifications = async () => {
     try {
@@ -314,14 +314,14 @@ const LandingPage = () => {
     setCurrentIndex(newIndex);
     localStorage.setItem('currentIndex', newIndex);
   };
-  
+
   const handlePrev = () => {
     const list = filteredPets.length > 0 ? filteredPets : pets;
     const newIndex = currentIndex === 0 ? list.length - 1 : currentIndex - 1;
     setCurrentIndex(newIndex);
     localStorage.setItem('currentIndex', newIndex);
   };
-  
+
 
   // Form Handlers
   const handleChange = (e) => {
@@ -373,15 +373,15 @@ const LandingPage = () => {
 
       const data = await response.json();
       alert('Pet added successfully!');
-      
+
       // ⛔️ Problem: `fetchPets()` will still use old `shuffledPets`
       // ✅ Fix: Clear and reload
       localStorage.removeItem('shuffledPets'); // clear stale cache
       await fetchPets();                        // re-fetch with updated list
-      
+
       setCurrentIndex(0);
       localStorage.setItem('currentIndex', 0);
-      
+
       setShowForm(false);
       setFormData({
         images: [],
@@ -446,58 +446,58 @@ const LandingPage = () => {
     }
     return shuffled;
   }
-  
-  
+
+
 
   return (
     <div style={styles.pageContainer}>
       {/* NAVBAR */}
       <nav style={styles.navbar}>
         <div style={styles.logo}>🐾 PetPal</div>
-  
+
         <div style={styles.searchContainer}>
-  <div style={styles.searchInputWrapper}>
-    <input
-      type="text"
-      placeholder="Search by breed, blood type, age, address..."
-      style={styles.searchInput}
-      value={searchQuery}
-      onChange={(e) => setSearchQuery(e.target.value)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') {
-          handleSearch();
-        }
-      }}
-    />
-    {searchQuery && (
-      <button
-  onClick={() => {
-    const currentPetId = currentPet?.id;
+          <div style={styles.searchInputWrapper}>
+            <input
+              type="text"
+              placeholder="Search by breed, blood type, age, address..."
+              style={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  const currentPetId = currentPet?.id;
 
-    // Clear search query and filtered pets
-    setSearchQuery('');
-    setFilteredPets([]);
+                  // Clear search query and filtered pets
+                  setSearchQuery('');
+                  setFilteredPets([]);
 
-    // Try to find the same pet in the full pet list
-    const indexInFull = pets.findIndex(p => p.id === currentPetId);
+                  // Try to find the same pet in the full pet list
+                  const indexInFull = pets.findIndex(p => p.id === currentPetId);
 
-    // Update the currentIndex to that pet if found, otherwise default to 0
-    setCurrentIndex(indexInFull !== -1 ? indexInFull : 0);
-    localStorage.setItem('currentIndex', indexInFull !== -1 ? indexInFull : 0);
-  }}
-  style={styles.inputClearButton}
->
-  ×
-</button>
+                  // Update the currentIndex to that pet if found, otherwise default to 0
+                  setCurrentIndex(indexInFull !== -1 ? indexInFull : 0);
+                  localStorage.setItem('currentIndex', indexInFull !== -1 ? indexInFull : 0);
+                }}
+                style={styles.inputClearButton}
+              >
+                ×
+              </button>
 
-    )}
-  </div>
-</div>
-
-
+            )}
+          </div>
+        </div>
 
 
-  
+
+
+
         <div style={styles.navRight}>
           {/* 🔔 Notification Bell and Dropdown */}
           <div style={{ position: 'relative', marginRight: '10px' }}>
@@ -511,7 +511,7 @@ const LandingPage = () => {
                 <span style={styles.notificationDot}></span>
               )}
             </div>
-  
+
             {showNotifications && (
               <div style={styles.notificationDropdown}>
                 {notifications.length === 0 ? (
@@ -554,7 +554,7 @@ const LandingPage = () => {
               </div>
             )}
           </div>
-  
+
           {/* 👤 Profile Image and Dropdown */}
           <div style={{ position: 'relative' }}>
             <img
@@ -592,7 +592,7 @@ const LandingPage = () => {
           </div>
         </div>
       </nav>
-  
+
       {/* HEADER */}
       <header style={styles.header}>
         <h1 style={styles.title}>Welcome to PetPal</h1>
@@ -602,26 +602,28 @@ const LandingPage = () => {
       </header>
 
       {currentPetCoords && (
-  <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
+        <div style={{ position: 'relative', height: '100vh', width: '100vw' }}>
 
-    <div style={{ flex: 1, borderRadius: '12px', overflow: 'hidden' }}>
-      <MapContainer
-        center={[currentPetCoords.lat, currentPetCoords.lon]}
-        zoom={14}
-        scrollWheelZoom={false}
-        ref={mapRef}
-        style={{ height: '120vh', width: '100vw', position: 'relative', // 👈 important
-          zIndex: 0, }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-<Marker
-  position={[currentPetCoords.lat, currentPetCoords.lon]}
-  icon={L.divIcon({
-    className: '',
-    html: `
+          <div style={{ flex: 1, borderRadius: '12px', overflow: 'hidden' }}>
+            <MapContainer
+              center={[currentPetCoords.lat, currentPetCoords.lon]}
+              zoom={14}
+              scrollWheelZoom={false}
+              ref={mapRef}
+              style={{
+                height: '120vh', width: '100vw', position: 'relative', // 👈 important
+                zIndex: 0,
+              }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
+              <Marker
+                position={[currentPetCoords.lat, currentPetCoords.lon]}
+                icon={L.divIcon({
+                  className: '',
+                  html: `
       <div style="
         position: relative;
         width: 40px;
@@ -670,30 +672,30 @@ const LandingPage = () => {
         "></div>
       </div>
     `,
-    iconSize: [40, 56],
-    iconAnchor: [20, 56],
-    popupAnchor: [0, -56],
-  })}
->
-  
-  <Popup>
-    <strong>${currentPet.name}</strong><br />
-    ${currentPet.breed}<br />
-    ${currentPet.address}
-  </Popup>
-</Marker>
+                  iconSize: [40, 56],
+                  iconAnchor: [20, 56],
+                  popupAnchor: [0, -56],
+                })}
+              >
 
-{userLocation &&
-  nearbyPets.map((pet, index) => {
-    const isSelected = pet.id === currentPet?.id;
+                <Popup>
+                  <strong>${currentPet.name}</strong><br />
+                  ${currentPet.breed}<br />
+                  ${currentPet.address}
+                </Popup>
+              </Marker>
 
-    return (
-      <Marker
-        key={index}
-        position={[pet.lat, pet.lon]}
-        icon={L.divIcon({
-          className: '',
-          html: `
+              {userLocation &&
+                nearbyPets.map((pet, index) => {
+                  const isSelected = pet.id === currentPet?.id;
+
+                  return (
+                    <Marker
+                      key={index}
+                      position={[pet.lat, pet.lon]}
+                      icon={L.divIcon({
+                        className: '',
+                        html: `
             <div style="
               display: flex;
               flex-direction: column;
@@ -722,382 +724,381 @@ const LandingPage = () => {
               "></div>
             </div>
           `,
-          iconSize: [isSelected ? 48 : 40, 56],
-          iconAnchor: [20, 56],
-          popupAnchor: [0, -56],
-        })}
-      >
-        <Popup>
-          <strong>{pet.name}</strong><br />
-          {pet.breed}<br />
-          {pet.address}
-        </Popup>
-      </Marker>
-    );
-  })}
+                        iconSize: [isSelected ? 48 : 40, 56],
+                        iconAnchor: [20, 56],
+                        popupAnchor: [0, -56],
+                      })}
+                    >
+                      <Popup>
+                        <strong>{pet.name}</strong><br />
+                        {pet.breed}<br />
+                        {pet.address}
+                      </Popup>
+                    </Marker>
+                  );
+                })}
 
 
-        <MapFollower coords={currentPetCoords} />
-      </MapContainer>
-      </div>
-
-   {/* Floating Pet Card */}
-   <div
-    style={{
-      position: 'absolute',
-      top: '100px',
-      left: '20px',
-      width: '360px',
-      height: 'auto',
-      background: 'rgba(255, 255, 255, 0.95)',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-      borderRadius: '12px',
-      padding: '1rem',
-      zIndex: 1000,
-    }}
-  >
-    <div style={styles.petCard}>
-      <div style={styles.petCardContent}>
-        {loading ? (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-        ) : activePets.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center' }}>
-            No match found for "{searchQuery}"
+              <MapFollower coords={currentPetCoords} />
+            </MapContainer>
           </div>
-        ) : (
-          <>
-          <div
-  style={{ cursor: 'pointer' }}
-  onClick={() => toggleExpandPet(currentIndex)}
-  role="button"
-  tabIndex={0}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter') toggleExpandPet(currentIndex);
-  }}
->
-            <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
-            <div style={styles.cardContent}>
-              <div style={styles.imageSection}>
-                {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
-                  <>
-      {/* Show 1st image normally */}
-      <img
-  src={currentPet.images[0]}
-  alt={`${currentPet.name} image 1`}
-  style={styles.largeImage}
-/>
 
-
-      {/* Show 2nd image with overlay if there are more than 1 */}
-      {currentPet.images.length > 1 && (
-        <div
-          style={{
-            position: 'relative',
-            width: '150px',
-            height: '150px',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            cursor: 'pointer',
-            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
-            marginLeft: '0.5rem',
-          }}
-        >
-          <img
-            src={currentPet.images[1]}
-            alt={`${currentPet.name} image 2`}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(2px)' }}
-          />
+          {/* Floating Pet Card */}
           <div
             style={{
               position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'rgba(0, 0, 0, 0.5)',
-              color: '#fff',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
+              top: '100px',
+              left: '20px',
+              width: '360px',
+              height: 'auto',
+              background: 'rgba(255, 255, 255, 0.95)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+              borderRadius: '12px',
+              padding: '1rem',
+              zIndex: 1000,
             }}
           >
-            +{currentPet.images.length - 1}
-          </div>
-        </div>
-      )}
-    </>
-  ) : (
-    <p>No images available</p>
-  )}
-
-                {fullscreenImage && (
-                  <div
-                    style={styles.fullscreenOverlay}
-                    onClick={() => setFullscreenImage(null)}
-                    role="dialog"
-                    aria-modal="true"
-                  >
-                    <img
-                      src={fullscreenImage}
-                      alt="Fullscreen pet"
-                      style={styles.fullscreenImage}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                    <button
-                      onClick={() => setFullscreenImage(null)}
-                      style={styles.fullscreenCloseButton}
-                      aria-label="Close fullscreen image"
-                    >
-                      ×
-                    </button>
+            
+              <div style={styles.petCardContent}>
+                {loading ? (
+                  <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+                ) : activePets.length === 0 ? (
+                  <div style={{ padding: '2rem', textAlign: 'center' }}>
+                    No match found for "{searchQuery}"
                   </div>
+                ) : (
+                  <>
+                    <div
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => toggleExpandPet(currentIndex)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') toggleExpandPet(currentIndex);
+                      }}
+                    >
+                      <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
+                      <div style={styles.cardContent}>
+                        <div style={styles.imageSection}>
+                          {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                            <>
+                              {/* Show 1st image normally */}
+                              <img
+                                src={currentPet.images[0]}
+                                alt={`${currentPet.name} image 1`}
+                                style={styles.largeImage}
+                              />
+
+
+                              {/* Show 2nd image with overlay if there are more than 1 */}
+                              {currentPet.images.length > 1 && (
+                                <div
+                                  style={{
+                                    position: 'relative',
+                                    width: '150px',
+                                    height: '150px',
+                                    borderRadius: '8px',
+                                    overflow: 'hidden',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                                    marginLeft: '0.5rem',
+                                  }}
+                                >
+                                  <img
+                                    src={currentPet.images[1]}
+                                    alt={`${currentPet.name} image 2`}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(2px)' }}
+                                  />
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      width: '100%',
+                                      height: '100%',
+                                      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                      color: '#fff',
+                                      fontSize: '20px',
+                                      fontWeight: 'bold',
+                                      display: 'flex',
+                                      justifyContent: 'center',
+                                      alignItems: 'center',
+                                    }}
+                                  >
+                                    +{currentPet.images.length - 1}
+                                  </div>
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <p>No images available</p>
+                          )}
+
+                          {fullscreenImage && (
+                            <div
+                              style={styles.fullscreenOverlay}
+                              onClick={() => setFullscreenImage(null)}
+                              role="dialog"
+                              aria-modal="true"
+                            >
+                              <img
+                                src={fullscreenImage}
+                                alt="Fullscreen pet"
+                                style={styles.fullscreenImage}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                              <button
+                                onClick={() => setFullscreenImage(null)}
+                                style={styles.fullscreenCloseButton}
+                                aria-label="Close fullscreen image"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={styles.detailsSection}>
+                          <p><b>Breed:</b> {currentPet.breed}</p>
+                          <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+                          <p><b>Age:</b> {currentPet.age}</p>
+                          <p><b>Sex:</b> {currentPet.sex}</p>
+                          <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+                          <p><b>Address:</b> {currentPet.address}</p>
+                          <p><b>Details:</b> {currentPet.details}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={styles.buttonContainerRight}>
+                      <button onClick={handlePrev} style={styles.navButton}>Prev</button>
+                      <button onClick={handleNext} style={styles.navButton}>Next</button>
+                    </div>
+
+                    <button
+                      onClick={handleShowNearbyPets}
+                      style={{
+                        marginTop: '1rem',
+                        padding: '10px 20px',
+                        backgroundColor: '#FA9A51',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Locate Nearby Pets
+                    </button>
+                  </>
                 )}
               </div>
+            </div>
 
-              <div style={styles.detailsSection}>
-                <p><b>Breed:</b> {currentPet.breed}</p>
-                <p><b>Blood Type:</b> {currentPet.blood_type}</p>
-                <p><b>Age:</b> {currentPet.age}</p>
-                <p><b>Sex:</b> {currentPet.sex}</p>
-                <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
-                <p><b>Address:</b> {currentPet.address}</p>
-                <p><b>Details:</b> {currentPet.details}</p>
+          {/* Expanded Modal View */}
+          {expandedPetIndex === currentIndex && (
+            <div
+              style={styles.modalOverlay}
+              onClick={() => setExpandedPetIndex(null)}
+            >
+              <div
+                style={{ ...styles.card, ...styles.cardExpanded }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Action Buttons */}
+                <button
+                  style={styles.heartButton}
+                  onClick={() => handleFavorite(currentPet)}
+                >
+                  ❤️
+                </button>
+                <button
+                  style={styles.connectButton}
+                  onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
+                >
+                  🐾 Connect
+                </button>
+
+                <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
+                <div style={styles.cardContent}>
+                  <div style={styles.imageSection}>
+                    {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                      <>
+                        {currentPet.images.slice(0, 2).map((img, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              position: 'relative',
+                              width: '150px',
+                              height: '150px',
+                              borderRadius: '12px',
+                              overflow: 'hidden',
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              backgroundColor: 'rgba(255,255,255,0.05)',
+                              backdropFilter: 'blur(4px)',
+                              transition: 'transform 0.3s ease',
+                            }}
+                            onClick={() => {
+                              if (idx === 1 && currentPet.images.length > 2) {
+                                setShowAllImagesModal(true);
+                              } else {
+                                setFullscreenImage(img);
+                              }
+                            }}
+                          >
+                            <img
+                              src={img}
+                              alt={`${currentPet.name} image ${idx + 1}`}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                            />
+                            {idx === 1 && currentPet.images.length > 2 && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                  color: '#fff',
+                                  fontSize: '20px',
+                                  fontWeight: 'bold',
+                                  display: 'flex',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                +{currentPet.images.length - 2}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <p>No images available</p>
+                    )}
+                  </div>
+
+
+                  {showAllImagesModal && (
+                    <div
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(0,0,0,0.65)',
+                        zIndex: 2000,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '2rem',
+                        padding: '3rem',
+                        overflowY: 'auto',
+                      }}
+                      onClick={() => setShowAllImagesModal(false)}
+                    >
+                      {currentPet.images.map((img, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            width: '260px',
+                            height: '260px',
+                            borderRadius: '18px',
+                            overflow: 'hidden',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            backdropFilter: 'blur(10px)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                            cursor: 'pointer',
+                            transition: 'transform 0.3s ease',
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent background close
+                            setFullscreenImage(img);
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}
+                        >
+                          <img
+                            src={img}
+                            alt={`Image ${idx + 1}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={styles.detailsSection}>
+                    <p><b>Breed:</b> {currentPet.breed}</p>
+                    <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+                    <p><b>Age:</b> {currentPet.age}</p>
+                    <p><b>Sex:</b> {currentPet.sex}</p>
+                    <p><b>Weight:</b> {currentPet.kilos} kg</p>
+                    <p><b>Address:</b> {currentPet.address}</p>
+                    <p><b>Details:</b> {currentPet.details}</p>
+                  </div>
+                </div>
               </div>
             </div>
-            </div>
+          )}
 
-            <div style={styles.buttonContainerRight}>
-              <button onClick={handlePrev} style={styles.navButton}>Prev</button>
-              <button onClick={handleNext} style={styles.navButton}>Next</button>
-            </div>
 
-            <button
-              onClick={handleShowNearbyPets}
-              style={{
-                marginTop: '1rem',
-                padding: '10px 20px',
-                backgroundColor: '#FA9A51',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-              }}
-            >
-              Locate Nearby Pets
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  </div>
-
-  {/* Expanded Modal View */}
-  {expandedPetIndex === currentIndex && (
-    <div
-      style={styles.modalOverlay}
-      onClick={() => setExpandedPetIndex(null)}
-    >
-      <div
-        style={{ ...styles.card, ...styles.cardExpanded }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Action Buttons */}
-        <button
-          style={styles.heartButton}
-          onClick={() => handleFavorite(currentPet)}
-        >
-          ❤️
-        </button>
-        <button
-          style={styles.connectButton}
-          onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
-        >
-          🐾 Connect
-        </button>
-
-        <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
-        <div style={styles.cardContent}>
-        <div style={styles.imageSection}>
-  {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
-    <>
-      {currentPet.images.slice(0, 2).map((img, idx) => (
-        <div
-          key={idx}
-          style={{
-            position: 'relative',
-            width: '150px',
-            height: '150px',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-            border: '1px solid rgba(255,255,255,0.15)',
-            backgroundColor: 'rgba(255,255,255,0.05)',
-            backdropFilter: 'blur(4px)',
-            transition: 'transform 0.3s ease',
-          }}
-          onClick={() => {
-            if (idx === 1 && currentPet.images.length > 2) {
-              setShowAllImagesModal(true);
-            } else {
-              setFullscreenImage(img);
-            }
-          }}
-        >
-          <img
-            src={img}
-            alt={`${currentPet.name} image ${idx + 1}`}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-            }}
-          />
-          {idx === 1 && currentPet.images.length > 2 && (
+          {fullscreenImage && (
             <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                color: '#fff',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
+              style={styles.fullscreenOverlay}
+              onClick={() => setFullscreenImage(null)}
             >
-              +{currentPet.images.length - 2}
+              <img
+                src={fullscreenImage}
+                alt="Fullscreen pet"
+                style={styles.fullscreenImage}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={() => setFullscreenImage(null)}
+                style={styles.fullscreenCloseButton}
+              >
+                ×
+              </button>
             </div>
           )}
         </div>
-      ))}
-    </>
-  ) : (
-    <p>No images available</p>
-  )}
-</div>
-
-
-{showAllImagesModal && (
-  <div
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      width: '100vw',
-      height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.65)',
-      zIndex: 2000,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: '2rem',
-      padding: '3rem',
-      overflowY: 'auto',
-    }}
-    onClick={() => setShowAllImagesModal(false)}
-  >
-    {currentPet.images.map((img, idx) => (
-      <div
-        key={idx}
-        style={{
-          width: '260px',
-          height: '260px',
-          borderRadius: '18px',
-          overflow: 'hidden',
-          backgroundColor: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-          cursor: 'pointer',
-          transition: 'transform 0.3s ease',
-        }}
-        onClick={(e) => {
-          e.stopPropagation(); // Prevent background close
-          setFullscreenImage(img);
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.05)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-        }}
-      >
-        <img
-          src={img}
-          alt={`Image ${idx + 1}`}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-          }}
-        />
-      </div>
-    ))}
-  </div>
-)}
-
-          <div style={styles.detailsSection}>
-            <p><b>Breed:</b> {currentPet.breed}</p>
-            <p><b>Blood Type:</b> {currentPet.blood_type}</p>
-            <p><b>Age:</b> {currentPet.age}</p>
-            <p><b>Sex:</b> {currentPet.sex}</p>
-            <p><b>Weight:</b> {currentPet.kilos} kg</p>
-            <p><b>Address:</b> {currentPet.address}</p>
-            <p><b>Details:</b> {currentPet.details}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )}
-
-
-    {fullscreenImage && (
-    <div
-      style={styles.fullscreenOverlay}
-      onClick={() => setFullscreenImage(null)}
-    >
-      <img
-        src={fullscreenImage}
-        alt="Fullscreen pet"
-        style={styles.fullscreenImage}
-        onClick={(e) => e.stopPropagation()}
-      />
-      <button
-        onClick={() => setFullscreenImage(null)}
-        style={styles.fullscreenCloseButton}
-      >
-        ×
-      </button>
-    </div>
-  )}
-</div>
       )}
 
 
-  {/* Fullscreen Image Viewer */}
-  {fullscreenImage && (
-    <div style={styles.fullscreenOverlay} onClick={() => setFullscreenImage(null)}>
-      <img
-        src={fullscreenImage}
-        alt="Fullscreen"
-        style={styles.fullscreenImage}
-        onClick={(e) => e.stopPropagation()}
-      />
-      <button
-        style={styles.fullscreenCloseButton}
-        onClick={() => setFullscreenImage(null)}
-      >
-        ×
-      </button>
-    </div>
-  )}
+      {/* Fullscreen Image Viewer */}
+      {fullscreenImage && (
+        <div style={styles.fullscreenOverlay} onClick={() => setFullscreenImage(null)}>
+          <img
+            src={fullscreenImage}
+            alt="Fullscreen"
+            style={styles.fullscreenImage}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            style={styles.fullscreenCloseButton}
+            onClick={() => setFullscreenImage(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
 
       {/* POPUP FORM */}
@@ -1242,7 +1243,7 @@ const LandingPage = () => {
       </button>
 
     </div>
-    
+
   );
 };
 

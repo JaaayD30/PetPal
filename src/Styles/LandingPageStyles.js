@@ -42,18 +42,7 @@ const styles = {
     boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
   },
 
-  petCard: {
-    flex: '1 1 40%',
-    backgroundColor: '#fff',
-    borderRadius: '16px',
-    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-    display: 'flex',
-    flexDirection: 'column',
-    padding: '1.5rem',
-    border: '1px solid transparent',
-    justifyContent: 'space-between',
-  },
-  
+
   
 
   petCardContent: {
@@ -69,13 +58,13 @@ const styles = {
   },
 
   petTitle: {
-    fontSize: '1.4rem',
+    fontSize: '1.2rem', // was 1.4rem
     fontWeight: 'bold',
     color: '#1a1a1a',
   },
 
   petSubtitle: {
-    fontSize: '1rem',
+    fontSize: '0.95rem',
     color: '#666',
   },
 
@@ -84,7 +73,9 @@ const styles = {
     margin: 0,
     padding: 0,
     boxSizing: 'border-box',
-    overflowX: 'hidden',
+    overflowX: 'hidden', // ✅ already set
+    overflowY: 'visible', // ✅ make sure vertical scroll behaves normally
+    width: '100vw',       // ✅ ensure no overflow from child elements
   },
   navRight: {
     display: 'flex',
@@ -215,7 +206,8 @@ const styles = {
     maxWidth: '600px',
     width: '90%',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
-    overflowY: 'auto',
+    // Remove this line:
+    // overflowY: 'auto',
     height: '65vh',
     maxHeight: '90vh',
   },
@@ -255,10 +247,11 @@ const styles = {
   detailsSection: {
     flex: '1 1 60%',
     overflowY: 'auto',
-    fontSize: '1.1rem',
+    fontSize: '1rem', // was 1.1rem
     color: '#333',
     lineHeight: '1.4',
-  },
+    maxHeight: '300px', // ✅ new
+  },  
   allImagesModal: {
     background: '#fff',
     padding: '20px',
