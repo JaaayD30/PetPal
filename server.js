@@ -543,7 +543,7 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
   }
 
   try {
-    // 🚨 Check if they're already matched (still in DB)
+    // 🚨 Check if they're already matched
     const matchCheck = await pool.query(`
       SELECT * FROM matches
       WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
@@ -553,7 +553,7 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'You already connected to this user.' });
     }
 
-    // 🚨 Check if a connect request was already sent
+    // 🚨 Check for existing connect request
     const existing = await pool.query(
       'SELECT * FROM notifications WHERE sender_id = $1 AND recipient_id = $2 AND type = $3',
       [senderId, recipientId, 'connect']
@@ -563,12 +563,11 @@ app.post('/api/connect-request', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'You already sent a connection. Please wait for the response.' });
     }
 
-    // ✅ Insert new connect request
+    // ✅ Insert new connect request (message is generic)
     await pool.query(
-      'INSERT INTO notifications (sender_id, recipient_id, message) VALUES ($1, $2, $3)',
-      [senderId, recipientId, 'wants to connect with you']
+      'INSERT INTO notifications (sender_id, recipient_id, message, type) VALUES ($1, $2, $3, $4)',
+      [senderId, recipientId, 'wants to connect with you', 'connect']
     );
-    
 
     res.status(200).json({ message: 'Connect request sent!' });
   } catch (error) {
@@ -584,15 +583,23 @@ app.get('/api/notifications', authenticateToken, async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT * FROM notifications WHERE recipient_id = $1 ORDER BY created_at DESC`,
+      `SELECT n.id, n.sender_id, n.message, n.created_at, n.type,
+              u.full_name AS sender_name,
+              encode(u.profile_picture, 'base64') AS base64image
+       FROM notifications n
+       JOIN users1 u ON n.sender_id = u.id
+       WHERE n.recipient_id = $1
+       ORDER BY n.created_at DESC`,
       [userId]
     );
+
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching notifications:', error);
     res.status(500).json({ message: 'Failed to fetch notifications' });
   }
 });
+
 
 app.delete('/api/notifications/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;

@@ -512,61 +512,80 @@ const LandingPage = () => {
 
 
         <div style={styles.navRight}>
-          {/* 🔔 Notification Bell and Dropdown */}
-          <div style={{ position: 'relative', marginRight: '10px' }}>
-            <div
-              style={styles.notificationIcon}
-              title="Notifications"
-              onClick={() => setShowNotifications(!showNotifications)}
-            >
-              🔔
-              {notifications.length > 0 && (
-                <span style={styles.notificationDot}></span>
-              )}
+  {/* 🔔 Notification Bell and Dropdown */}
+  <div style={{ position: 'relative', marginRight: '10px' }}>
+    <div
+      style={styles.notificationIcon}
+      title="Notifications"
+      onClick={() => setShowNotifications(!showNotifications)}
+    >
+      🔔
+      {notifications.length > 0 && (
+        <span style={styles.notificationDot}></span>
+      )}
+    </div>
+
+    {showNotifications && (
+      <div style={styles.notificationDropdown}>
+        {notifications.length === 0 ? (
+          <p style={styles.notificationItem}>No new notifications</p>
+        ) : (
+          <>
+            <div style={styles.dropdownHeader}>
+              <strong>Notifications</strong>
+              <button
+                onClick={clearAllNotifications}
+                style={styles.clearAllButton}
+              >
+                ✖
+              </button>
             </div>
 
-            {showNotifications && (
-              <div style={styles.notificationDropdown}>
-                {notifications.length === 0 ? (
-                  <p style={styles.notificationItem}>No new notifications</p>
-                ) : (
-                  <>
-                    <div style={styles.dropdownHeader}>
-                      <strong>Notifications</strong>
-                      <button
-                        onClick={clearAllNotifications}
-                        style={styles.clearAllButton}
-                      >
-                        ✖
-                      </button>
-                    </div>
-                    {notifications.map((notif) => (
-                      <div key={notif.id} style={styles.notificationItem}>
-                        <span
-                          onClick={() =>
-                            navigate(`/match-details/${notif.sender_id}`)
-                          }
-                          style={{
-                            color: 'black',
-                            cursor: 'pointer',
-                            textDecoration: 'underline',
-                          }}
-                        >
-                          🐾 {notif.message}
-                        </span>
-                        <button
-                          onClick={() => clearNotification(notif.id)}
-                          style={styles.clearOneButton}
-                        >
-                          ❌
-                        </button>
-                      </div>
-                    ))}
-                  </>
-                )}
+            {notifications.map((notif) => (
+              <div key={notif.id} style={styles.notificationItem}>
+                <div
+                  onClick={() => navigate(`/match-details/${notif.sender_id}`)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    gap: '8px'
+                  }}
+                >
+                  <img
+                    src={
+                      notif.base64image
+                        ? `data:image/jpeg;base64,${notif.base64image}`
+                        : '/Images/default-user.png'
+                    }
+                    alt="Sender Profile"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1px solid #ccc'
+                    }}
+                  />
+                  <span style={{ color: 'black' }}>
+                    🐾 <strong>{notif.sender_name}</strong> {notif.message}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => clearNotification(notif.id)}
+                  style={styles.clearOneButton}
+                >
+                  ❌
+                </button>
               </div>
-            )}
-          </div>
+            ))}
+          </>
+        )}
+      </div>
+    )}
+  </div>
+
 
           {/* 👤 Profile Image and Dropdown */}
           <div style={{ position: 'relative' }}>
