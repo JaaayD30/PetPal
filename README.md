@@ -41,9 +41,6 @@ Styling: Tailwind CSS
 
 Setup and Installation
 
-
-Prerequisites
-
 1. Clone the Repository
 
 ```
@@ -90,6 +87,11 @@ Start the Vite development server:
 npm run dev
 
 ```
+
+
+
+
+
 
 
 
