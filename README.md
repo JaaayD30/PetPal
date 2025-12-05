@@ -26,5 +26,7 @@ yeah
 
 3. sample 2 :
 
-```powershell
-yeah 2```
+```
+yeah 2 
+
+```
