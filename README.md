@@ -17,7 +17,7 @@ This is a single-page time tracking application built with React and optimized f
 
 ## Key Features
 
-* **Offline First: All tracking data is stored locally in the browser's IndexedDB.
+* Offline First: All tracking data is stored locally in the browser's IndexedDB.
 
 Persistent Storage: Data is saved using Dexie.js and persists across browser sessions.
 
@@ -43,8 +43,6 @@ Setup and Installation
 
 
 Prerequisites
-
-You must have Node.js and npm (or yarn/pnpm) installed.
 
 1. Clone the Repository
 
@@ -78,12 +76,11 @@ mkdir src/hooks
 mkdir src/utils
 
 # Create files in the terminal
-touch src/db/appDB.js
-touch src/hooks/useTimer.js
-touch src/utils/timeUtils.js
+src/db/appDB.js
+src/hooks/useTimer.js
+src/utils/timeUtils.js
 
 
-(Note: Paste the corresponding code for the application logic into these files.)
 
 4. Run the Application
 
