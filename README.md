@@ -19,17 +19,17 @@ This is a single-page time tracking application built with React and optimized f
 
 * Offline First: All tracking data is stored locally in the browser's IndexedDB.
 
-Persistent Storage: Data is saved using Dexie.js and persists across browser sessions.
+* Persistent Storage: Data is saved using Dexie.js and persists across browser sessions.
 
-Real-time UI: Uses dexie-react-hooks (useLiveQuery) for instant updates to the history list upon saving or deleting a ticket.
+* Real-time UI: Uses dexie-react-hooks (useLiveQuery) for instant updates to the history list upon saving or deleting a ticket.
 
-Modular Architecture: Code is separated into components, hooks, and utilities for maintainability (DRY Principle).
+* Modular Architecture: Code is separated into components, hooks, and utilities for maintainability (DRY Principle).
 
-Ticket Management: Users can name a ticket, start/stop a timer, and choose to save or cancel the recorded session.
+* Ticket Management: Users can name a ticket, start/stop a timer, and choose to save or cancel the recorded session.
 
-Safety Confirmation: Includes a custom confirmation dialog for permanent ticket deletion.
+* Safety Confirmation: Includes a custom confirmation dialog for permanent ticket deletion.
 
-Tech Stack
+## Tech Stack
 
 Framework: React
 
@@ -39,7 +39,7 @@ Database: IndexedDB (accessed via Dexie.js)
 
 Styling: Tailwind CSS
 
-Setup and Installation
+## Setup and Installation
 
 1. Clone the Repository
 
@@ -72,14 +72,14 @@ mkdir src/db
 mkdir src/hooks
 mkdir src/utils
 
-# Create files in the terminal
+## Create files in the terminal
 src/db/appDB.js
 src/hooks/useTimer.js
 src/utils/timeUtils.js
 
 
 
-4. Run the Application
+## Run the Application
 
 Start the Vite development server:
 
