@@ -12,15 +12,15 @@ Currently, two official plugins are available:
 If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 
 1. Install dependencies: 
-~ powershell
-npm run dev ~
+~~~powershell
+npm run dev~~~
 
 2. Sample :
 
-~ powershell
-yeah ~
+~~~powershell
+yeah~~~
 
 3. sample 2 :
 
-~ powershell
-yeah 2 ~
+~~~powershell
+yeah 2~~~
