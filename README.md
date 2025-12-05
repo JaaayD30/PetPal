@@ -14,5 +14,8 @@ If you are developing a production application, we recommend using TypeScript an
 1. Install dependencies 
 ~~~npm install~~~
 
-2. Sample again
-~~~npm run dev~~~
+2. Sample again:
+
+~~~ powershell
+npm run dev
+~~~
