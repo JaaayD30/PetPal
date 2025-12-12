@@ -1,25 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import styles from '../Styles/LandingPageStyles';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { useRef } from 'react';
+import { FiUser, FiHeart, FiLogOut, FiUsers, FiGrid } from 'react-icons/fi';
+
+
 
 const LandingPage = () => {
-  const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const token = localStorage.getItem('token');
 
+  // State
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const toggleDropdown = () => setDropdownOpen(open => !open);
-  const handleProfile = () => navigate('/profile');
-  const handleFavorites = () => navigate ('/favorites');
-  const handlePets = () => navigate('/pets');
-  const handleLogout = () => {
-    localStorage.removeItem('googleEmail');
-    localStorage.removeItem('token');
-    navigate('/');
-    console.log('User logged out');
-  };
+  const [profileImage, setProfileImage] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredPets, setFilteredPets] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [pets, setPets] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showAllImagesModal, setShowAllImagesModal] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [expandedPetIndex, setExpandedPetIndex] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+
   const [formData, setFormData] = useState({
     images: [],
     name: '',
@@ -31,43 +43,291 @@ const LandingPage = () => {
     kilos: '',
     details: '',
   });
-  const [fullscreenImage, setFullscreenImage] = useState(null);
-  const [expandedPetIndex, setExpandedPetIndex] = useState(null);
 
-  const toggleExpandPet = (index) => {
-    setExpandedPetIndex(prev => (prev === index ? null : index));
+  //maps
+  const [currentPetCoords, setCurrentPetCoords] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [nearbyPets, setNearbyPets] = useState([]);
+
+  const handleShowNearbyPets = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const userCoords = {
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        };
+        setUserLocation(userCoords);
+
+        // Filter pets within 10km
+        const petsWithinRadius = pets.filter((pet) => {
+          if (!pet.lat || !pet.lon) return false;
+          const distance = getDistanceFromLatLonInKm(
+            userCoords.lat,
+            userCoords.lon,
+            pet.lat,
+            pet.lon
+          );
+          return distance <= 10;
+        });
+
+        // Slightly offset markers with same coordinates
+        const adjustedPets = offsetDuplicateMarkers(petsWithinRadius);
+        setNearbyPets(adjustedPets);
+      },
+      (error) => {
+        alert("Location access denied. Cannot show nearby pets.");
+        console.error(error);
+      }
+    );
   };
+
+
+  // Utility to slightly offset pets with duplicate coordinates
+  function offsetDuplicateMarkers(pets) {
+    const seen = new Map();
+
+    return pets.map(pet => {
+      const key = `${pet.lat},${pet.lon}`;
+      if (seen.has(key)) {
+        const count = seen.get(key) + 1;
+        seen.set(key, count);
+
+        const offset = 0.0001 * count; // ~11 meters per duplicate
+        return {
+          ...pet,
+          lat: pet.lat + offset,
+          lon: pet.lon + offset,
+        };
+      } else {
+        seen.set(key, 0);
+        return pet;
+      }
+    });
+  }
+
+
+
+  function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+    return distance;
+  }
+
+
+  const mapRef = useRef();
+  const MapFollower = ({ coords }) => {
+    const map = useMap();
+    useEffect(() => {
+      if (coords) {
+        map.setView([coords.lat, coords.lon], 14, {
+          animate: true,
+        });
+      }
+    }, [coords]);
+    return null;
+  };
+
+
+  // Navigation Handlers
+  const handleProfile = () => navigate('/profile');
+  const handleFavorites = () => navigate('/favorites');
+  const handlePets = () => navigate('/pets');
+  const handleConnected = () => navigate('/connectedmatches');
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('googleEmail');
+    localStorage.removeItem('shuffledPets');
+    localStorage.removeItem('currentIndex');
+    navigate('/');
+  };
+
+
+  // Toggle
+  const toggleDropdown = () => setDropdownOpen(prev => !prev);
+  const toggleExpandPet = (index) => {
+    if (expandedPetIndex === index) {
+      setExpandedPetIndex(null);
+    } else {
+      setExpandedPetIndex(index);
+    }
+  };
+
+
+  // Derived Data
+  const activePets = filteredPets.length > 0 ? filteredPets : pets;
+  const currentPet = activePets[currentIndex];
+
+  // Effects
+  useEffect(() => {
+    const geocodeAddress = async () => {
+      if (!currentPet?.address) return;
+
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(currentPet.address)}`
+        );
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          setCurrentPetCoords({
+            lat: parseFloat(data[0].lat),
+            lon: parseFloat(data[0].lon),
+          });
+        }
+      } catch (error) {
+        console.error("Geocoding error:", error);
+        setCurrentPetCoords(null);
+      }
+    };
+
+    geocodeAddress();
+  }, [currentPet]);
 
   useEffect(() => {
     fetchPets();
+    fetchProfilePicture();
+    fetchNotifications();
   }, []);
-  
 
-  const currentPet = pets[currentIndex];
+  useEffect(() => {
+    if (token) {
+      const base64Url = token.split('.')[1];
+      const decodedValue = JSON.parse(atob(base64Url));
+      setCurrentUserId(decodedValue.id);
+    }
+  }, []);
 
-  const fetchPets = () => {
-    setLoading(true);
-    fetch('http://localhost:5000/api/all-pets')
-      .then(res => res.json())
-      .then(data => {
-        setPets(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Error fetching pets:', err);
-        setLoading(false);
-      });
+  // Fetchers
+  const fetchPets = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/all-pets');
+      const data = await res.json();
+
+      let shuffledPets = [];
+
+      if (localStorage.getItem('shuffledPets')) {
+        shuffledPets = JSON.parse(localStorage.getItem('shuffledPets'));
+      } else {
+        shuffledPets = shuffleArray(data);
+        localStorage.setItem('shuffledPets', JSON.stringify(shuffledPets));
+      }
+
+      setPets(shuffledPets);
+
+      const savedIndex = parseInt(localStorage.getItem('currentIndex'), 10);
+      if (!isNaN(savedIndex)) {
+        setCurrentIndex(savedIndex);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching pets:', error);
+    }
   };
-  
+
+
+
+
+  const fetchProfilePicture = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/users/profile-picture', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setProfileImage(response.data.image);
+    } catch (error) {
+      console.error('Error fetching profile image', error);
+    }
+  };
+
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(res.data);
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
+
+  // Notification Handlers
+  const clearNotification = async (notifId) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/notifications/${notifId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(prev => prev.filter(n => n.id !== notifId));
+    } catch (err) {
+      console.error('Failed to delete notification:', err);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    try {
+      await axios.delete('http://localhost:5000/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications([]);
+    } catch (err) {
+      console.error('Failed to clear all notifications:', err);
+    }
+  };
+
+  // Search
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      setFilteredPets([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const results = pets.filter(pet =>
+      (pet.breed && pet.breed.toLowerCase().includes(query)) ||
+      (pet.blood_type && pet.blood_type.toLowerCase().includes(query)) ||
+      (pet.age && pet.age.toString().includes(query)) ||
+      (pet.address && pet.address.toLowerCase().includes(query))
+    );
+
+    setFilteredPets(results);
+    setCurrentIndex(0);
+  };
+
+  // Pet Navigation
+  const handleNext = () => {
+    const list = filteredPets.length > 0 ? filteredPets : pets;
+    const newIndex = currentIndex === list.length - 1 ? 0 : currentIndex + 1;
+    setCurrentIndex(newIndex);
+    localStorage.setItem('currentIndex', newIndex);
+  };
 
   const handlePrev = () => {
-    setCurrentIndex(prev => (prev === 0 ? pets.length - 1 : prev - 1));
+    const list = filteredPets.length > 0 ? filteredPets : pets;
+    const newIndex = currentIndex === 0 ? list.length - 1 : currentIndex - 1;
+    setCurrentIndex(newIndex);
+    localStorage.setItem('currentIndex', newIndex);
   };
 
-  const handleNext = () => {
-    setCurrentIndex(prev => (prev === pets.length - 1 ? 0 : prev + 1));
-  };
 
+  // Form Handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -117,8 +377,15 @@ const LandingPage = () => {
 
       const data = await response.json();
       alert('Pet added successfully!');
-      fetchPets();
-      setPets(prev => [...prev, data.pet]);
+
+      // ⛔️ Problem: `fetchPets()` will still use old `shuffledPets`
+      // ✅ Fix: Clear and reload
+      localStorage.removeItem('shuffledPets'); // clear stale cache
+      await fetchPets();                        // re-fetch with updated list
+
+      setCurrentIndex(0);
+      localStorage.setItem('currentIndex', 0);
+
       setShowForm(false);
       setFormData({
         images: [],
@@ -137,208 +404,782 @@ const LandingPage = () => {
     }
   };
 
+  const handleFavorite = (pet) => {
+    try {
+      // Get existing favorites (as pet IDs)
+      const existingFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+  
+      // Check for duplication
+      if (existingFavorites.includes(pet.id)) {
+        alert(`${pet.name} is already in favorites.`);
+        return;
+      }
+  
+      // Add new favorite by ID
+      const updatedFavorites = [...existingFavorites, pet.id];
+      localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
+      alert(`${pet.name} added to favorites!`);
+    } catch (error) {
+      console.error('Failed to save favorite:', error);
+      alert('Unable to save favorite. Storage limit may have been exceeded.');
+    }
+  };
+  
+  
+
+  const handleConnect = async (petId, ownerId) => {
+    if (ownerId === currentUserId) {
+      alert("You cannot connect to your own pet.");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        'http://localhost:5000/api/connect-request',
+        { petId, recipientId: ownerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(res.data.message || 'Connect request sent!');
+    } catch (error) {
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        console.error(error);
+        alert('Failed to send connect request.');
+      }
+    }
+  };
+
+  //suffle array
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+
+
   return (
     <div style={styles.pageContainer}>
       {/* NAVBAR */}
       <nav style={styles.navbar}>
         <div style={styles.logo}>🐾 PetPal</div>
+
         <div style={styles.searchContainer}>
-          <input type="text" placeholder="Search..." style={styles.searchInput} />
+          <div style={styles.searchInputWrapper}>
+            <input
+              type="text"
+              placeholder="Search by breed, blood type, age, address..."
+              style={styles.searchInput}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  const currentPetId = currentPet?.id;
+
+                  // Clear search query and filtered pets
+                  setSearchQuery('');
+                  setFilteredPets([]);
+
+                  // Try to find the same pet in the full pet list
+                  const indexInFull = pets.findIndex(p => p.id === currentPetId);
+
+                  // Update the currentIndex to that pet if found, otherwise default to 0
+                  setCurrentIndex(indexInFull !== -1 ? indexInFull : 0);
+                  localStorage.setItem('currentIndex', indexInFull !== -1 ? indexInFull : 0);
+                }}
+                style={styles.inputClearButton}
+              >
+                ×
+              </button>
+
+            )}
+          </div>
         </div>
-        <div style={styles.profileSection}>
-          <button onClick={toggleDropdown} style={styles.profileIcon}>👤</button>
-          {dropdownOpen && (
-            <div style={styles.dropdown}>
-              <button onClick={handleProfile} style={styles.dropdownItem}>View Profile</button>
-              <button onClick={handlePets} style={styles.dropdownItem}>Pets</button>
-              <button onClick={handleFavorites} style={styles.dropdownItem}>Favorites</button>
-              <button onClick={handleLogout} style={styles.dropdownItem}>Log Out</button>
+
+
+
+
+
+        <div style={styles.navRight}>
+  {/* 🔔 Notification Bell and Dropdown */}
+  <div style={{ position: 'relative', marginRight: '10px' }}>
+    <div
+      style={styles.notificationIcon}
+      title="Notifications"
+      onClick={() => setShowNotifications(!showNotifications)}
+    >
+      🔔
+      {notifications.length > 0 && (
+        <span style={styles.notificationDot}></span>
+      )}
+    </div>
+
+    {showNotifications && (
+      <div style={styles.notificationDropdown}>
+        {notifications.length === 0 ? (
+          <p style={styles.notificationItem}>No new notifications</p>
+        ) : (
+          <>
+            <div style={styles.dropdownHeader}>
+              <strong>Notifications</strong>
+              <button
+                onClick={clearAllNotifications}
+                style={styles.clearAllButton}
+              >
+                ✖
+              </button>
             </div>
-          )}
+
+            {notifications.map((notif) => (
+              <div key={notif.id} style={styles.notificationItem}>
+                <div
+                  onClick={() => navigate(`/match-details/${notif.sender_id}`)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    gap: '8px'
+                  }}
+                >
+                  <img
+                    src={
+                      notif.base64image
+                        ? `data:image/jpeg;base64,${notif.base64image}`
+                        : '/Images/default-user.png'
+                    }
+                    alt="Sender Profile"
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '1px solid #ccc'
+                    }}
+                  />
+                  <span style={{ color: 'black' }}>
+                    🐾 {notif.message}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => clearNotification(notif.id)}
+                  style={styles.clearOneButton}
+                >
+                  ❌
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    )}
+  </div>
+
+
+          {/* 👤 Profile Image and Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <img
+              src={profileImage || '/Images/default-user.png'}
+              alt="Profile"
+              onClick={toggleDropdown}
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                objectFit: 'cover',
+                border: '2px solid #FA9A51',
+              }}
+            />
+            {dropdownOpen && (
+              <div style={styles.dropdown}>
+                <button
+                  onClick={handleProfile}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiUser style={styles.dropdownIcon} />
+                  View Profile
+                </button>
+
+                <button
+                  onClick={handlePets}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiGrid style={styles.dropdownIcon} />
+                  Pets
+                </button>
+
+                <button
+                  onClick={handleFavorites}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiHeart style={styles.dropdownIcon} />
+                  Favorites
+                </button>
+
+                <button
+                  onClick={handleConnected}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiUsers style={styles.dropdownIcon} />
+                  Matched
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  style={styles.dropdownItem}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f5f5')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <FiLogOut style={styles.dropdownIcon} />
+                  Log Out
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </nav>
 
       {/* HEADER */}
       <header style={styles.header}>
         <h1 style={styles.title}>Welcome to PetPal</h1>
-        <p style={styles.subtitle}>Connecting Pet Owners with Potential Blood Donors</p>
+        <p style={styles.subtitle}>
+          Connecting Pet Owners with Potential Blood Donors
+        </p>
       </header>
 
-{/* PET CARD + NAVIGATION */}
-<div style={styles.cardNavigation}>
-  <button onClick={handlePrev} style={styles.navButton}>Prev</button>
+      {currentPetCoords && (
+        <div style={{ position: 'relative', height: '100vh', width: '100vw', overflow: 'hidden' }}>
 
-  {expandedPetIndex !== currentIndex && (
-  <div
-    style={styles.card}
-    onClick={() => toggleExpandPet(currentIndex)}
-    role="button"
-    tabIndex={0}
-    onKeyDown={(e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        toggleExpandPet(currentIndex);
-      }
-    }}
-  >
-    {loading ? (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-    ) : pets.length === 0 ? (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
-    ) : (
-      <>
-        <h2>{pets[currentIndex].name}</h2>
-        <div style={styles.cardContent}>
-          <div style={styles.imageSection}>
-            {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
-              pets[currentIndex].images.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`${pets[currentIndex].name} image ${idx + 1}`}
-                  style={styles.largeImage}
-                  loading="lazy"
-                  // **REMOVE this onClick to disable clicking on images when collapsed**
-                  // onClick={(e) => {
-                  //   e.stopPropagation();
-                  //   setFullscreenImage(img);
-                  // }}
-                />
-              ))
-            ) : (
-              <p>No images available</p>
-            )}
+          <div style={{ flex: 1, borderRadius: '12px', overflow: 'hidden' }}>
+            <MapContainer
+              center={[currentPetCoords.lat, currentPetCoords.lon]}
+              zoom={14}
+              scrollWheelZoom={false}
+              ref={mapRef}
+              style={{
+                height: '120vh',
+                width: '100vw',
+                position: 'relative',
+                zIndex: 0,
+              }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
 
-{fullscreenImage && (
-  <div
-    style={styles.fullscreenOverlay}
-    onClick={() => setFullscreenImage(null)}
-    role="dialog"
-    aria-modal="true"
-  >
-    <img
-      src={fullscreenImage}
-      alt="Fullscreen pet"
-      style={styles.fullscreenImage}
-      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image itself
-    />
-    <button
-      onClick={() => setFullscreenImage(null)}
-      style={styles.fullscreenCloseButton}
-      aria-label="Close fullscreen image"
-    >
-      ×
-    </button>
-  </div>
-)}
-            </div>
-            <div style={styles.detailsSection}>
-              <p><b>Breed:</b> {pets[currentIndex].breed}</p>
-              <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
-              <p><b>Age:</b> {pets[currentIndex].age}</p>
-              <p><b>Sex:</b> {pets[currentIndex].sex}</p>
-              <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
-              <p><b>Address:</b> {pets[currentIndex].address}</p>
-              <p><b>Details:</b> {pets[currentIndex].details}</p>
+              {/* Current Pet Marker */}
+              <Marker
+                position={[currentPetCoords.lat, currentPetCoords.lon]}
+                icon={L.divIcon({
+                  className: '',
+                  html: `
+        <div style="
+          position: relative;
+          width: 40px;
+          height: 56px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-direction: column;
+        ">
+          <div style="
+            width: 40px;
+            height: 40px;
+            background: orange;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            z-index: 2;
+          ">
+            <div style="
+              width: 30px;
+              height: 30px;
+              background: white;
+              border-radius: 50%;
+              overflow: hidden;
+            ">
+              <img 
+                src="${currentPet?.images?.[0] || '/Images/default-pet.png'}" 
+                alt="pet"
+                style="width: 100%; height: 100%; object-fit: cover;" 
+              />
             </div>
           </div>
-        </>
-      )}
-    </div>
-  )}
+          <div style="
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 16px solid orange;
+            margin-top: -2px;
+            z-index: 1;
+          "></div>
+        </div>
+      `,
+                  iconSize: [40, 56],
+                  iconAnchor: [20, 56],
+                  popupAnchor: [0, -56],
+                })}
+              >
+                <Popup>
+                  <strong>{currentPet.name}</strong><br />
+                  {currentPet.breed}<br />
+                  {currentPet.address}
+                </Popup>
+              </Marker>
 
-{/* Expanded modal */}
-{expandedPetIndex === currentIndex && (
-  <div
-    style={styles.modalOverlay}
-    onClick={() => {
-      if (!fullscreenImage) {
-        toggleExpandPet(null); // Close modal only if fullscreen image not open
-      } else {
-        setFullscreenImage(null); // If fullscreen image open, close that first
-      }
-    }}
-  >
-    <div
-      style={{ ...styles.card, ...styles.cardExpanded }}
-      onClick={(e) => e.stopPropagation()} // Prevent closing modal when clicking inside
-      role="dialog"
-      tabIndex={-1}
-    >
-      {loading ? (
-        <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
-      ) : pets.length === 0 ? (
-        <div style={{ padding: '2rem', textAlign: 'center' }}>No pets to display</div>
-      ) : (
-        <>
-          <h2>{pets[currentIndex].name}</h2>
-          <div style={styles.cardContent}>
-            <div style={styles.imageSection}>
-              {Array.isArray(pets[currentIndex].images) && pets[currentIndex].images.length > 0 ? (
-                pets[currentIndex].images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={img}
-                    alt={`${pets[currentIndex].name} image ${idx + 1}`}
-                    style={styles.largeImage}
-                    loading="lazy"
-                    onClick={() => setFullscreenImage(img)} // open fullscreen image
+              {/* Other Nearby Pets */}
+              {userLocation &&
+                nearbyPets.map((pet, index) => {
+                  const isSelected = pet.id === currentPet?.id;
+                  return (
+                    <Marker
+                      key={index}
+                      position={[pet.lat, pet.lon]}
+                      eventHandlers={{
+                        click: () => {
+                          const activeIndex = activePets.findIndex(p => p.id === pet.id);
+                          if (activeIndex !== -1) {
+                            setCurrentIndex(activeIndex);
+                            setExpandedPetIndex(null);
+                          }
+                        },
+                      }}
+                      icon={L.divIcon({
+                        className: '',
+                        html: `
+              <div style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+              ">
+                <div style="
+                  width: ${isSelected ? '48px' : '40px'};
+                  height: ${isSelected ? '48px' : '40px'};
+                  border-radius: 50%;
+                  overflow: hidden;
+                  border: 3px solid ${isSelected ? 'red' : 'orange'};
+                  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                ">
+                  <img 
+                    src="${pet.images?.[0] || '/Images/default-pet.png'}"
+                    style="width: 100%; height: 100%; object-fit: cover;" 
+                  />
+                </div>
+                <div style="
+                  width: 0;
+                  height: 0;
+                  border-left: 10px solid transparent;
+                  border-right: 10px solid transparent;
+                  border-top: 16px solid ${isSelected ? 'red' : 'orange'};
+                  margin-top: -2px;
+                "></div>
+              </div>
+            `,
+                        iconSize: [isSelected ? 48 : 40, 56],
+                        iconAnchor: [20, 56],
+                        popupAnchor: [0, -56],
+                      })}
+                    >
+                      <Popup>
+                        <strong>{pet.name}</strong><br />
+                        {pet.breed}<br />
+                        {pet.address}
+                      </Popup>
+                    </Marker>
+                  );
+                })}
+
+              <MapFollower coords={currentPetCoords} />
+            </MapContainer>
+
+          </div>
+
+          
+          {/* Floating Pet Card */}
+          <div
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            style={{
+              position: 'absolute',
+              top: '100px',
+              left: '20px',
+              width: '360px',
+              height: 'auto',
+              background: 'rgba(255, 255, 255, 0.95)',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+              borderRadius: '12px',
+              padding: '1rem',
+              zIndex: 1000,
+              transition: 'all 0.3s ease-in-out',
+              ...(isHovered ? styles.hoverCardStyle : {}),
+            }}
+          >
+
+            <div style={styles.petCardContent}>
+              {loading ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>Loading pets...</div>
+              ) : activePets.length === 0 ? (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                  No match found for "{searchQuery}"
+                </div>
+              ) : (
+                <>
+                  <div
+                    style={{ cursor: 'pointer' }}
+                    onClick={() => toggleExpandPet(currentIndex)}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        setFullscreenImage(img);
-                      }
+                      if (e.key === 'Enter') toggleExpandPet(currentIndex);
                     }}
-                  />
-                ))
-              ) : (
-                <p>No images available</p>
-              )}
-
-              {fullscreenImage && (
-                <div
-                  style={styles.fullscreenOverlay}
-                  onClick={() => setFullscreenImage(null)}
-                  role="dialog"
-                  aria-modal="true"
-                >
-                  <img
-                    src={fullscreenImage}
-                    alt="Fullscreen pet"
-                    style={styles.fullscreenImage}
-                    onClick={(e) => e.stopPropagation()} // prevent closing when clicking image
-                  />
-                  <button
-                    onClick={() => setFullscreenImage(null)}
-                    style={styles.fullscreenCloseButton}
-                    aria-label="Close fullscreen image"
                   >
-                    ×
+                    <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
+                    <div style={styles.cardContent}>
+                      <div style={styles.imageSection}>
+                        {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                          <>
+                            {/* Show 1st image normally */}
+                            <img
+                              src={currentPet.images[0]}
+                              alt={`${currentPet.name} image 1`}
+                              style={styles.largeImage}
+                            />
+
+
+                            {/* Show 2nd image with overlay if there are more than 1 */}
+                            {currentPet.images.length > 1 && (
+                              <div
+                                style={{
+                                  position: 'relative',
+                                  width: '150px',
+                                  height: '150px',
+                                  borderRadius: '8px',
+                                  overflow: 'hidden',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                                  marginLeft: '0.5rem',
+                                }}
+                              >
+                                <img
+                                  src={currentPet.images[1]}
+                                  alt={`${currentPet.name} image 2`}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(2px)' }}
+                                />
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    width: '100%',
+                                    height: '100%',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                    color: '#fff',
+                                    fontSize: '20px',
+                                    fontWeight: 'bold',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  +{currentPet.images.length - 1}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <p>No images available</p>
+                        )}
+
+                        {fullscreenImage && (
+                          <div
+                            style={styles.fullscreenOverlay}
+                            onClick={() => setFullscreenImage(null)}
+                            role="dialog"
+                            aria-modal="true"
+                          >
+                            <img
+                              src={fullscreenImage}
+                              alt="Fullscreen pet"
+                              style={styles.fullscreenImage}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <button
+                              onClick={() => setFullscreenImage(null)}
+                              style={styles.fullscreenCloseButton}
+                              aria-label="Close fullscreen image"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={styles.detailsSection}>
+                        <p><b>Breed:</b> {currentPet.breed}</p>
+                        <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+                        <p><b>Age:</b> {currentPet.age}</p>
+                        <p><b>Sex:</b> {currentPet.sex}</p>
+                        <p><b>Weight (kgs):</b> {currentPet.kilos}</p>
+                        <p><b>Address:</b> {currentPet.address}</p>
+                        <p><b>Details:</b> {currentPet.details}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={styles.buttonContainerRight}>
+                    <button onClick={handlePrev} style={styles.navButton}>Prev</button>
+                    <button onClick={handleNext} style={styles.navButton}>Next</button>
+                  </div>
+
+                  <button
+                    onClick={handleShowNearbyPets}
+                    style={{
+                      marginTop: '1rem',
+                      padding: '10px 20px',
+                      backgroundColor: '#FA9A51',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Locate Nearby Pets
                   </button>
-                </div>
+                </>
               )}
-            </div>
-            <div style={styles.detailsSection}>
-              <p><b>Breed:</b> {pets[currentIndex].breed}</p>
-              <p><b>Blood Type:</b> {pets[currentIndex].blood_type}</p>
-              <p><b>Age:</b> {pets[currentIndex].age}</p>
-              <p><b>Sex:</b> {pets[currentIndex].sex}</p>
-              <p><b>Weight (kgs):</b> {pets[currentIndex].kilos}</p>
-              <p><b>Address:</b> {pets[currentIndex].address}</p>
-              <p><b>Details:</b> {pets[currentIndex].details}</p>
             </div>
           </div>
-        </>
+
+
+          {/* Expanded Modal View */}
+          {expandedPetIndex === currentIndex && (
+            <div
+              style={styles.modalOverlay}
+              onClick={() => setExpandedPetIndex(null)}
+            >
+              <div
+                style={{ ...styles.card, ...styles.cardExpanded }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Action Buttons */}
+                <button
+                  style={styles.heartButton}
+                  onClick={() => handleFavorite(currentPet)}
+                >
+                  ❤️
+                </button>
+                <button
+                  style={styles.connectButton}
+                  onClick={() => handleConnect(currentPet.id, currentPet.user_id)}
+                >
+                  🐾 Connect
+                </button>
+
+                <h2 style={{ textAlign: 'center', marginBottom: '1rem' }}>{currentPet.name}</h2>
+                <div style={styles.cardContent}>
+                  <div style={styles.imageSection}>
+                    {Array.isArray(currentPet.images) && currentPet.images.length > 0 ? (
+                      <>
+                        {currentPet.images.slice(0, 2).map((img, idx) => (
+                          <div
+                            key={idx}
+                            style={{
+                              position: 'relative',
+                              width: '150px',
+                              height: '150px',
+                              borderRadius: '12px',
+                              overflow: 'hidden',
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              backgroundColor: 'rgba(255,255,255,0.05)',
+                              backdropFilter: 'blur(4px)',
+                              transition: 'transform 0.3s ease',
+                            }}
+                            onClick={() => {
+                              if (idx === 1 && currentPet.images.length > 2) {
+                                setShowAllImagesModal(true);
+                              } else {
+                                setFullscreenImage(img);
+                              }
+                            }}
+                          >
+                            <img
+                              src={img}
+                              alt={`${currentPet.name} image ${idx + 1}`}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                              }}
+                            />
+                            {idx === 1 && currentPet.images.length > 2 && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                  color: '#fff',
+                                  fontSize: '20px',
+                                  fontWeight: 'bold',
+                                  display: 'flex',
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                +{currentPet.images.length - 2}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <p>No images available</p>
+                    )}
+                  </div>
+
+
+                  {showAllImagesModal && (
+                    <div
+                      style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        width: '100vw',
+                        height: '100vh',
+                        backgroundColor: 'rgba(0,0,0,0.65)',
+                        zIndex: 2000,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '2rem',
+                        padding: '3rem',
+                        overflowY: 'auto',
+                      }}
+                      onClick={() => setShowAllImagesModal(false)}
+                    >
+                      {currentPet.images.map((img, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            width: '260px',
+                            height: '260px',
+                            borderRadius: '18px',
+                            overflow: 'hidden',
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            backdropFilter: 'blur(10px)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                            cursor: 'pointer',
+                            transition: 'transform 0.3s ease',
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent background close
+                            setFullscreenImage(img);
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.05)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                          }}
+                        >
+                          <img
+                            src={img}
+                            alt={`Image ${idx + 1}`}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={styles.detailsSection}>
+                    <p><b>Breed:</b> {currentPet.breed}</p>
+                    <p><b>Blood Type:</b> {currentPet.blood_type}</p>
+                    <p><b>Age:</b> {currentPet.age}</p>
+                    <p><b>Sex:</b> {currentPet.sex}</p>
+                    <p><b>Weight:</b> {currentPet.kilos} kg</p>
+                    <p><b>Address:</b> {currentPet.address}</p>
+                    <p><b>Details:</b> {currentPet.details}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+
+          {fullscreenImage && (
+            <div
+              style={styles.fullscreenOverlay}
+              onClick={() => setFullscreenImage(null)}
+            >
+              <img
+                src={fullscreenImage}
+                alt="Fullscreen pet"
+                style={styles.fullscreenImage}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={() => setFullscreenImage(null)}
+                style={styles.fullscreenCloseButton}
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
       )}
-    </div>
-  </div>
-)}
 
 
-  <button onClick={handleNext} style={styles.navButton}>Next</button>
-</div>
-
+      {/* Fullscreen Image Viewer */}
+      {fullscreenImage && (
+        <div style={styles.fullscreenOverlay} onClick={() => setFullscreenImage(null)}>
+          <img
+            src={fullscreenImage}
+            alt="Fullscreen"
+            style={styles.fullscreenImage}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            style={styles.fullscreenCloseButton}
+            onClick={() => setFullscreenImage(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
 
 
       {/* POPUP FORM */}
@@ -424,7 +1265,7 @@ const LandingPage = () => {
                 <option value="No common blood group">No common blood group</option>
               </select>
 
-              <label style={styles.formLabel}>Age</label>
+              <label style={styles.formLabel}>Age(in months)</label>
               <input
                 type="number"
                 name="age"
@@ -473,7 +1314,6 @@ const LandingPage = () => {
           </div>
         </div>
       )}
-
       {/* FLOATING ADD BUTTON */}
       <button
         onClick={() => setShowForm(true)}
@@ -482,318 +1322,10 @@ const LandingPage = () => {
       >
         +
       </button>
+
     </div>
+
   );
-};
-
-const styles = {
-  fullscreenOverlay: {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1500,
-    cursor: 'pointer',
-  },
-
-  fullscreenImage: {
-    maxWidth: '90%',
-    maxHeight: '90%',
-    borderRadius: '10px',
-    boxShadow: '0 0 20px rgba(255, 255, 255, 0.3)',
-    cursor: 'default',
-  },
-
-  fullscreenCloseButton: {
-    position: 'fixed',
-    top: '20px',
-    right: '30px',
-    fontSize: '2rem',
-    color: 'white',
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    userSelect: 'none',
-    zIndex: 1600,
-  },
-
-  // Nav & layout
-  cardNavigation: {
-    marginTop: '2rem',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: '1rem',
-  },
-
-  navButton: {
-    padding: '0.5rem 1rem',
-    fontSize: '1rem',
-    borderRadius: '5px',
-    border: 'none',
-    backgroundColor: '#f28b39',
-    color: 'white',
-    cursor: 'pointer',
-    userSelect: 'none',
-  },
-
-  // Card styles
-  card: {
-    cursor: 'pointer',
-    backgroundColor: 'white',
-    padding: '1rem 1.5rem',
-    borderRadius: '8px',
-    boxShadow: '0 3px 8px rgba(0,0,0,0.1)',
-    maxWidth: '400px',
-    margin: '0 1rem',
-  },
-
-  cardExpanded: {
-    maxWidth: '600px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
-    cursor: 'default', // Not clickable when expanded
-  },
-
-  // Modal overlay for expanded pet card
-  modalOverlay: {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-
-  // Card content inside the card/modal
-  cardContent: {
-    display: 'flex',
-    gap: '1.5rem',
-    alignItems: 'flex-start',
-  },
-
-  imageSection: {
-    flex: '1 1 40%',
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '10px',
-    justifyContent: 'center',
-  },
-
-  largeImage: {
-    width: '150px',
-    height: '150px',
-    objectFit: 'cover',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-  },
-
-  detailsSection: {
-    flex: '1 1 60%',
-    fontSize: '1.1rem',
-    color: '#333',
-    lineHeight: '1.4',
-  },
-
-  // Other styles (navbar, search, dropdown, form, etc.) remain unchanged
-  navbar: {
-    backgroundColor: '#f28b39',
-    display: 'flex',
-    justifyContent: 'center',
-    padding: '0.75rem 1rem',
-    color: 'white',
-    alignItems: 'center',
-    position: 'sticky',
-    top: 0,
-    zIndex: 10,
-  },
-
-  logo: {
-    fontWeight: 'bold',
-    fontSize: '1.5rem',
-    marginRight: 'auto',
-  },
-
-  searchContainer: {
-    width: '300px',
-    margin: '0 auto',
-  },
-
-  searchInput: {
-    width: '100%',
-    padding: '0.4rem 0.75rem',
-    borderRadius: '4px',
-    border: 'none',
-    fontSize: '1rem',
-  },
-
-  profileSection: {
-    position: 'relative',
-    marginLeft: 'auto',
-  },
-
-  profileIcon: {
-    background: 'transparent',
-    border: 'none',
-    color: 'white',
-    fontSize: '1.4rem',
-    cursor: 'pointer',
-  },
-
-  dropdown: {
-    position: 'absolute',
-    top: '110%',
-    right: 0,
-    backgroundColor: 'white',
-    color: '#333',
-    borderRadius: '4px',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-
-  dropdownItem: {
-    padding: '0.5rem 1rem',
-    border: 'none',
-    background: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-  },
-
-  header: {
-    textAlign: 'center',
-    marginTop: '1rem',
-  },
-
-  title: {
-    fontSize: '2.4rem',
-    color: '#334e68',
-    marginBottom: '0.25rem',
-  },
-
-  subtitle: {
-    fontSize: '1.1rem',
-    color: '#557a95',
-    marginTop: 0,
-  },
-
-  imagesContainer: {
-    display: 'flex',
-    gap: '8px',
-    marginTop: '10px',
-    flexWrap: 'wrap',
-  },
-
-  thumbnail: {
-    width: '60px',
-    height: '60px',
-    objectFit: 'cover',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    border: '2px solid transparent',
-    transition: 'border-color 0.3s',
-  },
-
-  modal: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    cursor: 'pointer',
-    zIndex: 100,
-  },
-
-  modalImage: {
-    maxWidth: '90vw',
-    maxHeight: '80vh',
-    borderRadius: '10px',
-    boxShadow: '0 0 15px rgba(255,255,255,0.5)',
-  },
-
-  popupOverlay: {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-
-  popup: {
-    backgroundColor: 'white',
-    borderRadius: '10px',
-    width: '90%',
-    maxWidth: '480px',
-    padding: '1.5rem',
-    boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-  },
-
-  formLabel: {
-    marginTop: '0.75rem',
-    marginBottom: '0.25rem',
-    fontWeight: '600',
-  },
-
-  formInput: {
-    width: '100%',
-    padding: '0.5rem 0.75rem',
-    borderRadius: '6px',
-    border: '1px solid #ccc',
-    fontSize: '1rem',
-  },
-
-  formButtons: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: '1rem',
-  },
-
-  submitButton: {
-    backgroundColor: '#357edd',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    padding: '0.5rem 1.5rem',
-    fontSize: '1rem',
-    cursor: 'pointer',
-  },
-
-  cancelButton: {
-    backgroundColor: '#999',
-    color: 'white',
-    border: 'none',
-    borderRadius: '6px',
-    padding: '0.5rem 1.5rem',
-    fontSize: '1rem',
-    cursor: 'pointer',
-  },
-
-  floatingButton: {
-    position: 'fixed',
-    bottom: '20px',
-    right: '20px',
-    width: '50px',
-    height: '50px',
-    borderRadius: '50%',
-    fontSize: '2rem',
-    backgroundColor: '#f28b39',
-    color: 'white',
-    border: 'none',
-    cursor: 'pointer',
-    boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-    userSelect: 'none',
-  },
 };
 
 

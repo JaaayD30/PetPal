@@ -7,7 +7,7 @@ import { authenticateToken, generateToken } from './jwtUtils.js';
 import dotenv from 'dotenv';
 import { sendResetPasswordEmail } from './emailService.js';
 import crypto from 'crypto';
-
+import fetch from 'node-fetch';
 
 dotenv.config();
 console.log('EMAIL_USER:', process.env.EMAIL_USER);
@@ -182,22 +182,22 @@ app.post('/api/google-login', async (req, res) => {
   }
 });
 
-// Update user details (except email)
+// Update user details (except email and password)
 app.put('/api/update-user/:id', async (req, res) => {
   const userId = req.params.id;
-  const { fullName, username, password, address, phone } = req.body;
+  const { fullName, username, address, phone } = req.body;
 
-  if (!fullName || !username || !password || !address || !phone) {
+  // Validate required fields (no password)
+  if (!fullName || !username || !address || !phone) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       `UPDATE "users1"
-       SET full_name = $1, username = $2, password = $3, address = $4, phone = $5
-       WHERE id = $6 RETURNING *`,
-      [fullName, username, hashedPassword, address, phone, userId]
+       SET full_name = $1, username = $2, address = $3, phone = $4
+       WHERE id = $5 RETURNING *`,
+      [fullName, username, address, phone, userId]
     );
 
     if (result.rows.length === 0) {
@@ -223,9 +223,60 @@ app.put('/api/update-user/:id', async (req, res) => {
   }
 });
 
+// Get profile picture
+app.get('/api/users/profile-picture', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      'SELECT encode(profile_picture, \'base64\') AS base64image FROM users1 WHERE id = $1',
+      [userId]
+    );
+
+    if (!result.rows[0].base64image) {
+      return res.json({ image: null }); // No image set
+    }
+
+    const image = `data:image/jpeg;base64,${result.rows[0].base64image}`;
+    res.json({ image });
+  } catch (err) {
+    console.error('Error fetching profile picture:', err);
+    res.status(500).json({ message: 'Failed to fetch profile picture' });
+  }
+});
+
+
+// Upload or update profile picture
+app.put('/api/users/profile-picture', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const { image } = req.body;
+
+  if (!image) {
+    return res.status(400).json({ message: 'No image provided' });
+  }
+
+  try {
+    const base64Data = image.split(',')[1];
+    const imgBuffer = Buffer.from(base64Data, 'base64');
+
+    await pool.query(
+      'UPDATE users1 SET profile_picture = $1 WHERE id = $2',
+      [imgBuffer, userId]
+    );
+
+    res.json({ message: 'Profile picture updated successfully' });
+  } catch (err) {
+    console.error('Error updating profile picture:', err);
+    res.status(500).json({ message: 'Failed to update profile picture' });
+  }
+});
+
+
+
 // ==================== PET ROUTES ====================
 
 // Add pet route with auth
+
 app.post('/api/pets', authenticateToken, async (req, res) => {
   const {
     images,
@@ -236,42 +287,68 @@ app.post('/api/pets', authenticateToken, async (req, res) => {
     sex,
     address,
     kilos,
-    details,
+    details
   } = req.body;
 
-  const userId = req.user.id; // get userId from JWT token
+  const userId = req.user.id;
 
   if (!name || !breed || !bloodType || !age || !sex || !address || !kilos || !details) {
     return res.status(400).json({ message: 'Missing required pet fields' });
   }
 
   try {
-    const petResult = await pool.query(
-      `INSERT INTO pets (user_id, name, breed, blood_type, age, sex, address, kilos, details)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [userId, name, breed, bloodType, age, sex, address, kilos, details]
-    );
+    // 🌐 Geocode address using OpenStreetMap
+    let lat = null;
+    let lon = null;
+
+    const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`, {
+      headers: {
+        'User-Agent': 'PetPalApp/1.0 (resonablejmar@gmail.com)' // ← use any valid email
+      }
+    });
+    
+    const geoData = await geoRes.json();
+
+    if (geoData.length > 0) {
+      lat = parseFloat(geoData[0].lat);
+      lon = parseFloat(geoData[0].lon);
+    }
+    
+
+    // 🐶 Insert pet into `pets` table
+    const insertPetQuery = `
+      INSERT INTO pets (user_id, name, breed, blood_type, age, sex, address, kilos, details, lat, lon)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      RETURNING *;
+    `;
+    const petResult = await pool.query(insertPetQuery, [
+      userId, name, breed, bloodType, age, sex, address, kilos, details, lat, lon
+    ]);
 
     const pet = petResult.rows[0];
 
-    if (images && images.length > 0) {
+    // 🖼️ Store images into `pet_images` table
+    if (images && Array.isArray(images)) {
       for (const base64Image of images) {
         const base64Data = base64Image.split(',')[1];
-        const imgBuffer = Buffer.from(base64Data, 'base64');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
 
         await pool.query(
           'INSERT INTO pet_images (pet_id, image) VALUES ($1, $2)',
-          [pet.id, imgBuffer]
+          [pet.id, imageBuffer]
         );
       }
     }
 
     res.status(201).json({ message: 'Pet added successfully', pet });
-  } catch (err) {
-    console.error('Error adding pet:', err);
+
+  } catch (error) {
+    console.error('Error saving pet:', error);
     res.status(500).json({ message: 'Failed to add pet' });
   }
 });
+
+
 
 app.get('/api/pets', authenticateToken, async (req, res) => {
   const userId = req.user.id;
@@ -424,6 +501,271 @@ app.get('/api/all-pets', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch pets' });
   }
 });
+
+app.delete('/api/pets/:id', authenticateToken, async (req, res) => {
+  const petId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    // Check if the pet belongs to the user
+    const petCheck = await pool.query(
+      'SELECT * FROM pets WHERE id = $1 AND user_id = $2',
+      [petId, userId]
+    );
+
+    if (petCheck.rows.length === 0) {
+      return res.status(404).json({ message: 'Pet not found or unauthorized' });
+    }
+
+    // Delete related favorites
+    await pool.query('DELETE FROM favorites WHERE pet_id = $1', [petId]);
+
+    // Delete pet images
+    await pool.query('DELETE FROM pet_images WHERE pet_id = $1', [petId]);
+
+    // Delete the pet
+    await pool.query('DELETE FROM pets WHERE id = $1 AND user_id = $2', [petId, userId]);
+
+    res.status(200).json({ message: 'Pet deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting pet:', err);
+    res.status(500).json({ message: 'Failed to delete pet' });
+  }
+});
+
+// server.js
+app.post('/api/connect-request', authenticateToken, async (req, res) => {
+  const { petId, recipientId } = req.body;
+  const senderId = req.user.id;
+
+  if (recipientId === senderId) {
+    return res.status(400).json({ message: 'You cannot send a request to yourself.' });
+  }
+
+  try {
+    // 🚨 Check if they're already matched
+    const matchCheck = await pool.query(`
+      SELECT * FROM matches
+      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+    `, [senderId, recipientId]);
+
+    if (matchCheck.rows.length > 0) {
+      return res.status(400).json({ message: 'You already connected to this user.' });
+    }
+
+    // 🚨 Check for existing connect request
+    const existing = await pool.query(
+      'SELECT * FROM notifications WHERE sender_id = $1 AND recipient_id = $2 AND type = $3',
+      [senderId, recipientId, 'connect']
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: 'You already sent a connection. Please wait for the response.' });
+    }
+
+    // ✅ Insert new connect request (message is generic)
+    await pool.query(
+      'INSERT INTO notifications (sender_id, recipient_id, message, type) VALUES ($1, $2, $3, $4)',
+      [senderId, recipientId, 'wants to connect with you', 'connect']
+    );
+
+    res.status(200).json({ message: 'Connect request sent!' });
+  } catch (error) {
+    console.error('Connect request failed:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+
+
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(
+      `SELECT n.id, n.sender_id, n.message, n.created_at, n.type,
+              u.full_name AS sender_name,
+              encode(u.profile_picture, 'base64') AS base64image
+       FROM notifications n
+       JOIN users1 u ON n.sender_id = u.id
+       WHERE n.recipient_id = $1
+       ORDER BY n.created_at DESC`,
+      [userId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ message: 'Failed to fetch notifications' });
+  }
+});
+
+
+app.delete('/api/notifications/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  console.log('Attempting to delete notif ID:', id);
+  console.log('Authenticated user:', req.user.id);
+
+  try {
+    const result = await pool.query(
+      'DELETE FROM notifications WHERE id = $1 AND recipient_id = $2 RETURNING *',
+      [id, req.user.id]
+    );
+
+    if (result.rowCount === 0) {
+      console.log('No matching notification or unauthorized');
+      return res.status(404).json({ message: 'Notification not found or not authorized' });
+    }
+
+    res.json({ message: 'Notification deleted' });
+  } catch (err) {
+    console.error('Delete single notification error:', err);
+    res.status(500).json({ message: 'Failed to delete notification' });
+  }
+});
+
+
+
+app.delete('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM notifications WHERE recipient_id = $1', [req.user.id]);
+    res.json({ message: 'All notifications cleared' });
+  } catch (err) {
+    console.error('Delete all notifications error:', err);
+    res.status(500).json({ message: 'Failed to clear notifications' });
+  }
+});
+
+app.get('/api/match-details/:senderId', authenticateToken, async (req, res) => {
+  const { senderId } = req.params;
+
+  try {
+    const userResult = await pool.query(
+      `SELECT id, full_name, email, address, phone, encode(profile_picture, 'base64') AS base64image
+       FROM users1
+       WHERE id = $1`,
+      [senderId]
+    );
+
+  
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ message: 'Owner not found' });
+    }
+
+    const petsResult = await pool.query('SELECT * FROM pets WHERE user_id = $1', [senderId]);
+    const pets = petsResult.rows;
+
+    for (const pet of pets) {
+      const imagesResult = await pool.query(
+        "SELECT encode(image, 'base64') AS base64image FROM pet_images WHERE pet_id = $1",
+        [pet.id]
+      );
+      pet.images = imagesResult.rows.map(row => `data:image/jpeg;base64,${row.base64image}`);
+    }
+
+    res.json({ owner: userResult.rows[0], pets });
+  } catch (err) {
+    console.error('Error fetching match details:', err);
+    res.status(500).json({ message: 'Failed to fetch match details' });
+  }
+});
+
+
+app.post('/api/confirm-match', authenticateToken, async (req, res) => {
+  const { senderId } = req.body;
+  const currentUserId = req.user.id; // this is Juan (you)
+  
+  try {
+    // Prevent duplicate matches
+    const existing = await pool.query(
+      'SELECT * FROM matches WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)',
+      [senderId, currentUserId]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: 'Match already exists' });
+    }
+
+    // Insert mutual match
+    await pool.query(
+      'INSERT INTO matches (user1_id, user2_id) VALUES ($1, $2)',
+      [senderId, currentUserId]
+    );
+
+    // Get full names
+    const currentUserResult = await pool.query('SELECT full_name FROM users1 WHERE id = $1', [currentUserId]);
+    const senderResult = await pool.query('SELECT full_name FROM users1 WHERE id = $1', [senderId]);
+
+    const currentUserName = currentUserResult.rows[0]?.full_name || 'you';
+    const senderName = senderResult.rows[0]?.full_name || 'the user';
+
+    // Message where each sees the *other* person's name
+    const messageForSender = `You and ${currentUserName} are now matched!`; // shown to Luan
+    const messageForCurrentUser = `You and ${senderName} are now matched!`; // shown to Juan
+
+    // Notify both
+    await pool.query(
+      `INSERT INTO notifications (sender_id, recipient_id, message, status)
+       VALUES
+        ($1, $2, $3, 'pending'),
+        ($2, $1, $4, 'pending')`,
+      [currentUserId, senderId, messageForSender, messageForCurrentUser]
+    );
+
+    res.json({ message: 'Match confirmed and notification sent to both users.' });
+  } catch (err) {
+    console.error('Error confirming match:', err);
+    res.status(500).json({ message: 'Failed to confirm match' });
+  }
+});
+
+
+
+// Get detailed matches (profile info of matched users)
+app.get('/api/my-matches/details', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+        u.id, u.full_name, u.email, u.address, u.phone,
+        encode(u.profile_picture, 'base64') AS base64image
+      FROM matches m
+      JOIN users1 u 
+        ON u.id = CASE 
+                    WHEN m.user1_id = $1 THEN m.user2_id 
+                    ELSE m.user1_id 
+                 END
+      WHERE m.user1_id = $1 OR m.user2_id = $1
+    `, [userId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching matched users with details:', err);
+    res.status(500).json({ message: 'Failed to fetch matches' });
+  }
+});
+
+
+app.delete('/api/matches/:id', authenticateToken, async (req, res) => {
+  const userId = req.user.id;
+  const matchUserId = parseInt(req.params.id, 10);
+
+  try {
+    const result = await pool.query(`
+      DELETE FROM matches 
+      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+    `, [userId, matchUserId]);
+
+    res.json({ message: 'Match removed successfully' });
+  } catch (err) {
+    console.error('Error removing match:', err);
+    res.status(500).json({ message: 'Failed to remove match' });
+  }
+});
+
+
 
 
 // ==================== Start server ====================
